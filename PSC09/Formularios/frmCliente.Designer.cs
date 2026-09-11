@@ -49,6 +49,8 @@ namespace PSC09
             //
             // label1
             //
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.label1.BackColor = PSC09.Tema.EspacioProfundo;
             this.label1.Font = PSC09.Tema.FuenteTitulo();
             this.label1.ForeColor = PSC09.Tema.OroEstelar;
@@ -61,6 +63,7 @@ namespace PSC09
             //
             // btnGuardar
             //
+            this.btnGuardar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnGuardar.Image = global::PSC09.Properties.Resources.filesave;
             this.btnGuardar.Location = new System.Drawing.Point(572, 3);
             this.btnGuardar.Name = "btnGuardar";
@@ -74,6 +77,7 @@ namespace PSC09
             //
             // btnLimpiar
             //
+            this.btnLimpiar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnLimpiar.Image = global::PSC09.Properties.Resources.filenew;
             this.btnLimpiar.Location = new System.Drawing.Point(668, 3);
             this.btnLimpiar.Name = "btnLimpiar";
@@ -87,6 +91,7 @@ namespace PSC09
             //
             // btnBorrar
             //
+            this.btnBorrar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnBorrar.Image = global::PSC09.Properties.Resources.editdelete;
             this.btnBorrar.Location = new System.Drawing.Point(764, 3);
             this.btnBorrar.Name = "btnBorrar";
@@ -100,6 +105,7 @@ namespace PSC09
             //
             // btnSalir
             //
+            this.btnSalir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSalir.Image = global::PSC09.Properties.Resources.exit;
             this.btnSalir.Location = new System.Drawing.Point(860, 3);
             this.btnSalir.Name = "btnSalir";
@@ -124,6 +130,8 @@ namespace PSC09
             //
             // txtCodigo
             //
+            this.txtCodigo.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.txtCodigo.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCodigo.Location = new System.Drawing.Point(364, 140);
             this.txtCodigo.Name = "txtCodigo";
@@ -144,6 +152,8 @@ namespace PSC09
             //
             // txtNombre
             //
+            this.txtNombre.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.txtNombre.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtNombre.Location = new System.Drawing.Point(364, 200);
             this.txtNombre.Name = "txtNombre";
@@ -163,6 +173,8 @@ namespace PSC09
             //
             // txtDireccion
             //
+            this.txtDireccion.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.txtDireccion.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtDireccion.Location = new System.Drawing.Point(364, 260);
             this.txtDireccion.Name = "txtDireccion";
@@ -182,6 +194,8 @@ namespace PSC09
             //
             // txtSector
             //
+            this.txtSector.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.txtSector.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtSector.Location = new System.Drawing.Point(364, 320);
             this.txtSector.Name = "txtSector";
@@ -202,6 +216,8 @@ namespace PSC09
             // cmbPais
             //
             this.cmbPais.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbPais.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.cmbPais.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cmbPais.Location = new System.Drawing.Point(364, 380);
             this.cmbPais.Name = "cmbPais";
@@ -223,6 +239,8 @@ namespace PSC09
             // cmbCiudad
             //
             this.cmbCiudad.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbCiudad.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.cmbCiudad.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cmbCiudad.Location = new System.Drawing.Point(364, 440);
             this.cmbCiudad.Name = "cmbCiudad";
@@ -242,6 +260,8 @@ namespace PSC09
             //
             // txtTelefono1
             //
+            this.txtTelefono1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.txtTelefono1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtTelefono1.Location = new System.Drawing.Point(364, 500);
             this.txtTelefono1.Name = "txtTelefono1";
@@ -261,6 +281,8 @@ namespace PSC09
             //
             // txtTelefono2
             //
+            this.txtTelefono2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.txtTelefono2.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtTelefono2.Location = new System.Drawing.Point(364, 560);
             this.txtTelefono2.Name = "txtTelefono2";
@@ -280,6 +302,8 @@ namespace PSC09
             //
             // txtIdentificacion
             //
+            this.txtIdentificacion.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.txtIdentificacion.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtIdentificacion.Location = new System.Drawing.Point(364, 620);
             this.txtIdentificacion.Name = "txtIdentificacion";
@@ -299,6 +323,8 @@ namespace PSC09
             //
             // txtCorreo
             //
+            this.txtCorreo.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.txtCorreo.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCorreo.Location = new System.Drawing.Point(364, 680);
             this.txtCorreo.Name = "txtCorreo";
@@ -319,6 +345,8 @@ namespace PSC09
             // cmbEstatus
             //
             this.cmbEstatus.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbEstatus.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.cmbEstatus.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cmbEstatus.Location = new System.Drawing.Point(364, 740);
             this.cmbEstatus.Name = "cmbEstatus";
@@ -369,6 +397,7 @@ namespace PSC09
             this.Controls.Add(this.btnLimpiar);
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.label1);
+            this.MinimumSize = new System.Drawing.Size(986, 899);
             this.Name = "frmCliente";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "frmCliente";

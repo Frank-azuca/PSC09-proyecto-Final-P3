@@ -69,6 +69,8 @@
             // 
             // label1
             // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.label1.BackColor = PSC09.Tema.EspacioProfundo;
             this.label1.Font = PSC09.Tema.FuenteTitulo();
             this.label1.ForeColor = PSC09.Tema.OroEstelar;
@@ -81,6 +83,9 @@
             // 
             // tabControl1
             // 
+            this.tabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Location = new System.Drawing.Point(8, 112);
@@ -119,6 +124,7 @@
             // 
             // button1
             // 
+            this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.button1.Location = new System.Drawing.Point(894, 81);
             this.button1.Name = "button1";
@@ -131,6 +137,7 @@
             // 
             // pictureBox1
             // 
+            this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.pictureBox1.Image = global::PSC09.Properties.Resources.boss_man_128;
             this.pictureBox1.Location = new System.Drawing.Point(949, 208);
             this.pictureBox1.Name = "pictureBox1";
@@ -142,6 +149,8 @@
             // 
             // txtBarCode
             // 
+            this.txtBarCode.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.txtBarCode.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtBarCode.Location = new System.Drawing.Point(364, 443);
             this.txtBarCode.Name = "txtBarCode";
@@ -160,6 +169,8 @@
             // 
             // txtDescripcion
             // 
+            this.txtDescripcion.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.txtDescripcion.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtDescripcion.Location = new System.Drawing.Point(364, 136);
             this.txtDescripcion.Name = "txtDescripcion";
@@ -364,6 +375,7 @@
             // 
             // btnSalir
             // 
+            this.btnSalir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSalir.Image = global::PSC09.Properties.Resources.exit;
             this.btnSalir.Location = new System.Drawing.Point(1181, 3);
             this.btnSalir.Name = "btnSalir";
@@ -377,6 +389,7 @@
             // 
             // btnBorrar
             // 
+            this.btnBorrar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnBorrar.Image = global::PSC09.Properties.Resources.editdelete;
             this.btnBorrar.Location = new System.Drawing.Point(1054, 3);
             this.btnBorrar.Name = "btnBorrar";
@@ -390,6 +403,7 @@
             // 
             // btnLimpiar
             // 
+            this.btnLimpiar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnLimpiar.Image = global::PSC09.Properties.Resources.filenew;
             this.btnLimpiar.Location = new System.Drawing.Point(929, 3);
             this.btnLimpiar.Name = "btnLimpiar";
@@ -403,6 +417,7 @@
             // 
             // btnGuardar
             // 
+            this.btnGuardar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnGuardar.Image = global::PSC09.Properties.Resources.filesave;
             this.btnGuardar.Location = new System.Drawing.Point(802, 3);
             this.btnGuardar.Name = "btnGuardar";
@@ -438,6 +453,7 @@
             this.Controls.Add(this.btnLimpiar);
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.label1);
+            this.MinimumSize = new System.Drawing.Size(1000, 600);
             this.Name = "frmProductos";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "frmProductos";

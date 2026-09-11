@@ -40,6 +40,9 @@
             // 
             // dgv
             // 
+            this.dgv.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.dgv.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgv.Location = new System.Drawing.Point(12, 75);
             this.dgv.Name = "dgv";
@@ -56,6 +59,7 @@
             // 
             // btnSeleccionar
             // 
+            this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSeleccionar.Location = new System.Drawing.Point(454, 0);
             this.btnSeleccionar.Margin = new System.Windows.Forms.Padding(2);
             this.btnSeleccionar.Name = "btnSeleccionar";
@@ -69,6 +73,7 @@
             // 
             // btnBuscar
             // 
+            this.btnBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnBuscar.Image = global::PSC09.Properties.Resources.search;
             this.btnBuscar.Location = new System.Drawing.Point(369, 0);
             this.btnBuscar.Margin = new System.Windows.Forms.Padding(2);
@@ -83,6 +88,7 @@
             // 
             // btnLimpiar
             // 
+            this.btnLimpiar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnLimpiar.Image = global::PSC09.Properties.Resources.filenew;
             this.btnLimpiar.Location = new System.Drawing.Point(563, 0);
             this.btnLimpiar.Margin = new System.Windows.Forms.Padding(2);
@@ -97,6 +103,7 @@
             // 
             // btnSalir
             // 
+            this.btnSalir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSalir.Image = global::PSC09.Properties.Resources.exit;
             this.btnSalir.Location = new System.Drawing.Point(646, -1);
             this.btnSalir.Margin = new System.Windows.Forms.Padding(2);
@@ -111,6 +118,8 @@
             //
             // label1
             //
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.label1.BackColor = PSC09.Tema.EspacioProfundo;
             this.label1.Font = PSC09.Tema.FuenteTitulo();
             this.label1.ForeColor = PSC09.Tema.OroEstelar;
@@ -135,6 +144,7 @@
             this.Controls.Add(this.btnLimpiar);
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.label1);
+            this.MinimumSize = new System.Drawing.Size(761, 489);
             this.Name = "frmVENFACT";
             this.Text = "frmVENFACT";
             this.Load += new System.EventHandler(this.frmVENFACT_Load);

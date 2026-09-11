@@ -239,7 +239,7 @@ namespace PSC09
 
             DataGridViewColumn
             column = dgv.Columns[00]; column.Width = 187;
-            column = dgv.Columns[01]; column.Width = 419;
+            column = dgv.Columns[01]; column.Width = 419; column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             column = dgv.Columns[02]; column.Width = 138;
             column = dgv.Columns[03]; column.Width = 135;
             column = dgv.Columns[04]; column.Width = 135;

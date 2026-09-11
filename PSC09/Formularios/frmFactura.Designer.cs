@@ -72,6 +72,8 @@
             // 
             // label1
             // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
             this.label1.BackColor = PSC09.Tema.EspacioProfundo;
             this.label1.Font = PSC09.Tema.FuenteTitulo();
             this.label1.ForeColor = PSC09.Tema.OroEstelar;
@@ -288,6 +290,9 @@
             // 
             // dgv
             // 
+            this.dgv.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.dgv.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgv.Location = new System.Drawing.Point(8, 292);
             this.dgv.Margin = new System.Windows.Forms.Padding(2);
@@ -375,6 +380,16 @@
             // 
             // btnCONFACT
             // 
+            this.btnBorrrarLn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnEditar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnLimpiarDgv.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnInsertarLn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblTotal.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblSubtotal.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblImpuesto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCONFACT.Image = global::PSC09.Properties.Resources.filefind;
             this.btnCONFACT.Location = new System.Drawing.Point(398, 90);
             this.btnCONFACT.Margin = new System.Windows.Forms.Padding(2);
@@ -470,6 +485,7 @@
             // 
             // btnImprimir
             // 
+            this.btnImprimir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnImprimir.Image = global::PSC09.Properties.Resources.fileprint;
             this.btnImprimir.Location = new System.Drawing.Point(991, 3);
             this.btnImprimir.Margin = new System.Windows.Forms.Padding(2);
@@ -484,6 +500,7 @@
             // 
             // btnSalir
             // 
+            this.btnSalir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSalir.Image = global::PSC09.Properties.Resources.exit;
             this.btnSalir.Location = new System.Drawing.Point(1075, 3);
             this.btnSalir.Margin = new System.Windows.Forms.Padding(2);
@@ -498,6 +515,7 @@
             // 
             // btnBorrar
             // 
+            this.btnBorrar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnBorrar.Image = global::PSC09.Properties.Resources.editdelete;
             this.btnBorrar.Location = new System.Drawing.Point(906, 3);
             this.btnBorrar.Margin = new System.Windows.Forms.Padding(2);
@@ -512,6 +530,7 @@
             // 
             // btnLimpiar
             // 
+            this.btnLimpiar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnLimpiar.Image = global::PSC09.Properties.Resources.filenew;
             this.btnLimpiar.Location = new System.Drawing.Point(823, 3);
             this.btnLimpiar.Margin = new System.Windows.Forms.Padding(2);
@@ -526,6 +545,7 @@
             // 
             // btnGuardar
             // 
+            this.btnGuardar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnGuardar.Image = global::PSC09.Properties.Resources.filesave;
             this.btnGuardar.Location = new System.Drawing.Point(738, 3);
             this.btnGuardar.Margin = new System.Windows.Forms.Padding(2);
@@ -542,7 +562,6 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.AutoSize = true;
             this.BackColor = PSC09.Tema.FondoClaro;
             this.ClientSize = new System.Drawing.Size(1166, 721);
             this.Controls.Add(this.lblFactura);
@@ -585,6 +604,7 @@
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.label1);
             this.Margin = new System.Windows.Forms.Padding(2);
+            this.MinimumSize = new System.Drawing.Size(1182, 760);
             this.Name = "frmFactura";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "frmFactura";
