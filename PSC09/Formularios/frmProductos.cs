@@ -187,6 +187,7 @@ namespace PSC09
             txtPrecioVenta.Clear();
             txtImpuesto.Clear();
             txtBarCode.Clear();
+            chkImpuestoIncluido.Checked = false;
 
             txtDescripcion.Focus();
 
@@ -212,7 +213,7 @@ namespace PSC09
 
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
 
-            string stQuery = "SELECT DESCRIPCION, " + " CANTIDAD, " + " COSTO, " + " PRECIOVENTA, " + " IMPUESTO, " + " BARCODE " +
+            string stQuery = "SELECT DESCRIPCION, " + " CANTIDAD, " + " COSTO, " + " PRECIOVENTA, " + " IMPUESTO, " + " BARCODE, " + " TIENEIMPUESTO " +
                              " FROM PRODUCTOS " + " WHERE ITEM = '" + numProducto + "' AND ESTATUSPRODUCTO = 1";
 
             SqlCommand cmd = new SqlCommand(stQuery, cnx);
@@ -228,6 +229,7 @@ namespace PSC09
                 txtPrecioVenta.Text = rcd["PRECIOVENTA"].ToString();
                 txtImpuesto.Text = rcd["IMPUESTO"].ToString();
                 txtBarCode.Text = rcd["BARCODE"].ToString();
+                chkImpuestoIncluido.Checked = rcd["TIENEIMPUESTO"] != DBNull.Value && Convert.ToInt32(rcd["TIENEIMPUESTO"]) == 1;
 
                 if (pictureBox1.Image != PSC09.Properties.Resources.boss_man_128)
                 {
@@ -272,7 +274,7 @@ namespace PSC09
 
         private void ActualizaData()
         {
-            string stQuery = " UPDATE PRODUCTOS SET DESCRIPCION = @A2, CANTIDAD = @A3, COSTO = @A4, PRECIOVENTA = @A5, IMPUESTO = @A6, BARCODE = @A7 " +
+            string stQuery = " UPDATE PRODUCTOS SET DESCRIPCION = @A2, CANTIDAD = @A3, COSTO = @A4, PRECIOVENTA = @A5, IMPUESTO = @A6, BARCODE = @A7, TIENEIMPUESTO = @A8 " +
                              " WHERE ITEM = @A1 ";
 
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
@@ -285,6 +287,7 @@ namespace PSC09
             cdm.Parameters.AddWithValue("@A5", txtPrecioVenta.Text);
             cdm.Parameters.AddWithValue("@A6", txtImpuesto.Text);
             cdm.Parameters.AddWithValue("@A7", txtBarCode.Text);
+            cdm.Parameters.AddWithValue("@A8", chkImpuestoIncluido.Checked ? 1 : 0);
 
             cdm.ExecuteNonQuery();
 
@@ -295,8 +298,8 @@ namespace PSC09
 
         private void InsertarData()
         {
-            string stQuery = "INSERT INTO PRODUCTOS (item, descripcion, cantidad, costo, precioventa, impuesto, estatusproducto, barcode) " +
-                             " VALUES ( @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8 )";
+            string stQuery = "INSERT INTO PRODUCTOS (item, descripcion, cantidad, costo, precioventa, impuesto, estatusproducto, barcode, tieneimpuesto) " +
+                             " VALUES ( @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8, @A9 )";
 
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
             SqlCommand cdm = new SqlCommand(stQuery, cnx);
@@ -309,6 +312,7 @@ namespace PSC09
             cdm.Parameters.AddWithValue("@A6", txtImpuesto.Text);
             cdm.Parameters.AddWithValue("@A7", 1);
             cdm.Parameters.AddWithValue("@A8", txtBarCode.Text);
+            cdm.Parameters.AddWithValue("@A9", chkImpuestoIncluido.Checked ? 1 : 0);
 
             cdm.ExecuteNonQuery();
 

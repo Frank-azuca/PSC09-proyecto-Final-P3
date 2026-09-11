@@ -227,6 +227,9 @@
     <None Include="BaseDeDatos\crear_base_datos.sql" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="BaseDeDatos\productos_iniciales.sql" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="Documentacion\MANUAL_USUARIO.md" />
   </ItemGroup>
   <ItemGroup>

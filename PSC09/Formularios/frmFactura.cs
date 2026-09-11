@@ -20,6 +20,7 @@ namespace PSC09
         Boolean ExisteLaData;
 
         double lnImpuesto;
+        bool lbImpuestoIncluido;
         double zImpuesto;
         double zTotal;
         double zSubtotal;
@@ -49,7 +50,7 @@ namespace PSC09
         private void BuscarArticulo(string nmrArticulo)
         {
             SqlConnection cxn = new SqlConnection(cnn.db); cxn.Open();
-            SqlCommand cmd = new SqlCommand("SELECT ITEM, DESCRIPCION, PRECIOVENTA, IMPUESTO FROM PRODUCTOS WHERE ITEM = '" + nmrArticulo + "'", cxn);
+            SqlCommand cmd = new SqlCommand("SELECT ITEM, DESCRIPCION, PRECIOVENTA, IMPUESTO, TIENEIMPUESTO FROM PRODUCTOS WHERE ITEM = '" + nmrArticulo + "'", cxn);
 
             SqlDataReader rdr = cmd.ExecuteReader();
 
@@ -58,6 +59,7 @@ namespace PSC09
                 lblArticulo.Text = rdr["DESCRIPCION"].ToString();
                 lblPrecio.Text = rdr["PRECIOVENTA"].ToString();
                 lnImpuesto = Convert.ToDouble(rdr["IMPUESTO"].ToString());
+                lbImpuestoIncluido = rdr["TIENEIMPUESTO"] != DBNull.Value && Convert.ToInt32(rdr["TIENEIMPUESTO"]) == 1;
             }
         }
 
@@ -435,11 +437,24 @@ namespace PSC09
 
                 if (nmCant > 0 && nmPrec > 0)
                 {
-                    double total = nmPrec * nmCant;
-                    double totalImp = lnImpuesto * total;
+                    double totalImp;
+                    double subtotal;
+
+                    if (lbImpuestoIncluido)
+                    {
+                        // El precio ya incluye el impuesto: se extrae en vez de sumarlo de nuevo.
+                        double totalConImpuesto = nmPrec * nmCant;
+                        subtotal = totalConImpuesto / (1 + lnImpuesto);
+                        totalImp = totalConImpuesto - subtotal;
+                    }
+                    else
+                    {
+                        subtotal = nmPrec * nmCant;
+                        totalImp = lnImpuesto * subtotal;
+                    }
 
                     lblImpuestoLn.Text = totalImp.ToString();
-                    lblTotalLn.Text = total.ToString();
+                    lblTotalLn.Text = subtotal.ToString();
                 }
             }
         }

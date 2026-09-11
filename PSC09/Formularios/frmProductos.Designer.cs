@@ -40,6 +40,7 @@
             this.txtCostoProducto = new System.Windows.Forms.TextBox();
             this.txtPrecioVenta = new System.Windows.Forms.TextBox();
             this.txtCodigo = new System.Windows.Forms.TextBox();
+            this.chkImpuestoIncluido = new System.Windows.Forms.CheckBox();
             this.label8 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
@@ -106,6 +107,7 @@
             this.tabPage1.Controls.Add(this.txtCostoProducto);
             this.tabPage1.Controls.Add(this.txtPrecioVenta);
             this.tabPage1.Controls.Add(this.txtCodigo);
+            this.tabPage1.Controls.Add(this.chkImpuestoIncluido);
             this.tabPage1.Controls.Add(this.label8);
             this.tabPage1.Controls.Add(this.label7);
             this.tabPage1.Controls.Add(this.label6);
@@ -166,7 +168,17 @@
             this.txtImpuesto.Size = new System.Drawing.Size(498, 35);
             this.txtImpuesto.TabIndex = 12;
             this.txtImpuesto.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtImpuesto_KeyPress);
-            // 
+            //
+            // chkImpuestoIncluido
+            //
+            this.chkImpuestoIncluido.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chkImpuestoIncluido.Location = new System.Drawing.Point(880, 388);
+            this.chkImpuestoIncluido.Name = "chkImpuestoIncluido";
+            this.chkImpuestoIncluido.Size = new System.Drawing.Size(320, 26);
+            this.chkImpuestoIncluido.TabIndex = 12;
+            this.chkImpuestoIncluido.Text = "Impuesto incluido en el precio";
+            this.chkImpuestoIncluido.UseVisualStyleBackColor = true;
+            //
             // txtDescripcion
             // 
             this.txtDescripcion.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
@@ -482,6 +494,7 @@
         private System.Windows.Forms.TabPage tabPage2;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox txtCodigo;
+        private System.Windows.Forms.CheckBox chkImpuestoIncluido;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label6;
