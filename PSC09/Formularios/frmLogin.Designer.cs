@@ -90,12 +90,12 @@
             // 
             // pictureBox1
             // 
-            this.pictureBox1.Image = global::PSC09.Properties.Resources.itla;
-            this.pictureBox1.Location = new System.Drawing.Point(8, 100);
+            this.pictureBox1.Image = global::PSC09.Properties.Resources.andromeda_logo;
+            this.pictureBox1.Location = new System.Drawing.Point(8, 90);
             this.pictureBox1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(149, 98);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox1.Size = new System.Drawing.Size(149, 118);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             // 
