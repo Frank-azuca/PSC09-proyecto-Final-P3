@@ -36,20 +36,22 @@ namespace PSC09
         {
             string stQuery = "SELECT secuencia + 1 AS ultimo_numero FROM SECUENCIA WHERE ID = @id";
 
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            SqlCommand cmd = new SqlCommand(stQuery, cnx);
-            cmd.Parameters.AddWithValue("@id", nmId);
-            SqlDataReader sdr = cmd.ExecuteReader();
-
-            if (sdr.Read())
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
-                return sdr["ultimo_numero"].ToString();
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand(stQuery, cnx);
+                cmd.Parameters.AddWithValue("@id", nmId);
+
+                using (SqlDataReader sdr = cmd.ExecuteReader())
+                {
+                    if (sdr.Read())
+                    {
+                        return sdr["ultimo_numero"].ToString();
+                    }
+                }
+
+                return null;
             }
-
-            cmd.Dispose();
-            cnx.Close();
-
-            return null;
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
@@ -232,10 +233,36 @@ namespace PSC09
                 return;
             }
 
-            foreach (Tuple<TipoComprobante, long> item in pendientes)
+            try
             {
-                ComprobanteFiscal.GuardarConfiguracion(item.Item1);
-                ComprobanteFiscal.FijarProximoNumero(item.Item1, item.Item2);
+                using (SqlConnection cnx = new SqlConnection(cnn.db))
+                {
+                    cnx.Open();
+
+                    using (SqlTransaction tx = cnx.BeginTransaction())
+                    {
+                        try
+                        {
+                            foreach (Tuple<TipoComprobante, long> item in pendientes)
+                            {
+                                ComprobanteFiscal.GuardarConfiguracion(cnx, tx, item.Item1);
+                                ComprobanteFiscal.FijarProximoNumero(cnx, tx, item.Item1, item.Item2);
+                            }
+
+                            tx.Commit();
+                        }
+                        catch
+                        {
+                            tx.Rollback();
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(error.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
 
             MessageBox.Show("Configuración guardada correctamente.", "Comprobantes Fiscales", MessageBoxButtons.OK, MessageBoxIcon.Information);

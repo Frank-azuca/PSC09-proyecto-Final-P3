@@ -211,52 +211,64 @@ namespace PSC09
         {
             DataExists = false;
 
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-
-            string stQuery = "SELECT DESCRIPCION, CANTIDAD, COSTO, PRECIOVENTA, IMPUESTO, BARCODE, TIENEIMPUESTO " +
-                             " FROM PRODUCTOS WHERE ITEM = @item AND ESTATUSPRODUCTO = 1";
-
-            SqlCommand cmd = new SqlCommand(stQuery, cnx);
-            cmd.Parameters.AddWithValue("@item", numProducto);
-            SqlDataReader rcd = cmd.ExecuteReader();
-
-            if (rcd.Read())
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
-                DataExists = true;
+                cnx.Open();
 
-                txtDescripcion.Text = rcd["DESCRIPCION"].ToString();
-                txtExistencia.Text = rcd["CANTIDAD"].ToString();
-                txtCostoProducto.Text = rcd["COSTO"].ToString();
-                txtPrecioVenta.Text = rcd["PRECIOVENTA"].ToString();
-                txtImpuesto.Text = rcd["IMPUESTO"].ToString();
-                txtBarCode.Text = rcd["BARCODE"].ToString();
-                chkImpuestoIncluido.Checked = rcd["TIENEIMPUESTO"] != DBNull.Value && Convert.ToInt32(rcd["TIENEIMPUESTO"]) == 1;
+                string stQuery = "SELECT DESCRIPCION, CANTIDAD, COSTO, PRECIOVENTA, IMPUESTO, BARCODE, TIENEIMPUESTO " +
+                                 " FROM PRODUCTOS WHERE ITEM = @item AND ESTATUSPRODUCTO = 1";
 
-                if (pictureBox1.Image != PSC09.Properties.Resources.boss_man_128)
+                SqlCommand cmd = new SqlCommand(stQuery, cnx);
+                cmd.Parameters.AddWithValue("@item", numProducto);
+
+                using (SqlDataReader rcd = cmd.ExecuteReader())
                 {
-                    pictureBox1.Image = PSC09.Properties.Resources.boss_man_128;
-                    MostrarImagenProducto(numProducto);
+                    if (rcd.Read())
+                    {
+                        DataExists = true;
+
+                        txtDescripcion.Text = rcd["DESCRIPCION"].ToString();
+                        txtExistencia.Text = rcd["CANTIDAD"].ToString();
+                        txtCostoProducto.Text = rcd["COSTO"].ToString();
+                        txtPrecioVenta.Text = rcd["PRECIOVENTA"].ToString();
+                        txtImpuesto.Text = rcd["IMPUESTO"].ToString();
+                        txtBarCode.Text = rcd["BARCODE"].ToString();
+                        chkImpuestoIncluido.Checked = rcd["TIENEIMPUESTO"] != DBNull.Value && Convert.ToInt32(rcd["TIENEIMPUESTO"]) == 1;
+                    }
+                    else
+                    {
+                        return;
+                    }
                 }
+            }
+
+            if (pictureBox1.Image != PSC09.Properties.Resources.boss_man_128)
+            {
+                pictureBox1.Image = PSC09.Properties.Resources.boss_man_128;
+                MostrarImagenProducto(numProducto);
             }
         }
 
         private void MostrarImagenProducto(string numProducto)
         {
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            SqlCommand cmd = new SqlCommand("SELECT IMAGEN FROM PRODUCTOS WHERE ITEM = @item", cnx);
-            cmd.Parameters.AddWithValue("@item", numProducto);
-
-            SqlDataReader rdr = cmd.ExecuteReader();
-
-            if (rdr.Read())
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
-                try
-                {
-                    pictureBox1.Image = ConvertImage.ByteArraytoImage((byte[])rdr["IMAGEN"]);
-                }
-                catch
-                {
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand("SELECT IMAGEN FROM PRODUCTOS WHERE ITEM = @item", cnx);
+                cmd.Parameters.AddWithValue("@item", numProducto);
 
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    if (rdr.Read())
+                    {
+                        try
+                        {
+                            pictureBox1.Image = ConvertImage.ByteArraytoImage((byte[])rdr["IMAGEN"]);
+                        }
+                        catch
+                        {
+                        }
+                    }
                 }
             }
         }

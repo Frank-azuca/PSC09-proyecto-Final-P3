@@ -36,28 +36,32 @@ namespace PSC09
                              (soloActivos ? " WHERE activo = 1 " : "") +
                              " ORDER BY id";
 
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            SqlCommand cmd = new SqlCommand(stQuery, cnx);
-            SqlDataReader rdr = cmd.ExecuteReader();
-
-            while (rdr.Read())
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
-                lista.Add(new TipoComprobante
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand(stQuery, cnx);
+
+                using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
-                    Id = Convert.ToInt32(rdr["id"]),
-                    Prefijo = rdr["prefijo"].ToString(),
-                    Nombre = rdr["nombre"].ToString(),
-                    LongitudTotal = Convert.ToInt32(rdr["longitudTotal"]),
-                    EsElectronico = Convert.ToBoolean(rdr["esElectronico"]),
-                    Activo = Convert.ToBoolean(rdr["activo"]),
-                    RangoInicial = rdr["rangoInicial"] == DBNull.Value ? (long?)null : Convert.ToInt64(rdr["rangoInicial"]),
-                    RangoFinal = rdr["rangoFinal"] == DBNull.Value ? (long?)null : Convert.ToInt64(rdr["rangoFinal"]),
-                    FechaVencimiento = rdr["fechaVencimiento"] == DBNull.Value ? "" : rdr["fechaVencimiento"].ToString(),
-                    MinimoAlerta = rdr["minimoAlerta"] == DBNull.Value ? (long?)null : Convert.ToInt64(rdr["minimoAlerta"])
-                });
+                    while (rdr.Read())
+                    {
+                        lista.Add(new TipoComprobante
+                        {
+                            Id = Convert.ToInt32(rdr["id"]),
+                            Prefijo = rdr["prefijo"].ToString(),
+                            Nombre = rdr["nombre"].ToString(),
+                            LongitudTotal = Convert.ToInt32(rdr["longitudTotal"]),
+                            EsElectronico = Convert.ToBoolean(rdr["esElectronico"]),
+                            Activo = Convert.ToBoolean(rdr["activo"]),
+                            RangoInicial = rdr["rangoInicial"] == DBNull.Value ? (long?)null : Convert.ToInt64(rdr["rangoInicial"]),
+                            RangoFinal = rdr["rangoFinal"] == DBNull.Value ? (long?)null : Convert.ToInt64(rdr["rangoFinal"]),
+                            FechaVencimiento = rdr["fechaVencimiento"] == DBNull.Value ? "" : rdr["fechaVencimiento"].ToString(),
+                            MinimoAlerta = rdr["minimoAlerta"] == DBNull.Value ? (long?)null : Convert.ToInt64(rdr["minimoAlerta"])
+                        });
+                    }
+                }
             }
 
-            cnx.Close();
             return lista;
         }
 
@@ -171,38 +175,60 @@ namespace PSC09
 
         // Fija la secuencia del tipo para que el próximo sugerido siga justo despues
         // del comprobante que se acaba de usar (igual patrón que ActualizaSecuencia de Factura).
+        // Abre su propia conexión; usar la sobrecarga con SqlConnection/SqlTransaction para
+        // que quede dentro de la misma transacción que el resto del guardado de la factura.
         public static void ActualizaSecuencia(TipoComprobante tipo, string comprobanteUsado)
+        {
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                ActualizaSecuencia(cnx, null, tipo, comprobanteUsado);
+            }
+        }
+
+        public static void ActualizaSecuencia(SqlConnection cnx, SqlTransaction tx, TipoComprobante tipo, string comprobanteUsado)
         {
             string parteNumerica = comprobanteUsado.Trim().ToUpper().Substring(tipo.Prefijo.Length);
             long numero = Convert.ToInt64(parteNumerica);
 
-            FijarProximoNumero(tipo, numero + 1);
+            FijarProximoNumero(cnx, tx, tipo, numero + 1);
         }
 
         // Fija directamente cuál es el próximo número a usar de este tipo (lo que la
         // DGII llama "Número Actual" al autorizar una secuencia).
         public static void FijarProximoNumero(TipoComprobante tipo, long proximoNumero)
         {
-            string stQuery = "UPDATE SECUENCIA SET SECUENCIA = @A0 WHERE id = @A1";
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                FijarProximoNumero(cnx, null, tipo, proximoNumero);
+            }
+        }
 
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            SqlCommand cmd = new SqlCommand(stQuery, cnx);
+        public static void FijarProximoNumero(SqlConnection cnx, SqlTransaction tx, TipoComprobante tipo, long proximoNumero)
+        {
+            SqlCommand cmd = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @A0 WHERE id = @A1", cnx, tx);
             cmd.Parameters.AddWithValue("@A0", proximoNumero - 1);
             cmd.Parameters.AddWithValue("@A1", tipo.Id);
             cmd.ExecuteNonQuery();
-
-            cmd.Dispose();
-            cnx.Close();
         }
 
         // Guarda la configuración del tipo (activo, rango autorizado, vencimiento y mínimo de alerta).
         public static void GuardarConfiguracion(TipoComprobante tipo)
         {
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                GuardarConfiguracion(cnx, null, tipo);
+            }
+        }
+
+        public static void GuardarConfiguracion(SqlConnection cnx, SqlTransaction tx, TipoComprobante tipo)
+        {
             string stQuery = " UPDATE TIPOCOMPROBANTE SET ACTIVO = @A1, RANGOINICIAL = @A2, RANGOFINAL = @A3, FECHAVENCIMIENTO = @A4, MINIMOALERTA = @A5 " +
                              " WHERE id = @A0 ";
 
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            SqlCommand cmd = new SqlCommand(stQuery, cnx);
+            SqlCommand cmd = new SqlCommand(stQuery, cnx, tx);
 
             cmd.Parameters.AddWithValue("@A0", tipo.Id);
             cmd.Parameters.AddWithValue("@A1", tipo.Activo);
@@ -212,9 +238,6 @@ namespace PSC09
             cmd.Parameters.AddWithValue("@A5", (object)tipo.MinimoAlerta ?? DBNull.Value);
 
             cmd.ExecuteNonQuery();
-
-            cmd.Dispose();
-            cnx.Close();
         }
     }
 }

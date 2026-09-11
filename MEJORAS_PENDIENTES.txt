@@ -32,6 +32,26 @@ de facturacion excelente, de mas a menos urgente.
       contrasena del intento anterior (comparaba contra una variable
       que no se limpiaba). Ahora usuario y contrasena se validan juntos
       en un solo paso.
+    * Se corrigio otro bug de login: la migracion de clave a hash podia
+      tumbar el login completo si la base de datos todavia no tenia la
+      columna clave ampliada (error de truncamiento). Ahora ese fallo se
+      ignora y el login sigue funcionando igual.
+
+- Fugas de conexion a SQL Server: varios metodos abrian una conexion y
+  nunca la cerraban cuando encontraban un resultado (clsBusco.BuscaUltimoNumero,
+  frmFactura.BuscarCliente/BuscarArticulo/BuscarDetalle/InsertaDetalleFactura,
+  frmProductos.BuscarData/MostrarImagenProducto). Con el uso normal del
+  sistema esto agotaba el pool de conexiones de SQL Server y el programa
+  empezaba a fallar con timeouts sin un patron claro. Ya se envolvieron
+  todas en "using" para que se cierren siempre.
+
+- Transacciones: guardar una factura (encabezado + secuencia de factura +
+  secuencia del comprobante fiscal + detalle + descuento de inventario) y
+  anular una factura (restituir inventario + desactivar detalle y
+  encabezado) ahora corren dentro de una sola transaccion SQL cada una:
+  o se completa todo, o no cambia nada si algo falla a mitad de camino.
+  Lo mismo se aplico al guardado por lote de Configuracion -> Comprobantes
+  Fiscales.
 
 
 2) FUNCIONALIDAD DE NEGOCIO QUE FALTA

@@ -70,32 +70,40 @@ namespace PSC09
 
         private void BuscarCliente(string nmCliente)
         {
-            SqlConnection cxn = new SqlConnection(cnn.db); cxn.Open();
-            SqlCommand cmd = new SqlCommand("SELECT NOMBRE, PAGAIMPUESTO FROM CLIENTES WHERE IDCLIENTE = @id", cxn);
-            cmd.Parameters.AddWithValue("@id", nmCliente);
-
-            SqlDataReader rdr = cmd.ExecuteReader();
-
-            if (rdr.Read())
+            using (SqlConnection cxn = new SqlConnection(cnn.db))
             {
-                lblNombre.Text = rdr["NOMBRE"].ToString();
+                cxn.Open();
+                SqlCommand cmd = new SqlCommand("SELECT NOMBRE, PAGAIMPUESTO FROM CLIENTES WHERE IDCLIENTE = @id", cxn);
+                cmd.Parameters.AddWithValue("@id", nmCliente);
+
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    if (rdr.Read())
+                    {
+                        lblNombre.Text = rdr["NOMBRE"].ToString();
+                    }
+                }
             }
         }
 
         private void BuscarArticulo(string nmrArticulo)
         {
-            SqlConnection cxn = new SqlConnection(cnn.db); cxn.Open();
-            SqlCommand cmd = new SqlCommand("SELECT ITEM, DESCRIPCION, PRECIOVENTA, IMPUESTO, TIENEIMPUESTO FROM PRODUCTOS WHERE ITEM = @item", cxn);
-            cmd.Parameters.AddWithValue("@item", nmrArticulo);
-
-            SqlDataReader rdr = cmd.ExecuteReader();
-
-            if (rdr.Read())
+            using (SqlConnection cxn = new SqlConnection(cnn.db))
             {
-                lblArticulo.Text = rdr["DESCRIPCION"].ToString();
-                lblPrecio.Text = rdr["PRECIOVENTA"].ToString();
-                lnImpuesto = Convert.ToDecimal(rdr["IMPUESTO"].ToString());
-                lbImpuestoIncluido = rdr["TIENEIMPUESTO"] != DBNull.Value && Convert.ToInt32(rdr["TIENEIMPUESTO"]) == 1;
+                cxn.Open();
+                SqlCommand cmd = new SqlCommand("SELECT ITEM, DESCRIPCION, PRECIOVENTA, IMPUESTO, TIENEIMPUESTO FROM PRODUCTOS WHERE ITEM = @item", cxn);
+                cmd.Parameters.AddWithValue("@item", nmrArticulo);
+
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    if (rdr.Read())
+                    {
+                        lblArticulo.Text = rdr["DESCRIPCION"].ToString();
+                        lblPrecio.Text = rdr["PRECIOVENTA"].ToString();
+                        lnImpuesto = Convert.ToDecimal(rdr["IMPUESTO"].ToString());
+                        lbImpuestoIncluido = rdr["TIENEIMPUESTO"] != DBNull.Value && Convert.ToInt32(rdr["TIENEIMPUESTO"]) == 1;
+                    }
+                }
             }
         }
 
@@ -188,7 +196,8 @@ namespace PSC09
 
         // Anula la factura en vez de borrarla físicamente: devuelve al inventario cada
         // artículo vendido y marca encabezado y detalle como inactivos (ACTIVO = 0), para
-        // conservar el historial y no violar la llave foránea DFACTURA -> HFACTURA.
+        // conservar el historial y no violar la llave foránea DFACTURA -> HFACTURA. Todo
+        // en una sola transacción: o se anula por completo, o no cambia nada.
         private void BorrarData(string numFactura)
         {
             if (ExisteLaData != true) return;
@@ -197,35 +206,48 @@ namespace PSC09
             {
                 cnx.Open();
 
-                List<Tuple<string, int>> lineas = new List<Tuple<string, int>>();
-
-                SqlCommand cmdSel = new SqlCommand(
-                    "SELECT ARTICULO, CANTIDAD FROM DFACTURA WHERE FACTURA = @factura AND ACTIVO = '1'", cnx);
-                cmdSel.Parameters.AddWithValue("@factura", numFactura);
-
-                using (SqlDataReader rdr = cmdSel.ExecuteReader())
+                using (SqlTransaction tx = cnx.BeginTransaction())
                 {
-                    while (rdr.Read())
+                    try
                     {
-                        lineas.Add(Tuple.Create(rdr["ARTICULO"].ToString(), Convert.ToInt32(rdr["CANTIDAD"])));
+                        List<Tuple<string, int>> lineas = new List<Tuple<string, int>>();
+
+                        SqlCommand cmdSel = new SqlCommand(
+                            "SELECT ARTICULO, CANTIDAD FROM DFACTURA WHERE FACTURA = @factura AND ACTIVO = '1'", cnx, tx);
+                        cmdSel.Parameters.AddWithValue("@factura", numFactura);
+
+                        using (SqlDataReader rdr = cmdSel.ExecuteReader())
+                        {
+                            while (rdr.Read())
+                            {
+                                lineas.Add(Tuple.Create(rdr["ARTICULO"].ToString(), Convert.ToInt32(rdr["CANTIDAD"])));
+                            }
+                        }
+
+                        foreach (Tuple<string, int> linea in lineas)
+                        {
+                            SqlCommand cmdStock = new SqlCommand("UPDATE PRODUCTOS SET CANTIDAD = CANTIDAD + @cant WHERE ITEM = @item", cnx, tx);
+                            cmdStock.Parameters.AddWithValue("@cant", linea.Item2);
+                            cmdStock.Parameters.AddWithValue("@item", linea.Item1);
+                            cmdStock.ExecuteNonQuery();
+                        }
+
+                        SqlCommand cmdDet = new SqlCommand("UPDATE DFACTURA SET ACTIVO = '0' WHERE FACTURA = @factura", cnx, tx);
+                        cmdDet.Parameters.AddWithValue("@factura", numFactura);
+                        cmdDet.ExecuteNonQuery();
+
+                        SqlCommand cmdHdr = new SqlCommand("UPDATE HFACTURA SET ACTIVO = '0' WHERE FACTURA = @factura", cnx, tx);
+                        cmdHdr.Parameters.AddWithValue("@factura", numFactura);
+                        cmdHdr.ExecuteNonQuery();
+
+                        tx.Commit();
+                    }
+                    catch
+                    {
+                        tx.Rollback();
+                        throw;
                     }
                 }
-
-                foreach (Tuple<string, int> linea in lineas)
-                {
-                    SqlCommand cmdStock = new SqlCommand("UPDATE PRODUCTOS SET CANTIDAD = CANTIDAD + @cant WHERE ITEM = @item", cnx);
-                    cmdStock.Parameters.AddWithValue("@cant", linea.Item2);
-                    cmdStock.Parameters.AddWithValue("@item", linea.Item1);
-                    cmdStock.ExecuteNonQuery();
-                }
-
-                SqlCommand cmdDet = new SqlCommand("UPDATE DFACTURA SET ACTIVO = '0' WHERE FACTURA = @factura", cnx);
-                cmdDet.Parameters.AddWithValue("@factura", numFactura);
-                cmdDet.ExecuteNonQuery();
-
-                SqlCommand cmdHdr = new SqlCommand("UPDATE HFACTURA SET ACTIVO = '0' WHERE FACTURA = @factura", cnx);
-                cmdHdr.Parameters.AddWithValue("@factura", numFactura);
-                cmdHdr.ExecuteNonQuery();
             }
 
             ExisteLaData = false;
@@ -233,44 +255,49 @@ namespace PSC09
 
         private void BuscarFactura(string nmrFactura)
         {
-            ExisteLaData = true;   
+            ExisteLaData = true;
 
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            string tsQuery = " SELECT A.FACTURA, A.CLIENTE, B.NOMBRE, A.FECHA, A.SUBTOTAL, A.IMPUESTO, A.MONTOFACTURA, A.IDTIPOCOMPROBANTE, A.COMPROBANTEFISCAL " +
-                             " FROM HFACTURA A INNER JOIN CLIENTES B ON A.CLIENTE = B.IDCLIENTE " +
-                             " WHERE A.FACTURA = @factura AND A.ACTIVO = '1' ";
-
-            SqlCommand cms = new SqlCommand(tsQuery, cnx);
-            cms.Parameters.AddWithValue("@factura", nmrFactura);
-            SqlDataReader rdr = cms.ExecuteReader();
-
-            if (rdr.Read())
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
-                ExisteLaData = true;
+                cnx.Open();
+                string tsQuery = " SELECT A.FACTURA, A.CLIENTE, B.NOMBRE, A.FECHA, A.SUBTOTAL, A.IMPUESTO, A.MONTOFACTURA, A.IDTIPOCOMPROBANTE, A.COMPROBANTEFISCAL " +
+                                 " FROM HFACTURA A INNER JOIN CLIENTES B ON A.CLIENTE = B.IDCLIENTE " +
+                                 " WHERE A.FACTURA = @factura AND A.ACTIVO = '1' ";
 
-                lblFechaFactura.Text = Convert.ToString(rdr["FECHA"]);
-                txtCliente.Text = Convert.ToString(rdr["CLIENTE"]);
-                lblNombre.Text = Convert.ToString(rdr["NOMBRE"]);
-                lblFechaFactura.Text = Convert.ToString(rdr["FECHA"]);
-                lblSubtotal.Text = Convert.ToString(rdr["SUBTOTAL"]);
-                lblImpuesto.Text = Convert.ToString(rdr["IMPUESTO"]);
-                lblTotal.Text = Convert.ToString(rdr["MONTOFACTURADO"]);
+                SqlCommand cms = new SqlCommand(tsQuery, cnx);
+                cms.Parameters.AddWithValue("@factura", nmrFactura);
 
-                if (rdr["IDTIPOCOMPROBANTE"] != DBNull.Value)
+                using (SqlDataReader rdr = cms.ExecuteReader())
                 {
-                    int idTipo = Convert.ToInt32(rdr["IDTIPOCOMPROBANTE"]);
-                    TipoComprobante tipo = ComprobanteFiscal.ObtenerTipoPorId(tiposComprobante, idTipo);
-                    if (tipo != null) cboTipoComprobante.SelectedItem = tipo;
+                    if (rdr.Read())
+                    {
+                        ExisteLaData = true;
+
+                        lblFechaFactura.Text = Convert.ToString(rdr["FECHA"]);
+                        txtCliente.Text = Convert.ToString(rdr["CLIENTE"]);
+                        lblNombre.Text = Convert.ToString(rdr["NOMBRE"]);
+                        lblFechaFactura.Text = Convert.ToString(rdr["FECHA"]);
+                        lblSubtotal.Text = Convert.ToString(rdr["SUBTOTAL"]);
+                        lblImpuesto.Text = Convert.ToString(rdr["IMPUESTO"]);
+                        lblTotal.Text = Convert.ToString(rdr["MONTOFACTURADO"]);
+
+                        if (rdr["IDTIPOCOMPROBANTE"] != DBNull.Value)
+                        {
+                            int idTipo = Convert.ToInt32(rdr["IDTIPOCOMPROBANTE"]);
+                            TipoComprobante tipo = ComprobanteFiscal.ObtenerTipoPorId(tiposComprobante, idTipo);
+                            if (tipo != null) cboTipoComprobante.SelectedItem = tipo;
+                        }
+                        txtComprobante.Text = Convert.ToString(rdr["COMPROBANTEFISCAL"]);
+                    }
+                    else
+                    {
+                        return;
+                    }
                 }
-                txtComprobante.Text = Convert.ToString(rdr["COMPROBANTEFISCAL"]);
-
-                BuscarDetalle(nmrFactura);
-
-                TotalizarFactura();
             }
 
-            cms.Dispose();
-            cnx.Close();
+            BuscarDetalle(nmrFactura);
+            TotalizarFactura();
         }
 
         private void BuscarDetalle(string nmrFactura)
@@ -280,25 +307,30 @@ namespace PSC09
             this.dgv.Rows.Clear();
             this.dgv.Refresh();
 
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            string tsQuery = " SELECT A.FACTURA, A.SECUENCIA, A.ARTICULO, B.DESCRIPCION, A.CANTIDAD, A.PRECIOVENTA, A.IMPUESTO, A.MONTOLINEA " +
-                             " FROM DFACTURA A INNER JOIN PRODUCTOS B ON A.ARTICULO = B.ITEM " +
-                             " WHERE A.FACTURA = @factura AND A.ACTIVO = '1' ";
-
-            SqlCommand cmd = new SqlCommand(tsQuery, cnx);
-            cmd.Parameters.AddWithValue("@factura", nmrFactura);
-            SqlDataReader rdr = cmd.ExecuteReader();
-
-            while (rdr.Read())
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
-                dgv.Rows.Add();
-                int xRows = dgv.Rows.Count - 1;
-                dgv[0, xRows].Value = Convert.ToString(rdr["ARTICULO"]);
-                dgv[1, xRows].Value = Convert.ToString(rdr["DESCRIPCION"]);
-                dgv[2, xRows].Value = Convert.ToString(rdr["CANTIDAD"]);
-                dgv[3, xRows].Value = Convert.ToString(rdr["PRECIOVENTA"]);
-                dgv[4, xRows].Value = Convert.ToString(rdr["IMPUESTO"]);
-                dgv[5, xRows].Value = Convert.ToString(rdr["MONTOLINEA"]);
+                cnx.Open();
+                string tsQuery = " SELECT A.FACTURA, A.SECUENCIA, A.ARTICULO, B.DESCRIPCION, A.CANTIDAD, A.PRECIOVENTA, A.IMPUESTO, A.MONTOLINEA " +
+                                 " FROM DFACTURA A INNER JOIN PRODUCTOS B ON A.ARTICULO = B.ITEM " +
+                                 " WHERE A.FACTURA = @factura AND A.ACTIVO = '1' ";
+
+                SqlCommand cmd = new SqlCommand(tsQuery, cnx);
+                cmd.Parameters.AddWithValue("@factura", nmrFactura);
+
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        dgv.Rows.Add();
+                        int xRows = dgv.Rows.Count - 1;
+                        dgv[0, xRows].Value = Convert.ToString(rdr["ARTICULO"]);
+                        dgv[1, xRows].Value = Convert.ToString(rdr["DESCRIPCION"]);
+                        dgv[2, xRows].Value = Convert.ToString(rdr["CANTIDAD"]);
+                        dgv[3, xRows].Value = Convert.ToString(rdr["PRECIOVENTA"]);
+                        dgv[4, xRows].Value = Convert.ToString(rdr["IMPUESTO"]);
+                        dgv[5, xRows].Value = Convert.ToString(rdr["MONTOLINEA"]);
+                    }
+                }
             }
         }
 
@@ -339,56 +371,71 @@ namespace PSC09
             this.dgv.ColumnHeadersDefaultCellStyle.ForeColor = Tema.TextoClaro;
         }
 
+        // Inserta el encabezado, actualiza ambas secuencias (factura y comprobante fiscal)
+        // e inserta el detalle con su descuento de inventario, todo en una sola transacción:
+        // o la factura queda completa, o no se guarda nada de ella.
         private void InsertarData()
         {
-            if (dgv.RowCount > 0)
+            if (dgv.RowCount == 0 || lblTotal.Text == string.Empty) return;
+
+            if (TipoComprobanteSeleccionado == null || string.IsNullOrWhiteSpace(txtComprobante.Text))
             {
-                if (lblTotal.Text != string.Empty)
+                throw new Exception("Selecciona un tipo de Comprobante Fiscal antes de guardar la factura.");
+            }
+
+            string errorComprobante;
+            if (!ComprobanteFiscal.ValidarFormato(TipoComprobanteSeleccionado, txtComprobante.Text, out errorComprobante))
+            {
+                throw new Exception(errorComprobante + " Corrígelo con click derecho sobre el comprobante, o configura el rango en Configuración → Comprobantes Fiscales.");
+            }
+
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+
+                using (SqlTransaction tx = cnx.BeginTransaction())
                 {
-                    if (TipoComprobanteSeleccionado == null || string.IsNullOrWhiteSpace(txtComprobante.Text))
+                    try
                     {
-                        throw new Exception("Selecciona un tipo de Comprobante Fiscal antes de guardar la factura.");
-                    }
+                        string stQuery = " INSERT INTO HFACTURA (FACTURA, CLIENTE, FECHA, SUBTOTAL, IMPUESTO, MONTOFACTURADO, ACTIVO, IDTIPOCOMPROBANTE, COMPROBANTEFISCAL) " +
+                                         " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8); ";
 
-                    string errorComprobante;
-                    if (!ComprobanteFiscal.ValidarFormato(TipoComprobanteSeleccionado, txtComprobante.Text, out errorComprobante))
+                        SqlCommand cmd = new SqlCommand(stQuery, cnx, tx);
+
+                        cmd.Parameters.AddWithValue("@A0", lblFactura.Text);
+                        cmd.Parameters.AddWithValue("@A1", txtCliente.Text);
+                        cmd.Parameters.AddWithValue("@A2", lblFechaFactura.Text);
+                        cmd.Parameters.AddWithValue("@A3", lblSubtotal.Text);
+                        cmd.Parameters.AddWithValue("@A4", lblImpuesto.Text);
+                        cmd.Parameters.AddWithValue("@A5", lblTotal.Text);
+                        cmd.Parameters.AddWithValue("@A6", "1");
+                        cmd.Parameters.AddWithValue("@A7", TipoComprobanteSeleccionado.Id);
+                        cmd.Parameters.AddWithValue("@A8", txtComprobante.Text);
+                        cmd.ExecuteNonQuery();
+
+                        SqlCommand cmdSecFactura = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 2", cnx, tx);
+                        cmdSecFactura.Parameters.AddWithValue("@numero", lblFactura.Text);
+                        cmdSecFactura.ExecuteNonQuery();
+
+                        ComprobanteFiscal.ActualizaSecuencia(cnx, tx, TipoComprobanteSeleccionado, txtComprobante.Text);
+
+                        InsertaDetalleFactura(cnx, tx);
+
+                        tx.Commit();
+                    }
+                    catch
                     {
-                        throw new Exception(errorComprobante + " Corrígelo con click derecho sobre el comprobante, o configura el rango en Configuración → Comprobantes Fiscales.");
+                        tx.Rollback();
+                        throw;
                     }
-
-                    string stQuery = " INSERT INTO HFACTURA (FACTURA, CLIENTE, FECHA, SUBTOTAL, IMPUESTO, MONTOFACTURADO, ACTIVO, IDTIPOCOMPROBANTE, COMPROBANTEFISCAL) " +
-                                     " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8); ";
-
-                    SqlConnection cnt = new SqlConnection(cnn.db); cnt.Open();
-                    SqlCommand cmd = new SqlCommand(stQuery, cnt);
-
-                    cmd.Parameters.AddWithValue("@A0", lblFactura.Text);
-                    cmd.Parameters.AddWithValue("@A1", txtCliente.Text);
-                    cmd.Parameters.AddWithValue("@A2", lblFechaFactura.Text);
-                    cmd.Parameters.AddWithValue("@A3", lblSubtotal.Text);
-                    cmd.Parameters.AddWithValue("@A4", lblImpuesto.Text);
-                    cmd.Parameters.AddWithValue("@A5", lblTotal.Text);
-                    cmd.Parameters.AddWithValue("@A6", "1");
-                    cmd.Parameters.AddWithValue("@A7", TipoComprobanteSeleccionado.Id);
-                    cmd.Parameters.AddWithValue("@A8", txtComprobante.Text);
-
-                    cmd.ExecuteNonQuery();
-                    cmd.Dispose();
-                    cnt.Close();
-
-                    ComprobanteFiscal.ActualizaSecuencia(TipoComprobanteSeleccionado, txtComprobante.Text);
-
-                    InsertaDetalleFactura();
                 }
             }
         }
 
-        private void InsertaDetalleFactura()
+        private void InsertaDetalleFactura(SqlConnection cnx, SqlTransaction tx)
         {
             string stQuery = " INSERT INTO DFACTURA (FACTURA, ARTICULO, CANTIDAD, PRECIOVENTA, IMPUESTO, MONTOLINEA, ACTIVO) " +
                              " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6) ";
-
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
 
             for (int xrow = 0; xrow < dgv.Rows.Count ; xrow++)
             {
@@ -398,7 +445,7 @@ namespace PSC09
                 string nmImp = dgv.Rows[xrow].Cells[4].Value.ToString();
                 string nmTot = dgv.Rows[xrow].Cells[5].Value.ToString();
 
-                SqlCommand cmm = new SqlCommand(stQuery, cnx);
+                SqlCommand cmm = new SqlCommand(stQuery, cnx, tx);
 
                 cmm.Parameters.AddWithValue("@A0", lblFactura.Text);
                 cmm.Parameters.AddWithValue("@A1", nmArt);
@@ -407,30 +454,13 @@ namespace PSC09
                 cmm.Parameters.AddWithValue("@A4", nmImp);
                 cmm.Parameters.AddWithValue("@A5", nmTot);
                 cmm.Parameters.AddWithValue("@A6", "1");
-
                 cmm.ExecuteNonQuery();
-                cmm.Dispose();
 
-                SqlCommand cmdStock = new SqlCommand("UPDATE PRODUCTOS SET CANTIDAD = CANTIDAD - @cant WHERE ITEM = @item", cnx);
+                SqlCommand cmdStock = new SqlCommand("UPDATE PRODUCTOS SET CANTIDAD = CANTIDAD - @cant WHERE ITEM = @item", cnx, tx);
                 cmdStock.Parameters.AddWithValue("@cant", nmCan);
                 cmdStock.Parameters.AddWithValue("@item", nmArt);
                 cmdStock.ExecuteNonQuery();
-                cmdStock.Dispose();
             }
-        }
-
-        private void ActualizaSecuencia(string numFactura)
-        {
-            string stQuery = "UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 2";
-
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            SqlCommand cmd = new SqlCommand(stQuery, cnx);
-            cmd.Parameters.AddWithValue("@numero", numFactura);
-
-            cmd.ExecuteNonQuery();
-
-            cmd.Dispose();
-            cnx.Close();
         }
 
         // Eventos
@@ -724,10 +754,15 @@ namespace PSC09
 
         private void btnGuardar_Click(object sender, EventArgs e)
         {
+            if (dgv.RowCount == 0)
+            {
+                MessageBox.Show("Agrega al menos un artículo antes de guardar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             try
             {
                 InsertarData();
-                ActualizaSecuencia(lblFactura.Text);
                 GenerarPDF();
                 LimpiarFormulario();
                 MessageBox.Show("Datos insertados correctamente", "Factura Guardada", MessageBoxButtons.OK, MessageBoxIcon.Information);

@@ -134,7 +134,17 @@ namespace PSC09
                         esValida = claveGuardada == claveIngresada;
                         if (esValida)
                         {
-                            MigrarClaveAHash(cnxn, idEmpleado, claveIngresada);
+                            // La migración a hash es un "bono": si falla (por ejemplo,
+                            // porque la base de datos todavía no tiene la columna clave
+                            // ampliada a NVARCHAR(200)), no debe impedir un login que ya
+                            // se validó correctamente contra el valor en texto plano.
+                            try
+                            {
+                                MigrarClaveAHash(cnxn, idEmpleado, claveIngresada);
+                            }
+                            catch (SqlException)
+                            {
+                            }
                         }
                     }
 
