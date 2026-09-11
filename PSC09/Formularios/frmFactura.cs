@@ -337,7 +337,7 @@ namespace PSC09
 
         private void frmFactura_Load(object sender, EventArgs e)
         {
-            this.Text = "Factura";
+            this.Text = "Andrómeda - Factura";
             this.KeyPreview = true;
 
             EstiloDataGridView();

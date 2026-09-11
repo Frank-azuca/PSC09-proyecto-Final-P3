@@ -63,6 +63,16 @@ namespace PSC09.Properties {
         /// <summary>
         ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap andromeda_logo {
+            get {
+                object obj = ResourceManager.GetObject("andromeda_logo", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap boss_man_128 {
             get {
                 object obj = ResourceManager.GetObject("boss_man-128", resourceCulture);

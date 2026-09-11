@@ -7,11 +7,12 @@
     <ProjectGuid>{A9F176E7-3F05-479C-9F2E-855EDD991A51}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>PSC09</RootNamespace>
-    <AssemblyName>PSC09</AssemblyName>
+    <AssemblyName>Andromeda</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <ApplicationIcon>Resources\andromeda.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -87,6 +88,18 @@
     <Compile Include="Formularios\frmVENCTE.Designer.cs">
       <DependentUpon>frmVENCTE.cs</DependentUpon>
     </Compile>
+    <Compile Include="Formularios\frmVENFACT.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmVENFACT.Designer.cs">
+      <DependentUpon>frmVENFACT.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmVENPRO.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmVENPRO.Designer.cs">
+      <DependentUpon>frmVENPRO.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Formularios\frmFactura.resx">
@@ -106,6 +119,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmVENCTE.resx">
       <DependentUpon>frmVENCTE.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmVENFACT.resx">
+      <DependentUpon>frmVENFACT.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmVENPRO.resx">
+      <DependentUpon>frmVENPRO.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -177,6 +196,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\filefind.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\andromeda_logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\andromeda.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

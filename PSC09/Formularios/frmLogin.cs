@@ -24,7 +24,7 @@ namespace PSC09
 
         private void frmLogin_Load(object sender, EventArgs e)
         {
-            this.Text = "Login";
+            this.Text = "Andrómeda - Iniciar Sesión";
             this.KeyPreview = true; //A ctivamos la tecla de funciones.
         }
 

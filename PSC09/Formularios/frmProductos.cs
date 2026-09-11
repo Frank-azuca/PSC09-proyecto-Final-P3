@@ -25,7 +25,7 @@ namespace PSC09
 
         private void frmProductos_Load(object sender, EventArgs e)
         {
-            this.Text = "Maestro de Productos";
+            this.Text = "Andrómeda - Productos";
             this.KeyPreview = true;
 
             txtCodigo.Text = Busco.BuscaUltimoNumero("1");

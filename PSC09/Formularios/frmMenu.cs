@@ -19,7 +19,7 @@ namespace PSC09
 
         private void frmMenu_Load(object sender, EventArgs e)
         {
-            this.Text = "Menu General";
+            this.Text = "Andrómeda - Menú Principal";
             this.KeyPreview = true;
         }
 
