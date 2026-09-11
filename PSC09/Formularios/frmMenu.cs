@@ -39,6 +39,22 @@ namespace PSC09
             pro.Show();
         }
 
+        private void clienteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmCliente cli = new frmCliente();
+            cli.Show();
+        }
+
+        private void usuarioToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmUsuario usr = new frmUsuario();
+            usr.Show();
+        }
+
         private void salirToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Close();

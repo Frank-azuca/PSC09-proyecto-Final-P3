@@ -33,18 +33,42 @@ CREATE TABLE USUARIO (
 );
 GO
 
+-- Normalizadas a 3FN: País y Ciudad viven en sus propias tablas para que
+-- "país" no dependa transitivamente de "ciudad" dentro de CLIENTES.
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PAISES')
+CREATE TABLE PAISES (
+    idPais  INT IDENTITY(1,1) PRIMARY KEY,
+    nombre  NVARCHAR(50) NOT NULL UNIQUE
+);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CIUDADES')
+CREATE TABLE CIUDADES (
+    idCiudad  INT IDENTITY(1,1) PRIMARY KEY,
+    nombre    NVARCHAR(50) NOT NULL,
+    idPais    INT NOT NULL FOREIGN KEY REFERENCES PAISES(idPais)
+);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'mESTATUSCTE')
+CREATE TABLE mESTATUSCTE (
+    id          INT IDENTITY(1,1) PRIMARY KEY,
+    estatus     NVARCHAR(15) NULL,
+    tipoEstatus INT NULL
+);
+GO
+
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CLIENTES')
 CREATE TABLE CLIENTES (
     idCliente         INT IDENTITY(1,1) PRIMARY KEY,
     nombre            NVARCHAR(80) NULL,
     direccion         NVARCHAR(80) NULL,
     sector            NVARCHAR(50) NULL,
-    ciudad            NVARCHAR(50) NULL,
-    pais              NVARCHAR(50) NULL,
+    idCiudad          INT NULL FOREIGN KEY REFERENCES CIUDADES(idCiudad),
     telefono01        NVARCHAR(13) NULL,
     telefono02        NVARCHAR(13) NULL,
     idIdentificacion  NVARCHAR(20) NULL,
-    estatus           INT NULL,
+    idEstatus         INT NULL FOREIGN KEY REFERENCES mESTATUSCTE(id),
     monto             DECIMAL(18,2) NULL,
     correo            NVARCHAR(80) NULL,
     imagen            IMAGE NULL,
@@ -99,7 +123,7 @@ GO
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'MUTOCTE')
 CREATE TABLE MUTOCTE (
     id           INT IDENTITY(1,1) PRIMARY KEY,
-    idCliente    INT NULL,
+    idCliente    INT NULL FOREIGN KEY REFERENCES CLIENTES(idCliente),
     fecha        NVARCHAR(12) NULL,
     origen       INT NULL,
     documento    NVARCHAR(20) NULL,
@@ -107,14 +131,6 @@ CREATE TABLE MUTOCTE (
     monto        DECIMAL(18,2) NULL,
     bcPendiente  DECIMAL(18,2) NULL,
     activo       INT NULL
-);
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'mESTATUSCTE')
-CREATE TABLE mESTATUSCTE (
-    id          INT IDENTITY(1,1) PRIMARY KEY,
-    estatus     NVARCHAR(15) NULL,
-    tipoEstatus INT NULL
 );
 GO
 
@@ -133,6 +149,25 @@ IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 2)
     INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (2, 'Factura', 0);
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 3)
     INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (3, 'Recibo', 0);
+GO
+
+-- Semillas de País / Ciudad (ajusta o agrega las que necesites).
+IF NOT EXISTS (SELECT * FROM PAISES WHERE nombre = 'República Dominicana')
+    INSERT INTO PAISES (nombre) VALUES ('República Dominicana');
+GO
+
+INSERT INTO CIUDADES (nombre, idPais)
+SELECT c.nombre, p.idPais
+FROM (VALUES ('Santo Domingo'), ('Santiago'), ('La Vega'), ('San Cristóbal'), ('Puerto Plata'), ('San Pedro de Macorís')) AS c(nombre)
+CROSS JOIN (SELECT idPais FROM PAISES WHERE nombre = 'República Dominicana') AS p
+WHERE NOT EXISTS (SELECT * FROM CIUDADES WHERE nombre = c.nombre AND idPais = p.idPais);
+GO
+
+-- Estatus de cliente (Activo / Inactivo).
+IF NOT EXISTS (SELECT * FROM mESTATUSCTE WHERE estatus = 'Activo')
+    INSERT INTO mESTATUSCTE (estatus, tipoEstatus) VALUES ('Activo', 1);
+IF NOT EXISTS (SELECT * FROM mESTATUSCTE WHERE estatus = 'Inactivo')
+    INSERT INTO mESTATUSCTE (estatus, tipoEstatus) VALUES ('Inactivo', 0);
 GO
 
 -- Usuario inicial para poder entrar por primera vez.
