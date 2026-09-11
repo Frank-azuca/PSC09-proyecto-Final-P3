@@ -105,13 +105,14 @@ CREATE TABLE HFACTURA (
 );
 GO
 
+-- Nota de normalización (3FN): "cliente" y "fecha" NO se guardan aquí.
+-- Ya viven en HFACTURA y se obtienen por FACTURA (evita datos repetidos
+-- que además nunca se leían en el resto del programa).
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DFACTURA')
 CREATE TABLE DFACTURA (
     secuencia    INT IDENTITY(1,1) PRIMARY KEY,
-    factura      NVARCHAR(10) NULL,
-    cliente      NVARCHAR(35) NULL,
-    fecha        NVARCHAR(12) NULL,
-    articulo     NVARCHAR(10) NULL,
+    factura      NVARCHAR(10) NULL FOREIGN KEY REFERENCES HFACTURA(factura),
+    articulo     NVARCHAR(10) NULL FOREIGN KEY REFERENCES PRODUCTOS(item),
     cantidad     INT NULL,
     precioVenta  DECIMAL(18,2) NULL,
     impuesto     DECIMAL(18,2) NULL,

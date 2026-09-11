@@ -290,8 +290,8 @@ namespace PSC09
 
         private void InsertaDetalleFactura()
         {
-            string stQuery = " INSERT INTO DFACTURA (FACTURA, ARTICULO, CANTIDAD, PRECIOVENTA, IMPUESTO, MONTOLINEA, CLIENTE, FECHA, ACTIVO) " +
-                             " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8) ";
+            string stQuery = " INSERT INTO DFACTURA (FACTURA, ARTICULO, CANTIDAD, PRECIOVENTA, IMPUESTO, MONTOLINEA, ACTIVO) " +
+                             " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6) ";
 
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
 
@@ -311,9 +311,7 @@ namespace PSC09
                 cmm.Parameters.AddWithValue("@A3", nmPre);
                 cmm.Parameters.AddWithValue("@A4", nmImp);
                 cmm.Parameters.AddWithValue("@A5", nmTot);
-                cmm.Parameters.AddWithValue("@A6", txtCliente.Text);
-                cmm.Parameters.AddWithValue("@A7", lblFechaFactura.Text);
-                cmm.Parameters.AddWithValue("@A8", "1");
+                cmm.Parameters.AddWithValue("@A6", "1");
 
                 cmm.ExecuteNonQuery();
                 cmm.Dispose();
