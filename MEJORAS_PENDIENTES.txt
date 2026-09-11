@@ -1,0 +1,65 @@
+ANDROMEDA - IDEAS PARA MEJORAR EL SISTEMA DE FACTURACION
+==========================================================
+
+Lo que ya esta resuelto es solido (facturacion, inventario, comprobantes
+fiscales con configuracion). Esto es lo que le falta para ser un sistema
+de facturacion excelente, de mas a menos urgente.
+
+
+1) RIESGO DE QUE ALGO SALGA MAL -- RESUELTO
+---------------------------------------------------
+- Los calculos de factura ahora usan "decimal" en vez de "double" en todo
+  frmFactura.cs (subtotal, impuesto, total, precio, cantidad). Tambien se
+  paso PRODUCTOS.costo/precioVenta/impuesto de FLOAT a DECIMAL en la base
+  de datos, para que el redondeo sea exacto desde el origen.
+
+- "Borrar Factura" ya no hace un DELETE fisico: ahora anula la factura
+  (HFACTURA.activo = 0, DFACTURA.activo = 0), devuelve al inventario cada
+  articulo vendido, y pide confirmacion antes de hacerlo. De paso se
+  corrigio que la venta nunca descontaba el inventario al guardar (bug
+  encontrado al implementar esto: ya se descuenta en InsertaDetalleFactura).
+  Sigue pendiente la nota de credito con su propio NCF (ver seccion 2).
+
+- Seguridad:
+    * Se parametrizaron todas las consultas concatenadas que quedaban
+      (frmFactura, frmProductos, frmLogin, frmVENCTE, frmVENPRO,
+      frmVENFACT, clsBusco). Ya no queda inyeccion SQL conocida.
+    * Las contrasenas ahora se guardan con hash PBKDF2 + salt
+      (Clases/Seguridad.cs), no en texto plano. Las cuentas viejas se
+      migran solas al hash la primera vez que inician sesion con exito.
+    * Se corrigio un bug de login: si escribias un usuario que no existe
+      justo despues de uno que si existe, podia colarse con la
+      contrasena del intento anterior (comparaba contra una variable
+      que no se limpiaba). Ahora usuario y contrasena se validan juntos
+      en un solo paso.
+
+
+2) FUNCIONALIDAD DE NEGOCIO QUE FALTA
+---------------------------------------------------
+- Reportes reales de ventas: el menu "Reporte" existe en la pantalla
+  pero no hace nada todavia.
+
+- Formatos 606/607 que pide la DGII (reportes fiscales de compras y
+  ventas).
+
+- Estado de cuenta de cliente: la tabla MUTOCTE ya guarda los
+  movimientos de cuenta, pero no hay ninguna pantalla para verlos.
+
+- Permisos por rol: el menu "Permiso a Usuario" esta ahi pero no filtra
+  nada; hoy cualquier usuario que entra ve y puede hacer todo.
+
+- Notas de credito / devoluciones de productos.
+
+
+3) CALIDAD OPERATIVA
+---------------------------------------------------
+- Respaldo automatico de la base de datos.
+
+- Impresion en impresora termica para el recibo, en vez de solo el PDF
+  completo que genera hoy.
+
+
+NOTA: esta lista es una guia de prioridades, no un plan cerrado. Antes
+de implementar cualquier punto, conviene decidir juntos el alcance
+exacto (por ejemplo, que tan a fondo debe llegar el reporte 606/607, o
+si las notas de credito tambien deben imprimir un NCF nuevo tipo E34/B04).

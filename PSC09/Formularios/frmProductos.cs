@@ -213,10 +213,11 @@ namespace PSC09
 
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
 
-            string stQuery = "SELECT DESCRIPCION, " + " CANTIDAD, " + " COSTO, " + " PRECIOVENTA, " + " IMPUESTO, " + " BARCODE, " + " TIENEIMPUESTO " +
-                             " FROM PRODUCTOS " + " WHERE ITEM = '" + numProducto + "' AND ESTATUSPRODUCTO = 1";
+            string stQuery = "SELECT DESCRIPCION, CANTIDAD, COSTO, PRECIOVENTA, IMPUESTO, BARCODE, TIENEIMPUESTO " +
+                             " FROM PRODUCTOS WHERE ITEM = @item AND ESTATUSPRODUCTO = 1";
 
             SqlCommand cmd = new SqlCommand(stQuery, cnx);
+            cmd.Parameters.AddWithValue("@item", numProducto);
             SqlDataReader rcd = cmd.ExecuteReader();
 
             if (rcd.Read())
@@ -242,7 +243,8 @@ namespace PSC09
         private void MostrarImagenProducto(string numProducto)
         {
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            SqlCommand cmd = new SqlCommand("SELECT IMAGEN FROM PRODUCTOS WHERE ITEM ='" + numProducto + "'", cnx);
+            SqlCommand cmd = new SqlCommand("SELECT IMAGEN FROM PRODUCTOS WHERE ITEM = @item", cnx);
+            cmd.Parameters.AddWithValue("@item", numProducto);
 
             SqlDataReader rdr = cmd.ExecuteReader();
 
@@ -265,8 +267,9 @@ namespace PSC09
 
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
 
-            SqlCommand cmd = new SqlCommand("UPDATE PRODUCTOS SET IMAGEN = @A1 WHERE ITEM = '" + numProducto + "'", cnx);
+            SqlCommand cmd = new SqlCommand("UPDATE PRODUCTOS SET IMAGEN = @A1 WHERE ITEM = @item", cnx);
             cmd.Parameters.AddWithValue("@A1", byteArrayImagen);
+            cmd.Parameters.AddWithValue("@item", numProducto);
 
             cmd.ExecuteNonQuery();
             cnx.Close();
@@ -323,10 +326,11 @@ namespace PSC09
 
         private void ActualizaSecuencia(string numProducto)
         {
-            string stQuery = "UPDATE SECUENCIA SET SECUENCIA = '" + numProducto + "' WHERE id = 1";
+            string stQuery = "UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 1";
 
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
             SqlCommand cmd = new SqlCommand(stQuery, cnx);
+            cmd.Parameters.AddWithValue("@numero", numProducto);
 
             cmd.ExecuteNonQuery();
 
@@ -337,9 +341,10 @@ namespace PSC09
         private void BorrarData(string numProducto)
         {
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            string tQuery = "UPDATE PRODUCTOS SET estatusprodcuto = 0 WHERE item = '" + numProducto + "' ";
+            string tQuery = "UPDATE PRODUCTOS SET estatusProducto = 0 WHERE item = @item";
 
             SqlCommand cmd = new SqlCommand(tQuery, cnx);
+            cmd.Parameters.AddWithValue("@item", numProducto);
             cmd.ExecuteNonQuery();
 
             cmd.Dispose();

@@ -54,6 +54,7 @@
     <Compile Include="Clases\clsBusco.cs" />
     <Compile Include="Clases\ComprobanteFiscal.cs" />
     <Compile Include="Clases\ConvertImage.cs" />
+    <Compile Include="Clases\Seguridad.cs" />
     <Compile Include="Clases\Tema.cs" />
     <Compile Include="Formularios\frmCambiarComprobante.cs">
       <SubType>Form</SubType>

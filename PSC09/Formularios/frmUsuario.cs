@@ -78,7 +78,7 @@ namespace PSC09
                     txtNombreCompleto.Text = rdr["nombrecompleto"].ToString();
                     txtPosicion.Text = rdr["posicion"].ToString();
                     txtCorreo.Text = rdr["correo"].ToString();
-                    txtClave.Text = rdr["clave"].ToString();
+                    txtClave.Clear(); // la clave guardada es un hash: no se muestra. Vacío = no cambiarla.
                     chkActivo.Checked = rdr["activo"].ToString().Trim() == "1";
                 }
             }
@@ -94,6 +94,7 @@ namespace PSC09
 
                 SqlCommand cmd = new SqlCommand(stQuery, cnx);
                 AgregarParametros(cmd);
+                cmd.Parameters.AddWithValue("@clave", Seguridad.HashPassword(txtClave.Text));
                 cmd.ExecuteNonQuery();
             }
 
@@ -105,11 +106,19 @@ namespace PSC09
             using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
                 cnx.Open();
-                string stQuery = " UPDATE USUARIO SET posicion = @posicion, correo = @correo, clave = @clave, " +
+
+                bool cambiaClave = txtClave.Text.Trim() != string.Empty;
+
+                string stQuery = " UPDATE USUARIO SET posicion = @posicion, correo = @correo, " +
+                                 (cambiaClave ? " clave = @clave, " : "") +
                                  " activo = @activo, nombrecompleto = @nombrecompleto WHERE idEmpleado = @id ";
 
                 SqlCommand cmd = new SqlCommand(stQuery, cnx);
                 AgregarParametros(cmd);
+                if (cambiaClave)
+                {
+                    cmd.Parameters.AddWithValue("@clave", Seguridad.HashPassword(txtClave.Text));
+                }
                 cmd.Parameters.AddWithValue("@id", idEmpleadoActual);
                 cmd.ExecuteNonQuery();
             }
@@ -120,7 +129,6 @@ namespace PSC09
             cmd.Parameters.AddWithValue("@posicion", txtPosicion.Text.Trim());
             cmd.Parameters.AddWithValue("@nombrecorto", txtNombreCorto.Text.Trim());
             cmd.Parameters.AddWithValue("@correo", txtCorreo.Text.Trim());
-            cmd.Parameters.AddWithValue("@clave", txtClave.Text);
             cmd.Parameters.AddWithValue("@activo", chkActivo.Checked ? "1" : "0");
             cmd.Parameters.AddWithValue("@nombrecompleto", txtNombreCompleto.Text.Trim());
         }
@@ -138,9 +146,15 @@ namespace PSC09
 
         private void btnGuardar_Click(object sender, EventArgs e)
         {
-            if (txtNombreCorto.Text.Trim() == string.Empty || txtClave.Text.Trim() == string.Empty)
+            if (txtNombreCorto.Text.Trim() == string.Empty)
             {
-                MessageBox.Show("Debes escribir el usuario y la contraseña", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Debes escribir el usuario", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (!existeElUsuario && txtClave.Text.Trim() == string.Empty)
+            {
+                MessageBox.Show("Debes escribir una contraseña para el usuario nuevo", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 

@@ -19,13 +19,13 @@ namespace PSC09
     {
         Boolean ExisteLaData;
 
-        double lnImpuesto;
+        decimal lnImpuesto;
         bool lbImpuestoIncluido;
-        double zImpuesto;
-        double zTotal;
-        double zSubtotal;
-        double nmCant;
-        double nmPrec;
+        decimal zImpuesto;
+        decimal zTotal;
+        decimal zSubtotal;
+        decimal nmCant;
+        decimal nmPrec;
         string archivo = "";
 
         List<TipoComprobante> tiposComprobante = new List<TipoComprobante>();
@@ -71,11 +71,12 @@ namespace PSC09
         private void BuscarCliente(string nmCliente)
         {
             SqlConnection cxn = new SqlConnection(cnn.db); cxn.Open();
-            SqlCommand cmd = new SqlCommand("SELECT NOMBRE, PAGAIMPUESTO FROM CLIENTES WHERE IDCLIENTE = '" + nmCliente + "'", cxn);
+            SqlCommand cmd = new SqlCommand("SELECT NOMBRE, PAGAIMPUESTO FROM CLIENTES WHERE IDCLIENTE = @id", cxn);
+            cmd.Parameters.AddWithValue("@id", nmCliente);
 
             SqlDataReader rdr = cmd.ExecuteReader();
 
-            if (rdr.Read()) 
+            if (rdr.Read())
             {
                 lblNombre.Text = rdr["NOMBRE"].ToString();
             }
@@ -84,7 +85,8 @@ namespace PSC09
         private void BuscarArticulo(string nmrArticulo)
         {
             SqlConnection cxn = new SqlConnection(cnn.db); cxn.Open();
-            SqlCommand cmd = new SqlCommand("SELECT ITEM, DESCRIPCION, PRECIOVENTA, IMPUESTO, TIENEIMPUESTO FROM PRODUCTOS WHERE ITEM = '" + nmrArticulo + "'", cxn);
+            SqlCommand cmd = new SqlCommand("SELECT ITEM, DESCRIPCION, PRECIOVENTA, IMPUESTO, TIENEIMPUESTO FROM PRODUCTOS WHERE ITEM = @item", cxn);
+            cmd.Parameters.AddWithValue("@item", nmrArticulo);
 
             SqlDataReader rdr = cmd.ExecuteReader();
 
@@ -92,7 +94,7 @@ namespace PSC09
             {
                 lblArticulo.Text = rdr["DESCRIPCION"].ToString();
                 lblPrecio.Text = rdr["PRECIOVENTA"].ToString();
-                lnImpuesto = Convert.ToDouble(rdr["IMPUESTO"].ToString());
+                lnImpuesto = Convert.ToDecimal(rdr["IMPUESTO"].ToString());
                 lbImpuestoIncluido = rdr["TIENEIMPUESTO"] != DBNull.Value && Convert.ToInt32(rdr["TIENEIMPUESTO"]) == 1;
             }
         }
@@ -153,9 +155,9 @@ namespace PSC09
 
             foreach (DataGridViewRow row in dgv.Rows)
             {
-                double nImpuesto = Convert.ToDouble(row.Cells[4].Value.ToString());
-                double nSubtotal = Convert.ToDouble(row.Cells[5].Value.ToString());
-                double nTotal = nSubtotal + nImpuesto;
+                decimal nImpuesto = Convert.ToDecimal(row.Cells[4].Value.ToString());
+                decimal nSubtotal = Convert.ToDecimal(row.Cells[5].Value.ToString());
+                decimal nTotal = nSubtotal + nImpuesto;
 
                 zImpuesto = zImpuesto + nImpuesto;
                 zSubtotal = zSubtotal + nSubtotal;
@@ -184,20 +186,49 @@ namespace PSC09
             }
         }
 
+        // Anula la factura en vez de borrarla físicamente: devuelve al inventario cada
+        // artículo vendido y marca encabezado y detalle como inactivos (ACTIVO = 0), para
+        // conservar el historial y no violar la llave foránea DFACTURA -> HFACTURA.
         private void BorrarData(string numFactura)
         {
-            if (ExisteLaData == true)
-            {
-                SqlConnection cns = new SqlConnection(cnn.db); cns.Open();
-                string ssQuery = "DELETE FROM HFACTURA WHERE FACTURA = '" + numFactura + "'";
-                SqlCommand cms = new SqlCommand(ssQuery,cns);
-                cms.ExecuteNonQuery();
+            if (ExisteLaData != true) return;
 
-                SqlConnection cnx = new SqlConnection(cnn.db); cns.Open();
-                string tsQuery = "DELETE FROM DFACTURA WHERE FACTURA = '" + numFactura + "'";
-                SqlCommand cmd = new SqlCommand(tsQuery, cns);
-                cms.ExecuteNonQuery();
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+
+                List<Tuple<string, int>> lineas = new List<Tuple<string, int>>();
+
+                SqlCommand cmdSel = new SqlCommand(
+                    "SELECT ARTICULO, CANTIDAD FROM DFACTURA WHERE FACTURA = @factura AND ACTIVO = '1'", cnx);
+                cmdSel.Parameters.AddWithValue("@factura", numFactura);
+
+                using (SqlDataReader rdr = cmdSel.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        lineas.Add(Tuple.Create(rdr["ARTICULO"].ToString(), Convert.ToInt32(rdr["CANTIDAD"])));
+                    }
+                }
+
+                foreach (Tuple<string, int> linea in lineas)
+                {
+                    SqlCommand cmdStock = new SqlCommand("UPDATE PRODUCTOS SET CANTIDAD = CANTIDAD + @cant WHERE ITEM = @item", cnx);
+                    cmdStock.Parameters.AddWithValue("@cant", linea.Item2);
+                    cmdStock.Parameters.AddWithValue("@item", linea.Item1);
+                    cmdStock.ExecuteNonQuery();
+                }
+
+                SqlCommand cmdDet = new SqlCommand("UPDATE DFACTURA SET ACTIVO = '0' WHERE FACTURA = @factura", cnx);
+                cmdDet.Parameters.AddWithValue("@factura", numFactura);
+                cmdDet.ExecuteNonQuery();
+
+                SqlCommand cmdHdr = new SqlCommand("UPDATE HFACTURA SET ACTIVO = '0' WHERE FACTURA = @factura", cnx);
+                cmdHdr.Parameters.AddWithValue("@factura", numFactura);
+                cmdHdr.ExecuteNonQuery();
             }
+
+            ExisteLaData = false;
         }
 
         private void BuscarFactura(string nmrFactura)
@@ -207,9 +238,10 @@ namespace PSC09
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
             string tsQuery = " SELECT A.FACTURA, A.CLIENTE, B.NOMBRE, A.FECHA, A.SUBTOTAL, A.IMPUESTO, A.MONTOFACTURA, A.IDTIPOCOMPROBANTE, A.COMPROBANTEFISCAL " +
                              " FROM HFACTURA A INNER JOIN CLIENTES B ON A.CLIENTE = B.IDCLIENTE " +
-                             " WHERE A.FACTURA = '" + nmrFactura + "' AND A.ACTIVO = '0' ";
+                             " WHERE A.FACTURA = @factura AND A.ACTIVO = '1' ";
 
             SqlCommand cms = new SqlCommand(tsQuery, cnx);
+            cms.Parameters.AddWithValue("@factura", nmrFactura);
             SqlDataReader rdr = cms.ExecuteReader();
 
             if (rdr.Read())
@@ -251,9 +283,10 @@ namespace PSC09
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
             string tsQuery = " SELECT A.FACTURA, A.SECUENCIA, A.ARTICULO, B.DESCRIPCION, A.CANTIDAD, A.PRECIOVENTA, A.IMPUESTO, A.MONTOLINEA " +
                              " FROM DFACTURA A INNER JOIN PRODUCTOS B ON A.ARTICULO = B.ITEM " +
-                             " WHERE A.FACTURA = '" + nmrFactura + "' ";
+                             " WHERE A.FACTURA = @factura AND A.ACTIVO = '1' ";
 
             SqlCommand cmd = new SqlCommand(tsQuery, cnx);
+            cmd.Parameters.AddWithValue("@factura", nmrFactura);
             SqlDataReader rdr = cmd.ExecuteReader();
 
             while (rdr.Read())
@@ -377,15 +410,22 @@ namespace PSC09
 
                 cmm.ExecuteNonQuery();
                 cmm.Dispose();
+
+                SqlCommand cmdStock = new SqlCommand("UPDATE PRODUCTOS SET CANTIDAD = CANTIDAD - @cant WHERE ITEM = @item", cnx);
+                cmdStock.Parameters.AddWithValue("@cant", nmCan);
+                cmdStock.Parameters.AddWithValue("@item", nmArt);
+                cmdStock.ExecuteNonQuery();
+                cmdStock.Dispose();
             }
         }
 
         private void ActualizaSecuencia(string numFactura)
         {
-            string stQuery = "UPDATE SECUENCIA SET SECUENCIA ='" + numFactura + "' WHERE id = 2";
+            string stQuery = "UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 2";
 
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
             SqlCommand cmd = new SqlCommand(stQuery, cnx);
+            cmd.Parameters.AddWithValue("@numero", numFactura);
 
             cmd.ExecuteNonQuery();
 
@@ -493,18 +533,18 @@ namespace PSC09
                 nmCant = 0;
                 nmPrec = 0;
 
-                nmCant = Convert.ToDouble(txtCantidad.Text);
-                nmPrec = Convert.ToDouble(lblPrecio.Text);
+                nmCant = Convert.ToDecimal(txtCantidad.Text);
+                nmPrec = Convert.ToDecimal(lblPrecio.Text);
 
                 if (nmCant > 0 && nmPrec > 0)
                 {
-                    double totalImp;
-                    double subtotal;
+                    decimal totalImp;
+                    decimal subtotal;
 
                     if (lbImpuestoIncluido)
                     {
                         // El precio ya incluye el impuesto: se extrae en vez de sumarlo de nuevo.
-                        double totalConImpuesto = nmPrec * nmCant;
+                        decimal totalConImpuesto = nmPrec * nmCant;
                         subtotal = totalConImpuesto / (1 + lnImpuesto);
                         totalImp = totalConImpuesto - subtotal;
                     }
@@ -556,7 +596,30 @@ namespace PSC09
 
         private void btnBorrar_Click(object sender, EventArgs e)
         {
-            BorrarData(lblFactura.Text);
+            if (!ExisteLaData)
+            {
+                MessageBox.Show("No hay una factura cargada para anular.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            DialogResult resultado = MessageBox.Show(
+                "¿Deseas anular esta factura? Se devolverá al inventario cada artículo vendido y no se puede deshacer.",
+                "Confirmar anulación",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (resultado != DialogResult.Yes) return;
+
+            try
+            {
+                BorrarData(lblFactura.Text);
+                MessageBox.Show("Factura anulada correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                LimpiarFormulario();
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(error.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void btnSalir_Click(object sender, EventArgs e)

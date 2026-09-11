@@ -20,17 +20,25 @@ GO
 USE sistemaFacturacion;
 GO
 
+-- clave es NVARCHAR(200) porque guarda el hash PBKDF2 (formato
+-- "iteraciones.saltBase64.hashBase64", ver Clases/Seguridad.cs), no la
+-- contraseña en texto plano. Las cuentas creadas antes de ese cambio
+-- migran su clave de texto plano a hash sola, en el primer login exitoso.
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'USUARIO')
 CREATE TABLE USUARIO (
     idEmpleado      INT IDENTITY(1,1) PRIMARY KEY,
     posicion        VARCHAR(15)  NULL,
     nombrecorto     VARCHAR(20)  NULL,
     correo          NVARCHAR(70) NULL,
-    clave           NVARCHAR(25) NULL,
+    clave           NVARCHAR(200) NULL,
     foto            IMAGE        NULL,
     activo          VARCHAR(5)   NULL,
     nombrecompleto  NVARCHAR(50) NULL
 );
+GO
+
+-- Para bases ya creadas antes de este cambio: el hash no cabe en NVARCHAR(25).
+ALTER TABLE USUARIO ALTER COLUMN clave NVARCHAR(200) NULL;
 GO
 
 -- Normalizadas a 3FN: País y Ciudad viven en sus propias tablas para que
@@ -77,20 +85,34 @@ CREATE TABLE CLIENTES (
 );
 GO
 
+-- costo/precioVenta/impuesto son DECIMAL (no FLOAT): FLOAT es binario
+-- aproximado y puede arrastrar errores de redondeo en dinero. DECIMAL(18,2)
+-- para montos, DECIMAL(9,4) para la tasa de impuesto (ej. 0.1800).
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PRODUCTOS')
 CREATE TABLE PRODUCTOS (
     item             NVARCHAR(10) PRIMARY KEY,
     descripcion      NVARCHAR(80) NULL,
     cantidad         INT NULL,
-    costo            FLOAT NULL,
-    precioVenta      FLOAT NULL,
-    impuesto         FLOAT NULL,
+    costo            DECIMAL(18,2) NULL,
+    precioVenta      DECIMAL(18,2) NULL,
+    impuesto         DECIMAL(9,4) NULL,
     estatusProducto  INT NULL,
     barCode          NVARCHAR(50) NULL,
     imagen           IMAGE NULL,
     ruta             TEXT NULL,
     tieneImpuesto    INT NULL
 );
+GO
+
+-- Para bases ya creadas antes de este cambio: convierte las columnas de FLOAT a DECIMAL.
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('PRODUCTOS') AND name = 'costo' AND system_type_id = TYPE_ID('float'))
+    ALTER TABLE PRODUCTOS ALTER COLUMN costo DECIMAL(18,2) NULL;
+GO
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('PRODUCTOS') AND name = 'precioVenta' AND system_type_id = TYPE_ID('float'))
+    ALTER TABLE PRODUCTOS ALTER COLUMN precioVenta DECIMAL(18,2) NULL;
+GO
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('PRODUCTOS') AND name = 'impuesto' AND system_type_id = TYPE_ID('float'))
+    ALTER TABLE PRODUCTOS ALTER COLUMN impuesto DECIMAL(9,4) NULL;
 GO
 
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'HFACTURA')
@@ -256,7 +278,10 @@ GO
 
 -- Usuario inicial para poder entrar por primera vez.
 -- Usuario: admin   Contraseña: admin123
--- (Cámbiala editando la tabla USUARIO; todavía no hay pantalla para eso.)
+-- Se guarda en texto plano a propósito: frmLogin.cs detecta que no tiene el
+-- formato de hash (ver Clases/Seguridad.cs) y la reemplaza por un hash en
+-- cuanto alguien inicia sesión con ella por primera vez. Para cambiarla
+-- después, usa Registro -> Usuario dentro del sistema.
 IF NOT EXISTS (SELECT * FROM USUARIO WHERE nombrecorto = 'admin')
     INSERT INTO USUARIO (posicion, nombrecorto, correo, clave, activo, nombrecompleto)
     VALUES ('Administrador', 'admin', '', 'admin123', '1', 'Administrador');

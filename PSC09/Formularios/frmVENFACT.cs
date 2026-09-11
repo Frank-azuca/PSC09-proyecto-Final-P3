@@ -59,10 +59,11 @@ namespace PSC09
             this.dgv.Refresh();
 
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            string stQuery = "SELECT FACTURA, CLIENTE, FECHA, MONTOFACTURADO FROM HFACTURA WHERE CLIENTE = '" + txtVENFACT.Text + 
-                             "' ORDER BY FACTURA, FECHA ASC";
+            string stQuery = "SELECT FACTURA, CLIENTE, FECHA, MONTOFACTURADO FROM HFACTURA WHERE CLIENTE = @cliente" +
+                             " ORDER BY FACTURA, FECHA ASC";
 
             SqlCommand cmd = new SqlCommand(stQuery, cnx);
+            cmd.Parameters.AddWithValue("@cliente", txtVENFACT.Text);
             SqlDataReader rdr = cmd.ExecuteReader();
 
             while (rdr.Read())

@@ -31,9 +31,10 @@ namespace PSC09
             this.dgv.Refresh();
 
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            string stQuery = "SELECT IDCLIENTE, NOMBRE FROM CLIENTES  WHERE NOMBRE LIKE '%" + txtVENCTE.Text + "%' ORDER BY NOMBRE ASC ";
+            string stQuery = "SELECT IDCLIENTE, NOMBRE FROM CLIENTES WHERE NOMBRE LIKE @busqueda ORDER BY NOMBRE ASC ";
 
             SqlCommand cmd = new SqlCommand(stQuery, cnx);
+            cmd.Parameters.AddWithValue("@busqueda", "%" + txtVENCTE.Text + "%");
             SqlDataReader rdr = cmd.ExecuteReader();
 
             while (rdr.Read())

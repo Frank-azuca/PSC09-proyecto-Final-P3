@@ -34,10 +34,11 @@ namespace PSC09
     {
         public static string BuscaUltimoNumero(string nmId)
         {
-            string stQuery = "SELECT secuencia + 1 AS ultimo_numero FROM SECUENCIA WHERE ID ='" + nmId + "'";
+            string stQuery = "SELECT secuencia + 1 AS ultimo_numero FROM SECUENCIA WHERE ID = @id";
 
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
             SqlCommand cmd = new SqlCommand(stQuery, cnx);
+            cmd.Parameters.AddWithValue("@id", nmId);
             SqlDataReader sdr = cmd.ExecuteReader();
 
             if (sdr.Read())

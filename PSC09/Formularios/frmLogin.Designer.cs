@@ -120,7 +120,6 @@ namespace PSC09
             this.txtUsuario.Size = new System.Drawing.Size(300, 32);
             this.txtUsuario.TabIndex = 8;
             this.txtUsuario.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtUsuario_KeyPress);
-            this.txtUsuario.Leave += new System.EventHandler(this.txtUsuario_Leave);
             //
             // txtPassword
             //

@@ -31,10 +31,11 @@ namespace PSC09
             this.dgv.Refresh();
 
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            string stQuery = "SELECT ITEM, DESCRIPCION, PRECIOVENTA FROM PRODUCTOS WHERE DESCRIPCION LIKE '%" + txtVENPRO.Text + "%'" +
+            string stQuery = "SELECT ITEM, DESCRIPCION, PRECIOVENTA FROM PRODUCTOS WHERE DESCRIPCION LIKE @busqueda" +
                              " ORDER BY DESCRIPCION ASC";
 
             SqlCommand cmd = new SqlCommand(stQuery, cnx);
+            cmd.Parameters.AddWithValue("@busqueda", "%" + txtVENPRO.Text + "%");
             SqlDataReader rdr = cmd.ExecuteReader();
 
             while (rdr.Read())

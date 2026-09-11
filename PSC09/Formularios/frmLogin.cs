@@ -14,9 +14,6 @@ namespace PSC09
 {
     public partial class frmLogin : Form
     {
-
-        string password;
-
         public frmLogin()
         {
             InitializeComponent();
@@ -49,14 +46,6 @@ namespace PSC09
             }        
         }
 
-        private void txtUsuario_Leave(object sender, EventArgs e)
-        {
-            if (txtUsuario.Text.Trim() != string.Empty)
-            {
-                BuscarUsuario(txtUsuario.Text);
-            }
-        }
-
         private void txtPassword_KeyPress(object sender, KeyPressEventArgs e)
         {
             if ((int)e.KeyChar == (int)Keys.Enter)
@@ -82,13 +71,13 @@ namespace PSC09
         {
             if (txtUsuario.Text.Trim() != string.Empty && txtPassword.Text.Trim() != string.Empty)
             {
-                if (txtPassword.Text.Trim() == password)
+                if (ValidarCredenciales(txtUsuario.Text.Trim(), txtPassword.Text))
                 {
                     frmMenu frm = new frmMenu();
                     frm.Show();
 
                     this.Hide();
-                } 
+                }
                 else
                 {
                     MessageBox.Show("El usuario y/o contraseña estan incorrectos", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -107,23 +96,49 @@ namespace PSC09
 
         //Metodos
 
-        private void BuscarUsuario(string cualUsuario)
+        // Valida usuario + contraseña en un solo paso (evita comparar contra una clave
+        // de un intento anterior si el usuario tecleado no existe). La clave puede estar
+        // hasheada (cuentas nuevas) o en texto plano (cuentas viejas, migradas de forma
+        // transparente al primer inicio de sesión exitoso).
+        private bool ValidarCredenciales(string usuario, string claveIngresada)
         {
-            string sqlQuery = "SELECT nombrecorto, " + "clave " + "FROM USUARIO" + " WHERE nombrecorto = '" + cualUsuario + "'";
-
             try
             {
                 using (SqlConnection cnxn = new SqlConnection(cnn.db))
                 {
                     cnxn.Open();
 
-                    SqlCommand cmd = new SqlCommand(sqlQuery, cnxn);
-                    SqlDataReader reader = cmd.ExecuteReader();
+                    SqlCommand cmd = new SqlCommand(
+                        "SELECT idEmpleado, clave FROM USUARIO WHERE nombrecorto = @usuario AND activo = '1'",
+                        cnxn);
+                    cmd.Parameters.AddWithValue("@usuario", usuario);
 
-                    if (reader.Read())
+                    int idEmpleado;
+                    string claveGuardada;
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        password = reader["clave"].ToString();
+                        if (!reader.Read()) return false;
+
+                        idEmpleado = Convert.ToInt32(reader["idEmpleado"]);
+                        claveGuardada = reader["clave"].ToString();
                     }
+
+                    bool esValida;
+                    if (Seguridad.EsHashValido(claveGuardada))
+                    {
+                        esValida = Seguridad.VerificarPassword(claveIngresada, claveGuardada);
+                    }
+                    else
+                    {
+                        esValida = claveGuardada == claveIngresada;
+                        if (esValida)
+                        {
+                            MigrarClaveAHash(cnxn, idEmpleado, claveIngresada);
+                        }
+                    }
+
+                    return esValida;
                 }
             }
             catch (SqlException)
@@ -133,7 +148,18 @@ namespace PSC09
                     "Sin conexión",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+                return false;
             }
+        }
+
+        private void MigrarClaveAHash(SqlConnection cnxn, int idEmpleado, string claveEnTextoPlano)
+        {
+            string nuevoHash = Seguridad.HashPassword(claveEnTextoPlano);
+
+            SqlCommand cmd = new SqlCommand("UPDATE USUARIO SET clave = @clave WHERE idEmpleado = @id", cnxn);
+            cmd.Parameters.AddWithValue("@clave", nuevoHash);
+            cmd.Parameters.AddWithValue("@id", idEmpleado);
+            cmd.ExecuteNonQuery();
         }
 
         private void label1_Click(object sender, EventArgs e)
