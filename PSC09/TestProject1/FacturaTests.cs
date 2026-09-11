@@ -155,6 +155,7 @@ namespace PSC09.Tests
             EnterCliente(TestClienteId);
             EnterArticulo(TestArticuloId);
             EnterCantidadAndInsert(TestCantidad);
+            SelectTipoComprobante();
 
             // Cerrar el MessageBox de "PDF generado" que aparece dentro de GenerarPDF()
             var btnGuardar = _facturaWindow.FindElementByAccessibilityId("btnGuardar");
@@ -277,6 +278,7 @@ namespace PSC09.Tests
             EnterCliente(TestClienteId);
             EnterArticulo(TestArticuloId);
             EnterCantidadAndInsert(TestCantidad);
+            SelectTipoComprobante();
 
             _facturaWindow.FindElementByAccessibilityId("btnGuardar").Click();
             System.Threading.Thread.Sleep(2000);
@@ -323,6 +325,20 @@ namespace PSC09.Tests
 
             _facturaWindow.FindElementByAccessibilityId("btnInsertarLn").Click();
             System.Threading.Thread.Sleep(400);
+        }
+
+        /// <summary>
+        /// Selecciona el primer Tipo de Comprobante Fiscal disponible (el combo inicia
+        /// sin selección; guardar la factura ahora requiere elegir uno).
+        /// </summary>
+        private void SelectTipoComprobante()
+        {
+            var combo = _facturaWindow.FindElementByAccessibilityId("cboTipoComprobante");
+            combo.Click();
+            System.Threading.Thread.Sleep(200);
+            combo.SendKeys(OpenQA.Selenium.Keys.Down);
+            combo.SendKeys(OpenQA.Selenium.Keys.Enter);
+            System.Threading.Thread.Sleep(300);
         }
 
         private void ClickMenuItem(string topLevel, string subItem)

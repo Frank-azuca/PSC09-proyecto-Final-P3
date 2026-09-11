@@ -27,9 +27,43 @@ namespace PSC09
         double nmCant;
         double nmPrec;
         string archivo = "";
+
+        List<TipoComprobante> tiposComprobante = new List<TipoComprobante>();
+
+        TipoComprobante TipoComprobanteSeleccionado
+        {
+            get { return cboTipoComprobante.SelectedItem as TipoComprobante; }
+        }
+
         public frmFactura()
         {
             InitializeComponent();
+        }
+
+        private void CargarTiposComprobante()
+        {
+            tiposComprobante = ComprobanteFiscal.ObtenerTipos(true);
+
+            cboTipoComprobante.Items.Clear();
+            foreach (TipoComprobante tipo in tiposComprobante)
+            {
+                cboTipoComprobante.Items.Add(tipo);
+            }
+
+            cboTipoComprobante.SelectedIndex = -1;
+            txtComprobante.Clear();
+        }
+
+        private void ActualizarComprobantePreview()
+        {
+            if (TipoComprobanteSeleccionado != null)
+            {
+                txtComprobante.Text = ComprobanteFiscal.SiguienteComprobante(TipoComprobanteSeleccionado);
+            }
+            else
+            {
+                txtComprobante.Clear();
+            }
         }
 
         // Metodos de base de datos
@@ -102,6 +136,9 @@ namespace PSC09
 
             lblFactura.Text = Busco.BuscaUltimoNumero("2");
 
+            cboTipoComprobante.SelectedIndex = -1;
+            txtComprobante.Clear();
+
             ExisteLaData = false;
         }
 
@@ -168,14 +205,14 @@ namespace PSC09
             ExisteLaData = true;   
 
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            string tsQuery = " SELECT A.FACTURA, A.CLIENTE, B.NOMBRE, A.FECHA, A.SUBTOTAL, A.IMPUESTO, A.MONTOFACTURA " +
-                             " FROM HFACTURA A INNER JOIN CLIENTES B ON A.CLIENTE = B.IDCLIENTE " + 
+            string tsQuery = " SELECT A.FACTURA, A.CLIENTE, B.NOMBRE, A.FECHA, A.SUBTOTAL, A.IMPUESTO, A.MONTOFACTURA, A.IDTIPOCOMPROBANTE, A.COMPROBANTEFISCAL " +
+                             " FROM HFACTURA A INNER JOIN CLIENTES B ON A.CLIENTE = B.IDCLIENTE " +
                              " WHERE A.FACTURA = '" + nmrFactura + "' AND A.ACTIVO = '0' ";
 
             SqlCommand cms = new SqlCommand(tsQuery, cnx);
             SqlDataReader rdr = cms.ExecuteReader();
 
-            if (rdr.Read()) 
+            if (rdr.Read())
             {
                 ExisteLaData = true;
 
@@ -186,6 +223,14 @@ namespace PSC09
                 lblSubtotal.Text = Convert.ToString(rdr["SUBTOTAL"]);
                 lblImpuesto.Text = Convert.ToString(rdr["IMPUESTO"]);
                 lblTotal.Text = Convert.ToString(rdr["MONTOFACTURADO"]);
+
+                if (rdr["IDTIPOCOMPROBANTE"] != DBNull.Value)
+                {
+                    int idTipo = Convert.ToInt32(rdr["IDTIPOCOMPROBANTE"]);
+                    TipoComprobante tipo = ComprobanteFiscal.ObtenerTipoPorId(tiposComprobante, idTipo);
+                    if (tipo != null) cboTipoComprobante.SelectedItem = tipo;
+                }
+                txtComprobante.Text = Convert.ToString(rdr["COMPROBANTEFISCAL"]);
 
                 BuscarDetalle(nmrFactura);
 
@@ -267,8 +312,19 @@ namespace PSC09
             {
                 if (lblTotal.Text != string.Empty)
                 {
-                    string stQuery = " INSERT INTO HFACTURA (FACTURA, CLIENTE, FECHA, SUBTOTAL, IMPUESTO, MONTOFACTURADO, ACTIVO) " +
-                                     " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6); ";
+                    if (TipoComprobanteSeleccionado == null || string.IsNullOrWhiteSpace(txtComprobante.Text))
+                    {
+                        throw new Exception("Selecciona un tipo de Comprobante Fiscal antes de guardar la factura.");
+                    }
+
+                    string errorComprobante;
+                    if (!ComprobanteFiscal.ValidarFormato(TipoComprobanteSeleccionado, txtComprobante.Text, out errorComprobante))
+                    {
+                        throw new Exception(errorComprobante + " Corrígelo con click derecho sobre el comprobante, o configura el rango en Configuración → Comprobantes Fiscales.");
+                    }
+
+                    string stQuery = " INSERT INTO HFACTURA (FACTURA, CLIENTE, FECHA, SUBTOTAL, IMPUESTO, MONTOFACTURADO, ACTIVO, IDTIPOCOMPROBANTE, COMPROBANTEFISCAL) " +
+                                     " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8); ";
 
                     SqlConnection cnt = new SqlConnection(cnn.db); cnt.Open();
                     SqlCommand cmd = new SqlCommand(stQuery, cnt);
@@ -280,10 +336,14 @@ namespace PSC09
                     cmd.Parameters.AddWithValue("@A4", lblImpuesto.Text);
                     cmd.Parameters.AddWithValue("@A5", lblTotal.Text);
                     cmd.Parameters.AddWithValue("@A6", "1");
+                    cmd.Parameters.AddWithValue("@A7", TipoComprobanteSeleccionado.Id);
+                    cmd.Parameters.AddWithValue("@A8", txtComprobante.Text);
 
                     cmd.ExecuteNonQuery();
                     cmd.Dispose();
                     cnt.Close();
+
+                    ComprobanteFiscal.ActualizaSecuencia(TipoComprobanteSeleccionado, txtComprobante.Text);
 
                     InsertaDetalleFactura();
                 }
@@ -341,6 +401,7 @@ namespace PSC09
             this.KeyPreview = true;
 
             EstiloDataGridView();
+            CargarTiposComprobante();
 
             lblFechaFactura.Text = DateTime.Now.ToString("dd/MM/yyyy");
             ExisteLaData = false;
@@ -455,6 +516,34 @@ namespace PSC09
 
                     lblImpuestoLn.Text = totalImp.ToString();
                     lblTotalLn.Text = subtotal.ToString();
+                }
+            }
+        }
+
+        private void cboTipoComprobante_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ActualizarComprobantePreview();
+        }
+
+        private void cmsComprobante_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // Solo se puede cambiar el comprobante por click derecho cuando ya hay uno asignado.
+            e.Cancel = string.IsNullOrWhiteSpace(txtComprobante.Text);
+        }
+
+        private void mnuCambiarComprobante_Click(object sender, EventArgs e)
+        {
+            TipoComprobante tipo = TipoComprobanteSeleccionado;
+            if (tipo == null || string.IsNullOrWhiteSpace(txtComprobante.Text))
+            {
+                return;
+            }
+
+            using (frmCambiarComprobante frm = new frmCambiarComprobante(tipo, txtComprobante.Text))
+            {
+                if (frm.ShowDialog(this) == DialogResult.OK)
+                {
+                    txtComprobante.Text = frm.NuevoComprobante;
                 }
             }
         }
@@ -618,6 +707,7 @@ namespace PSC09
 
             doc.Add(new Paragraph("FACTURA"));
             doc.Add(new Paragraph("Numero: " + lblFactura.Text));
+            doc.Add(new Paragraph("Comprobante Fiscal: " + txtComprobante.Text));
             doc.Add(new Paragraph("Fecha: " + lblFechaFactura.Text));
             doc.Add(new Paragraph("Cliente: " + lblNombre.Text));
             doc.Add(new Paragraph(" "));

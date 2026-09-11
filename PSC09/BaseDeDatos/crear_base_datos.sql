@@ -152,6 +152,89 @@ IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 3)
     INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (3, 'Recibo', 0);
 GO
 
+-- ============================================================
+-- Comprobantes fiscales (NCF)
+--
+-- TIPOCOMPROBANTE guarda los tipos de comprobante que emite la DGII:
+-- los físicos (prefijo "B", 11 caracteres en total: prefijo de 3 +
+-- 8 dígitos de secuencia) y los electrónicos (prefijo "E", 13
+-- caracteres en total: prefijo de 3 + 10 dígitos de secuencia).
+-- Cada tipo tiene su propia secuencia en la tabla SECUENCIA (mismo
+-- id en ambas tablas), igual patrón que ya usa Andrómeda para
+-- numerar Productos/Factura/Recibo.
+-- ============================================================
+-- activo permite prender/apagar cada tipo (por ejemplo, dejar solo los Electrónicos
+-- activos si el negocio ya no emite físicos). rangoInicial/rangoFinal/fechaVencimiento
+-- son los datos que entrega la DGII al autorizar una secuencia; se configuran desde
+-- Configuración -> Comprobantes Fiscales (frmComprobantesFiscales).
+-- minimoAlerta: cuántos comprobantes deben quedar (rangoFinal - próximo + 1) para que
+-- frmComprobantesFiscales avise que esa secuencia se está por agotar.
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TIPOCOMPROBANTE')
+CREATE TABLE TIPOCOMPROBANTE (
+    id                INT PRIMARY KEY,
+    prefijo           VARCHAR(3)   NOT NULL,
+    nombre            NVARCHAR(60) NOT NULL,
+    longitudTotal     INT          NOT NULL,
+    esElectronico     BIT          NOT NULL,
+    activo            BIT          NOT NULL DEFAULT 1,
+    rangoInicial      BIGINT       NULL,
+    rangoFinal        BIGINT       NULL,
+    fechaVencimiento  NVARCHAR(12) NULL,
+    minimoAlerta      BIGINT       NULL
+);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('TIPOCOMPROBANTE') AND name = 'activo')
+    ALTER TABLE TIPOCOMPROBANTE ADD activo BIT NOT NULL DEFAULT 1;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('TIPOCOMPROBANTE') AND name = 'rangoInicial')
+    ALTER TABLE TIPOCOMPROBANTE ADD rangoInicial BIGINT NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('TIPOCOMPROBANTE') AND name = 'rangoFinal')
+    ALTER TABLE TIPOCOMPROBANTE ADD rangoFinal BIGINT NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('TIPOCOMPROBANTE') AND name = 'fechaVencimiento')
+    ALTER TABLE TIPOCOMPROBANTE ADD fechaVencimiento NVARCHAR(12) NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('TIPOCOMPROBANTE') AND name = 'minimoAlerta')
+    ALTER TABLE TIPOCOMPROBANTE ADD minimoAlerta BIGINT NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 101)
+    INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (101, 'B01', 'Crédito Fiscal', 11, 0);
+IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 102)
+    INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (102, 'B02', 'Consumo', 11, 0);
+IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 103)
+    INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (103, 'B14', 'Regímenes Especiales', 11, 0);
+IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 104)
+    INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (104, 'B15', 'Gubernamental', 11, 0);
+IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 105)
+    INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (105, 'E31', 'Crédito Fiscal Electrónico', 13, 1);
+IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 106)
+    INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (106, 'E32', 'Consumo Electrónico', 13, 1);
+IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 107)
+    INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (107, 'E34', 'Nota de Crédito Electrónica', 13, 1);
+IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 108)
+    INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (108, 'E44', 'Gubernamental Electrónico', 13, 1);
+GO
+
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 101) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (101, 'Comprobante B01', 0);
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 102) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (102, 'Comprobante B02', 0);
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 103) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (103, 'Comprobante B14', 0);
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 104) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (104, 'Comprobante B15', 0);
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 105) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (105, 'Comprobante E31', 0);
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 106) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (106, 'Comprobante E32', 0);
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 107) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (107, 'Comprobante E34', 0);
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 108) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (108, 'Comprobante E44', 0);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HFACTURA') AND name = 'idTipoComprobante')
+    ALTER TABLE HFACTURA ADD idTipoComprobante INT NULL FOREIGN KEY REFERENCES TIPOCOMPROBANTE(id);
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HFACTURA') AND name = 'comprobanteFiscal')
+    ALTER TABLE HFACTURA ADD comprobanteFiscal NVARCHAR(13) NULL;
+GO
+
 -- Semillas de País / Ciudad (ajusta o agrega las que necesites).
 IF NOT EXISTS (SELECT * FROM PAISES WHERE nombre = 'República Dominicana')
     INSERT INTO PAISES (nombre) VALUES ('República Dominicana');

@@ -55,6 +55,14 @@ namespace PSC09
             usr.Show();
         }
 
+        private void comprobantesFiscalesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmComprobantesFiscales frm = new frmComprobantesFiscales();
+            frm.Show();
+        }
+
         private void salirToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Close();

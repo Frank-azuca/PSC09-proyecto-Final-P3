@@ -45,6 +45,7 @@
             this.configuraciónToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.opcionesDelMenuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.permisoAUsuarioToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.comprobantesFiscalesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.salirToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.cerrarProgramaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -173,23 +174,31 @@
             // 
             this.configuraciónToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.opcionesDelMenuToolStripMenuItem,
-            this.permisoAUsuarioToolStripMenuItem});
+            this.permisoAUsuarioToolStripMenuItem,
+            this.comprobantesFiscalesToolStripMenuItem});
             this.configuraciónToolStripMenuItem.Name = "configuraciónToolStripMenuItem";
             this.configuraciónToolStripMenuItem.Size = new System.Drawing.Size(95, 22);
             this.configuraciónToolStripMenuItem.Text = "Configuración";
-            // 
+            //
             // opcionesDelMenuToolStripMenuItem
-            // 
+            //
             this.opcionesDelMenuToolStripMenuItem.Name = "opcionesDelMenuToolStripMenuItem";
             this.opcionesDelMenuToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.opcionesDelMenuToolStripMenuItem.Text = "Opciones del Menu";
-            // 
+            //
             // permisoAUsuarioToolStripMenuItem
-            // 
+            //
             this.permisoAUsuarioToolStripMenuItem.Name = "permisoAUsuarioToolStripMenuItem";
             this.permisoAUsuarioToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.permisoAUsuarioToolStripMenuItem.Text = "Permiso a Usuario";
-            // 
+            //
+            // comprobantesFiscalesToolStripMenuItem
+            //
+            this.comprobantesFiscalesToolStripMenuItem.Name = "comprobantesFiscalesToolStripMenuItem";
+            this.comprobantesFiscalesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.comprobantesFiscalesToolStripMenuItem.Text = "Comprobantes Fiscales";
+            this.comprobantesFiscalesToolStripMenuItem.Click += new System.EventHandler(this.comprobantesFiscalesToolStripMenuItem_Click);
+            //
             // pictureBox1
             // 
             this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -268,6 +277,7 @@
         private System.Windows.Forms.ToolStripMenuItem alfabeticoDelClienteToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem opcionesDelMenuToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem permisoAUsuarioToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem comprobantesFiscalesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem facturaToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem salirToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem cerrarProgramaToolStripMenuItem;

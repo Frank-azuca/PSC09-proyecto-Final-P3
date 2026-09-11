@@ -67,7 +67,13 @@
             this.btnBorrar = new System.Windows.Forms.Button();
             this.btnLimpiar = new System.Windows.Forms.Button();
             this.btnGuardar = new System.Windows.Forms.Button();
+            this.lblComprobante = new System.Windows.Forms.Label();
+            this.cboTipoComprobante = new System.Windows.Forms.ComboBox();
+            this.txtComprobante = new System.Windows.Forms.TextBox();
+            this.cmsComprobante = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.mnuCambiarComprobante = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.dgv)).BeginInit();
+            this.cmsComprobante.SuspendLayout();
             this.SuspendLayout();
             // 
             // label1
@@ -287,9 +293,59 @@
             this.label15.TabIndex = 32;
             this.label15.Text = "Total Ln";
             this.label15.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            // 
+            //
+            // lblComprobante
+            //
+            this.lblComprobante.BackColor = PSC09.Tema.LavandaSuave;
+            this.lblComprobante.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblComprobante.Location = new System.Drawing.Point(14, 184);
+            this.lblComprobante.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.lblComprobante.Name = "lblComprobante";
+            this.lblComprobante.Size = new System.Drawing.Size(193, 26);
+            this.lblComprobante.TabIndex = 48;
+            this.lblComprobante.Text = "Comprobante Fiscal";
+            this.lblComprobante.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // cboTipoComprobante
+            //
+            this.cboTipoComprobante.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboTipoComprobante.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cboTipoComprobante.Location = new System.Drawing.Point(211, 184);
+            this.cboTipoComprobante.Margin = new System.Windows.Forms.Padding(2);
+            this.cboTipoComprobante.Name = "cboTipoComprobante";
+            this.cboTipoComprobante.Size = new System.Drawing.Size(250, 28);
+            this.cboTipoComprobante.TabIndex = 49;
+            this.cboTipoComprobante.SelectedIndexChanged += new System.EventHandler(this.cboTipoComprobante_SelectedIndexChanged);
+            //
+            // txtComprobante
+            //
+            this.txtComprobante.BackColor = System.Drawing.Color.White;
+            this.txtComprobante.ContextMenuStrip = this.cmsComprobante;
+            this.txtComprobante.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtComprobante.Location = new System.Drawing.Point(469, 184);
+            this.txtComprobante.Margin = new System.Windows.Forms.Padding(2);
+            this.txtComprobante.Name = "txtComprobante";
+            this.txtComprobante.ReadOnly = true;
+            this.txtComprobante.Size = new System.Drawing.Size(200, 26);
+            this.txtComprobante.TabIndex = 50;
+            //
+            // cmsComprobante
+            //
+            this.cmsComprobante.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mnuCambiarComprobante});
+            this.cmsComprobante.Name = "cmsComprobante";
+            this.cmsComprobante.Size = new System.Drawing.Size(214, 26);
+            this.cmsComprobante.Opening += new System.ComponentModel.CancelEventHandler(this.cmsComprobante_Opening);
+            //
+            // mnuCambiarComprobante
+            //
+            this.mnuCambiarComprobante.Name = "mnuCambiarComprobante";
+            this.mnuCambiarComprobante.Size = new System.Drawing.Size(213, 22);
+            this.mnuCambiarComprobante.Text = "Cambiar comprobante...";
+            this.mnuCambiarComprobante.Click += new System.EventHandler(this.mnuCambiarComprobante_Click);
+            //
             // dgv
-            // 
+            //
             this.dgv.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
             | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
@@ -564,6 +620,9 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = PSC09.Tema.FondoClaro;
             this.ClientSize = new System.Drawing.Size(1166, 721);
+            this.Controls.Add(this.txtComprobante);
+            this.Controls.Add(this.cboTipoComprobante);
+            this.Controls.Add(this.lblComprobante);
             this.Controls.Add(this.lblFactura);
             this.Controls.Add(this.lblImpuesto);
             this.Controls.Add(this.lblSubtotal);
@@ -611,6 +670,7 @@
             this.Load += new System.EventHandler(this.frmFactura_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.frmFactura_KeyDown);
             ((System.ComponentModel.ISupportInitialize)(this.dgv)).EndInit();
+            this.cmsComprobante.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -657,5 +717,10 @@
         private System.Windows.Forms.Label lblSubtotal;
         private System.Windows.Forms.Label lblImpuesto;
         private System.Windows.Forms.Label lblFactura;
+        private System.Windows.Forms.Label lblComprobante;
+        private System.Windows.Forms.ComboBox cboTipoComprobante;
+        private System.Windows.Forms.TextBox txtComprobante;
+        private System.Windows.Forms.ContextMenuStrip cmsComprobante;
+        private System.Windows.Forms.ToolStripMenuItem mnuCambiarComprobante;
     }
 }
