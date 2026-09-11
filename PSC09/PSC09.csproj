@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="Clases\clsBusco.cs" />
     <Compile Include="Clases\ConvertImage.cs" />
+    <Compile Include="Clases\Tema.cs" />
     <Compile Include="Formularios\frmFactura.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -52,9 +52,13 @@
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
-            // 
+            //
             // menuStrip1
-            // 
+            //
+            this.menuStrip1.Renderer = PSC09.Tema.CrearRendererMenu();
+            this.menuStrip1.BackColor = PSC09.Tema.NebulosaIndigo;
+            this.menuStrip1.ForeColor = PSC09.Tema.TextoClaro;
+            this.menuStrip1.Font = PSC09.Tema.FuenteEtiqueta(false);
             this.menuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.registroToolStripMenuItem,
@@ -224,6 +228,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = PSC09.Tema.FondoClaro;
             this.ClientSize = new System.Drawing.Size(839, 487);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.menuStrip1);

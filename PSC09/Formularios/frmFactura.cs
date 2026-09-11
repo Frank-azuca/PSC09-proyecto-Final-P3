@@ -246,17 +246,17 @@ namespace PSC09
             column = dgv.Columns[05]; column.Width = 135;
 
             this.dgv.BorderStyle = BorderStyle.None;
-            this.dgv.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(238, 239, 249);
+            this.dgv.AlternatingRowsDefaultCellStyle.BackColor = Tema.LavandaSuave;
             this.dgv.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
-            this.dgv.DefaultCellStyle.SelectionBackColor = Color.DarkTurquoise;
-            this.dgv.DefaultCellStyle.SelectionForeColor = Color.WhiteSmoke;
-            this.dgv.BackgroundColor = Color.LightGray;
+            this.dgv.DefaultCellStyle.SelectionBackColor = Tema.OroEstelar;
+            this.dgv.DefaultCellStyle.SelectionForeColor = Tema.TextoOscuro;
+            this.dgv.BackgroundColor = Color.White;
 
             this.dgv.EnableHeadersVisualStyles = false;
             this.dgv.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
             this.dgv.ColumnHeadersDefaultCellStyle.Padding = new Padding(0, 6, 0, 6);
-            this.dgv.ColumnHeadersDefaultCellStyle.BackColor = Color.CornflowerBlue;
-            this.dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            this.dgv.ColumnHeadersDefaultCellStyle.BackColor = Tema.NebulosaIndigo;
+            this.dgv.ColumnHeadersDefaultCellStyle.ForeColor = Tema.TextoClaro;
         }
 
         private void InsertarData()

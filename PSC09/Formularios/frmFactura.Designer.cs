@@ -72,9 +72,9 @@
             // 
             // label1
             // 
-            this.label1.BackColor = System.Drawing.Color.DodgerBlue;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.label1.BackColor = PSC09.Tema.EspacioProfundo;
+            this.label1.Font = PSC09.Tema.FuenteTitulo();
+            this.label1.ForeColor = PSC09.Tema.OroEstelar;
             this.label1.Location = new System.Drawing.Point(0, 0);
             this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.Name = "label1";
@@ -85,8 +85,8 @@
             // 
             // label2
             // 
-            this.label2.BackColor = System.Drawing.Color.LightSkyBlue;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.BackColor = PSC09.Tema.LavandaSuave;
+            this.label2.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.Location = new System.Drawing.Point(14, 90);
             this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.Name = "label2";
@@ -97,8 +97,8 @@
             // 
             // label3
             // 
-            this.label3.BackColor = System.Drawing.Color.LightSkyBlue;
-            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.BackColor = PSC09.Tema.LavandaSuave;
+            this.label3.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.Location = new System.Drawing.Point(14, 121);
             this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label3.Name = "label3";
@@ -109,8 +109,8 @@
             // 
             // label4
             // 
-            this.label4.BackColor = System.Drawing.Color.LightSkyBlue;
-            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label4.BackColor = PSC09.Tema.LavandaSuave;
+            this.label4.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.Location = new System.Drawing.Point(14, 153);
             this.label4.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label4.Name = "label4";
@@ -121,7 +121,7 @@
             // 
             // txtCliente
             // 
-            this.txtCliente.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCliente.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCliente.Location = new System.Drawing.Point(211, 121);
             this.txtCliente.Margin = new System.Windows.Forms.Padding(2);
             this.txtCliente.Name = "txtCliente";
@@ -153,8 +153,8 @@
             // 
             // label6
             // 
-            this.label6.BackColor = System.Drawing.Color.LightSkyBlue;
-            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.BackColor = PSC09.Tema.LavandaSuave;
+            this.label6.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.Location = new System.Drawing.Point(8, 240);
             this.label6.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label6.Name = "label6";
@@ -165,7 +165,7 @@
             // 
             // txtArticulo
             // 
-            this.txtArticulo.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtArticulo.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtArticulo.Location = new System.Drawing.Point(8, 264);
             this.txtArticulo.Margin = new System.Windows.Forms.Padding(2);
             this.txtArticulo.Name = "txtArticulo";
@@ -187,7 +187,7 @@
             // 
             // txtCantidad
             // 
-            this.txtCantidad.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCantidad.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCantidad.Location = new System.Drawing.Point(615, 264);
             this.txtCantidad.Margin = new System.Windows.Forms.Padding(2);
             this.txtCantidad.Name = "txtCantidad";
@@ -228,8 +228,8 @@
             // 
             // label11
             // 
-            this.label11.BackColor = System.Drawing.Color.LightSkyBlue;
-            this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label11.BackColor = PSC09.Tema.LavandaSuave;
+            this.label11.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label11.Location = new System.Drawing.Point(194, 240);
             this.label11.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label11.Name = "label11";
@@ -240,8 +240,8 @@
             // 
             // label12
             // 
-            this.label12.BackColor = System.Drawing.Color.LightSkyBlue;
-            this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label12.BackColor = PSC09.Tema.LavandaSuave;
+            this.label12.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label12.Location = new System.Drawing.Point(611, 240);
             this.label12.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label12.Name = "label12";
@@ -252,8 +252,8 @@
             // 
             // label13
             // 
-            this.label13.BackColor = System.Drawing.Color.LightSkyBlue;
-            this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label13.BackColor = PSC09.Tema.LavandaSuave;
+            this.label13.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label13.Location = new System.Drawing.Point(749, 240);
             this.label13.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label13.Name = "label13";
@@ -264,8 +264,8 @@
             // 
             // label14
             // 
-            this.label14.BackColor = System.Drawing.Color.LightSkyBlue;
-            this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label14.BackColor = PSC09.Tema.LavandaSuave;
+            this.label14.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label14.Location = new System.Drawing.Point(883, 240);
             this.label14.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label14.Name = "label14";
@@ -276,8 +276,8 @@
             // 
             // label15
             // 
-            this.label15.BackColor = System.Drawing.Color.LightSkyBlue;
-            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label15.BackColor = PSC09.Tema.LavandaSuave;
+            this.label15.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label15.Location = new System.Drawing.Point(1019, 240);
             this.label15.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label15.Name = "label15";
@@ -309,8 +309,8 @@
             // 
             // label7
             // 
-            this.label7.BackColor = System.Drawing.Color.LightSkyBlue;
-            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.BackColor = PSC09.Tema.LavandaSuave;
+            this.label7.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.Location = new System.Drawing.Point(735, 655);
             this.label7.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label7.Name = "label7";
@@ -321,8 +321,8 @@
             // 
             // label8
             // 
-            this.label8.BackColor = System.Drawing.Color.LightSkyBlue;
-            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label8.BackColor = PSC09.Tema.LavandaSuave;
+            this.label8.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label8.Location = new System.Drawing.Point(735, 623);
             this.label8.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label8.Name = "label8";
@@ -333,8 +333,8 @@
             // 
             // label9
             // 
-            this.label9.BackColor = System.Drawing.Color.LightSkyBlue;
-            this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label9.BackColor = PSC09.Tema.LavandaSuave;
+            this.label9.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label9.Location = new System.Drawing.Point(735, 592);
             this.label9.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label9.Name = "label9";
@@ -382,7 +382,8 @@
             this.btnCONFACT.Size = new System.Drawing.Size(39, 25);
             this.btnCONFACT.TabIndex = 37;
             this.btnCONFACT.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            this.btnCONFACT.UseVisualStyleBackColor = true;
+            this.btnCONFACT.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnCONFACT);
             this.btnCONFACT.Click += new System.EventHandler(this.btnCONFACT_Click);
             // 
             // btnBorrrarLn
@@ -395,7 +396,8 @@
             this.btnBorrrarLn.TabIndex = 36;
             this.btnBorrrarLn.Text = "Borrar Linea";
             this.btnBorrrarLn.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            this.btnBorrrarLn.UseVisualStyleBackColor = true;
+            this.btnBorrrarLn.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnBorrrarLn);
             this.btnBorrrarLn.Click += new System.EventHandler(this.btnBorrrarLn_Click);
             // 
             // btnEditar
@@ -408,7 +410,8 @@
             this.btnEditar.TabIndex = 35;
             this.btnEditar.Text = "Editar Linea";
             this.btnEditar.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            this.btnEditar.UseVisualStyleBackColor = true;
+            this.btnEditar.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnEditar);
             this.btnEditar.Click += new System.EventHandler(this.btnEditar_Click);
             // 
             // btnLimpiarDgv
@@ -421,7 +424,8 @@
             this.btnLimpiarDgv.TabIndex = 34;
             this.btnLimpiarDgv.Text = "Limpiar Detalle";
             this.btnLimpiarDgv.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            this.btnLimpiarDgv.UseVisualStyleBackColor = true;
+            this.btnLimpiarDgv.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnLimpiarDgv);
             this.btnLimpiarDgv.Click += new System.EventHandler(this.btnLimpiarDgv_Click);
             // 
             // btnInsertarLn
@@ -434,7 +438,8 @@
             this.btnInsertarLn.TabIndex = 33;
             this.btnInsertarLn.Text = "Insertar Linea";
             this.btnInsertarLn.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            this.btnInsertarLn.UseVisualStyleBackColor = true;
+            this.btnInsertarLn.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnInsertarLn);
             this.btnInsertarLn.Click += new System.EventHandler(this.btnInsertarLn_Click);
             // 
             // btnVENCTE
@@ -446,7 +451,8 @@
             this.btnVENCTE.Size = new System.Drawing.Size(39, 26);
             this.btnVENCTE.TabIndex = 22;
             this.btnVENCTE.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            this.btnVENCTE.UseVisualStyleBackColor = true;
+            this.btnVENCTE.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnVENCTE);
             this.btnVENCTE.Click += new System.EventHandler(this.btnVENCTE_Click);
             // 
             // btnArticulo
@@ -458,7 +464,8 @@
             this.btnArticulo.Size = new System.Drawing.Size(51, 32);
             this.btnArticulo.TabIndex = 18;
             this.btnArticulo.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            this.btnArticulo.UseVisualStyleBackColor = true;
+            this.btnArticulo.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnArticulo);
             this.btnArticulo.Click += new System.EventHandler(this.btnArticulo_Click);
             // 
             // btnImprimir
@@ -471,7 +478,8 @@
             this.btnImprimir.TabIndex = 11;
             this.btnImprimir.Text = "Imprimir";
             this.btnImprimir.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            this.btnImprimir.UseVisualStyleBackColor = true;
+            this.btnImprimir.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnImprimir);
             this.btnImprimir.Click += new System.EventHandler(this.btnImprimir_Click);
             // 
             // btnSalir
@@ -484,7 +492,8 @@
             this.btnSalir.TabIndex = 9;
             this.btnSalir.Text = "Salir";
             this.btnSalir.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            this.btnSalir.UseVisualStyleBackColor = true;
+            this.btnSalir.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnSalir);
             this.btnSalir.Click += new System.EventHandler(this.btnSalir_Click);
             // 
             // btnBorrar
@@ -497,7 +506,8 @@
             this.btnBorrar.TabIndex = 8;
             this.btnBorrar.Text = "Borrrar";
             this.btnBorrar.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            this.btnBorrar.UseVisualStyleBackColor = true;
+            this.btnBorrar.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnBorrar);
             this.btnBorrar.Click += new System.EventHandler(this.btnBorrar_Click);
             // 
             // btnLimpiar
@@ -510,7 +520,8 @@
             this.btnLimpiar.TabIndex = 7;
             this.btnLimpiar.Text = "Limpiar";
             this.btnLimpiar.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            this.btnLimpiar.UseVisualStyleBackColor = true;
+            this.btnLimpiar.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnLimpiar);
             this.btnLimpiar.Click += new System.EventHandler(this.btnLimpiar_Click);
             // 
             // btnGuardar
@@ -523,7 +534,8 @@
             this.btnGuardar.TabIndex = 6;
             this.btnGuardar.Text = "Guardar";
             this.btnGuardar.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            this.btnGuardar.UseVisualStyleBackColor = true;
+            this.btnGuardar.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonPrimario(this.btnGuardar);
             this.btnGuardar.Click += new System.EventHandler(this.btnGuardar_Click);
             // 
             // frmFactura
@@ -531,6 +543,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
+            this.BackColor = PSC09.Tema.FondoClaro;
             this.ClientSize = new System.Drawing.Size(1166, 721);
             this.Controls.Add(this.lblFactura);
             this.Controls.Add(this.lblImpuesto);

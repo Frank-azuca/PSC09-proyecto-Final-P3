@@ -52,8 +52,8 @@
             // lblTitulo
             //
             this.lblTitulo.AutoSize = false;
-            this.lblTitulo.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTitulo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(38)))), ((int)(((byte)(80)))));
+            this.lblTitulo.Font = PSC09.Tema.FuenteTitulo();
+            this.lblTitulo.ForeColor = PSC09.Tema.EspacioProfundo;
             this.lblTitulo.Location = new System.Drawing.Point(0, 154);
             this.lblTitulo.Name = "lblTitulo";
             this.lblTitulo.Size = new System.Drawing.Size(601, 40);
@@ -64,7 +64,8 @@
             // lblSubtitulo
             //
             this.lblSubtitulo.AutoSize = false;
-            this.lblSubtitulo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblSubtitulo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblSubtitulo.ForeColor = PSC09.Tema.NebulosaIndigo;
             this.lblSubtitulo.Location = new System.Drawing.Point(0, 192);
             this.lblSubtitulo.Name = "lblSubtitulo";
             this.lblSubtitulo.Size = new System.Drawing.Size(601, 20);
@@ -82,7 +83,8 @@
             // label1
             //
             this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = PSC09.Tema.NebulosaIndigo;
+            this.label1.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.Location = new System.Drawing.Point(243, 216);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(125, 25);
@@ -92,7 +94,8 @@
             // lblCarga
             //
             this.lblCarga.AutoSize = true;
-            this.lblCarga.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblCarga.ForeColor = PSC09.Tema.NebulosaIndigo;
+            this.lblCarga.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblCarga.Location = new System.Drawing.Point(273, 279);
             this.lblCarga.Name = "lblCarga";
             this.lblCarga.Size = new System.Drawing.Size(43, 25);
@@ -109,6 +112,7 @@
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = PSC09.Tema.FondoClaro;
             this.ClientSize = new System.Drawing.Size(601, 319);
             this.Controls.Add(this.lblSubtitulo);
             this.Controls.Add(this.lblTitulo);
