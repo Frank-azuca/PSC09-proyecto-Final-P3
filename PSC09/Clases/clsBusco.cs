@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,7 @@ namespace PSC09
 {
     public class cnn
     {
-        public static string db = @"server=DESKTOP-EVH7H6T; database=sistemaFacturacion; integrated security=true";
+        public static string db = ConfigurationManager.ConnectionStrings["sistemaFacturacion"].ConnectionString;
     }
 
     public class Item

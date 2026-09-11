@@ -42,6 +42,7 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
@@ -202,6 +203,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\andromeda.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="BaseDeDatos\crear_base_datos.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

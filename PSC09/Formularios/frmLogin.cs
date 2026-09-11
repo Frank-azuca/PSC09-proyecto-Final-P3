@@ -111,15 +111,28 @@ namespace PSC09
         {
             string sqlQuery = "SELECT nombrecorto, " + "clave " + "FROM USUARIO" + " WHERE nombrecorto = '" + cualUsuario + "'";
 
-            SqlConnection cnxn = new SqlConnection(cnn.db);
-            cnxn.Open();
-
-            SqlCommand cmd = new SqlCommand(sqlQuery, cnxn);
-            SqlDataReader reader = cmd.ExecuteReader();
-
-            if (reader.Read())
+            try
             {
-                password = reader["clave"].ToString();
+                using (SqlConnection cnxn = new SqlConnection(cnn.db))
+                {
+                    cnxn.Open();
+
+                    SqlCommand cmd = new SqlCommand(sqlQuery, cnxn);
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    if (reader.Read())
+                    {
+                        password = reader["clave"].ToString();
+                    }
+                }
+            }
+            catch (SqlException)
+            {
+                MessageBox.Show(
+                    "No se pudo conectar con la base de datos.\n\nVerifica que SQL Server esté encendido y que la conexión en App.config sea correcta.",
+                    "Sin conexión",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
 
