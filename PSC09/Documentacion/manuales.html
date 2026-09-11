@@ -1,0 +1,611 @@
+<title>Manuales Andrómeda</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#f5f4fb;
+    --surface:#ffffff;
+    --surface-2:#ece9f9;
+    --ink:#1e1c33;
+    --ink-soft:#57527a;
+    --indigo:#201e45;
+    --indigo-2:#322d68;
+    --gold:#b8853a;
+    --gold-strong:#96692a;
+    --border:#dedaf2;
+    --code-bg:#efecfa;
+    --shadow: 0 1px 2px rgba(32,30,69,.06), 0 8px 24px rgba(32,30,69,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f0e21;
+      --surface:#181633;
+      --surface-2:#211f45;
+      --ink:#f1efff;
+      --ink-soft:#b6b0d9;
+      --indigo:#0a0918;
+      --indigo-2:#251f52;
+      --gold:#e8c279;
+      --gold-strong:#f2d199;
+      --border:#312c5e;
+      --code-bg:#1c1a3d;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f0e21;
+    --surface:#181633;
+    --surface-2:#211f45;
+    --ink:#f1efff;
+    --ink-soft:#b6b0d9;
+    --indigo:#0a0918;
+    --indigo-2:#251f52;
+    --gold:#e8c279;
+    --gold-strong:#f2d199;
+    --border:#312c5e;
+    --code-bg:#1c1a3d;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Public Sans", system-ui, sans-serif;
+    font-size:16px;
+    line-height:1.6;
+  }
+  h1,h2,h3,h4{
+    font-family:"Fraunces", Georgia, serif;
+    text-wrap:balance;
+    color:var(--ink);
+    margin:0 0 .5em;
+  }
+  a{color:var(--gold-strong);}
+  :root[data-theme="dark"] a, @media (prefers-color-scheme:dark){ a{color:var(--gold);} }
+
+  /* ---------- Shell layout ---------- */
+  .topbar{
+    background:var(--indigo);
+    color:#fff;
+    padding:14px 20px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    position:sticky;
+    top:0;
+    z-index:20;
+    box-shadow:var(--shadow);
+  }
+  .topbar .mark{
+    width:30px;height:30px;border-radius:50%;
+    background:
+      radial-gradient(circle at 50% 50%, var(--gold) 0 18%, transparent 19%),
+      conic-gradient(from 210deg, transparent 0 20deg, rgba(232,194,121,.55) 40deg 70deg, transparent 90deg 180deg, rgba(232,194,121,.35) 200deg 230deg, transparent 250deg 360deg),
+      radial-gradient(ellipse at center, #2a2760 0%, #0a0918 75%);
+    flex:none;
+  }
+  .topbar .word{
+    font-family:"Fraunces", serif;
+    font-weight:600;
+    letter-spacing:.04em;
+    color:var(--gold);
+    font-size:1.05rem;
+  }
+  .topbar .sub{
+    color:#c8c3ec;
+    font-size:.85rem;
+    padding-left:10px;
+    margin-left:2px;
+    border-left:1px solid rgba(255,255,255,.2);
+  }
+
+  .shell{
+    display:grid;
+    grid-template-columns:270px 1fr;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  nav.side{
+    padding:28px 16px 60px;
+    position:sticky;
+    top:60px;
+    align-self:start;
+    height:calc(100vh - 60px);
+    overflow-y:auto;
+  }
+  nav.side .group-label{
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.09em;
+    color:var(--ink-soft);
+    font-weight:600;
+    margin:22px 0 8px;
+    padding:0 10px;
+  }
+  nav.side .group-label:first-child{margin-top:0;}
+  nav.side a{
+    display:block;
+    padding:7px 10px;
+    border-radius:8px;
+    color:var(--ink-soft);
+    text-decoration:none;
+    font-size:.92rem;
+    border-left:2px solid transparent;
+  }
+  nav.side a:hover{background:var(--surface-2); color:var(--ink);}
+  nav.side a.active{
+    color:var(--ink);
+    background:var(--surface-2);
+    border-left-color:var(--gold-strong);
+    font-weight:600;
+  }
+
+  main{
+    padding:40px 40px 100px;
+    min-width:0;
+  }
+  .doc-hero{
+    margin-bottom:36px;
+    padding-bottom:24px;
+    border-bottom:1px solid var(--border);
+  }
+  .doc-hero .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:.09em;
+    font-size:.75rem;
+    font-weight:600;
+    color:var(--gold-strong);
+  }
+  .doc-hero h1{font-size:2.1rem; margin-top:.3em;}
+  .doc-hero p{color:var(--ink-soft); max-width:62ch; margin:.6em 0 0;}
+
+  section.chapter{margin-bottom:56px; scroll-margin-top:76px;}
+  section.chapter h2{
+    font-size:1.5rem;
+    padding-bottom:.4em;
+    border-bottom:1px solid var(--border);
+  }
+  section.chapter h3{font-size:1.15rem; margin-top:1.6em;}
+  section.chapter p{max-width:68ch;}
+  section.chapter ol, section.chapter ul{max-width:66ch; padding-left:1.3em;}
+  section.chapter li{margin:.35em 0;}
+
+  .callout{
+    background:var(--surface-2);
+    border-left:3px solid var(--gold-strong);
+    border-radius:8px;
+    padding:12px 16px;
+    margin:16px 0;
+    max-width:64ch;
+    font-size:.95rem;
+  }
+
+  table{
+    border-collapse:collapse;
+    width:100%;
+    max-width:74ch;
+    margin:1em 0 1.6em;
+    font-size:.94rem;
+    background:var(--surface);
+    box-shadow:var(--shadow);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  th,td{
+    text-align:left;
+    padding:10px 14px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  thead th{
+    background:var(--indigo);
+    color:var(--gold);
+    font-family:"Fraunces", serif;
+    font-weight:600;
+    font-size:.9rem;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+
+  code{
+    font-family:"IBM Plex Mono", monospace;
+    background:var(--code-bg);
+    padding:.15em .4em;
+    border-radius:5px;
+    font-size:.88em;
+  }
+  pre{
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:16px 18px;
+    overflow-x:auto;
+    max-width:78ch;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:.85rem;
+    line-height:1.55;
+  }
+  pre code{background:none; padding:0;}
+
+  .diagram{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:.82rem;
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px 20px;
+    overflow-x:auto;
+    max-width:78ch;
+    color:var(--ink-soft);
+    white-space:pre;
+  }
+
+  .tree{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:.85rem;
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px 20px;
+    overflow-x:auto;
+    max-width:78ch;
+    white-space:pre;
+    line-height:1.65;
+  }
+
+  .faq dt{font-weight:600; margin-top:1.1em;}
+  .faq dd{margin:.25em 0 0; color:var(--ink-soft); max-width:64ch;}
+
+  .divider-manual{
+    margin:64px 0 40px;
+    display:flex;
+    align-items:center;
+    gap:16px;
+    color:var(--ink-soft);
+    max-width:78ch;
+  }
+  .divider-manual::before, .divider-manual::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--border);
+  }
+  .divider-manual span{
+    font-family:"Fraunces", serif;
+    font-size:.85rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+
+  footer.page{
+    max-width:1180px;
+    margin:0 auto;
+    padding:20px 40px 60px;
+    color:var(--ink-soft);
+    font-size:.85rem;
+  }
+
+  @media (max-width: 780px){
+    .shell{grid-template-columns:1fr;}
+    nav.side{
+      position:static;
+      height:auto;
+      display:flex;
+      flex-wrap:nowrap;
+      overflow-x:auto;
+      gap:4px;
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+    }
+    nav.side .group-label{display:none;}
+    nav.side a{white-space:nowrap; border-left:none; border-bottom:2px solid transparent;}
+    nav.side a.active{border-left:none; border-bottom-color:var(--gold-strong);}
+    main{padding:28px 20px 80px;}
+  }
+</style>
+
+<header class="topbar">
+  <div class="mark" aria-hidden="true"></div>
+  <div class="word">ANDRÓMEDA</div>
+  <div class="sub">Documentación</div>
+</header>
+
+<div class="shell">
+  <nav class="side" id="sidenav">
+    <div class="group-label">Manual de Usuario</div>
+    <a href="#u-abrir">1. Abrir el programa</a>
+    <a href="#u-login">2. Iniciar sesión</a>
+    <a href="#u-menu">3. El Menú Principal</a>
+    <a href="#u-cliente">4. Registrar un Cliente</a>
+    <a href="#u-producto">5. Registrar un Producto</a>
+    <a href="#u-factura">6. Hacer una Factura</a>
+    <a href="#u-usuarios">7. Gestión de Usuarios</a>
+    <a href="#u-cerrar">8. Cerrar el programa</a>
+    <a href="#u-faq">Preguntas frecuentes</a>
+
+    <div class="group-label">Manual Técnico</div>
+    <a href="#t-stack">1. Stack tecnológico</a>
+    <a href="#t-estructura">2. Estructura del proyecto</a>
+    <a href="#t-conexion">3. Conexión a la BD</a>
+    <a href="#t-modelo">4. Modelo de datos</a>
+    <a href="#t-formularios">5. Formularios</a>
+    <a href="#t-tema">6. Tema visual</a>
+    <a href="#t-responsive">7. Diseño responsivo</a>
+    <a href="#t-seguridad">8. Seguridad — deuda técnica</a>
+    <a href="#t-compilar">9. Cómo compilar</a>
+    <a href="#t-pendientes">10. Pendientes</a>
+  </nav>
+
+  <main>
+    <!-- ============ MANUAL DE USUARIO ============ -->
+    <div class="doc-hero">
+      <div class="eyebrow">Parte I</div>
+      <h1>Manual de Usuario</h1>
+      <p>Sistema de facturación Andrómeda. Esta guía explica cómo usarlo día a día para atender el negocio.</p>
+    </div>
+
+    <section class="chapter" id="u-abrir">
+      <h2>1. Abrir el programa</h2>
+      <p>Doble clic en el ícono de <strong>Andrómeda</strong> en el escritorio (o en el archivo <code>Andromeda.exe</code>). Primero aparece una pantalla de bienvenida con el logo, y luego la pantalla de inicio de sesión.</p>
+      <div class="callout">Si el programa muestra <strong>"No se pudo conectar con la base de datos"</strong>, el equipo con SQL Server está apagado o desconectado. Enciéndelo y vuelve a intentar.</div>
+    </section>
+
+    <section class="chapter" id="u-login">
+      <h2>2. Iniciar sesión</h2>
+      <p>Escribe tu <strong>usuario</strong> y <strong>contraseña</strong>, y presiona <strong>Aceptar</strong> (o Enter). Si los datos son incorrectos, el sistema avisa.</p>
+      <ul>
+        <li>Usuario inicial de fábrica: <code>admin</code></li>
+        <li>Si olvidas tu contraseña, pide a alguien con acceso que la restablezca desde <strong>Registro → Usuario</strong>.</li>
+      </ul>
+    </section>
+
+    <section class="chapter" id="u-menu">
+      <h2>3. El Menú Principal</h2>
+      <p>Al entrar verás una barra de menú arriba con estas opciones:</p>
+      <table>
+        <thead><tr><th>Menú</th><th>Para qué sirve</th></tr></thead>
+        <tbody>
+          <tr><td>Registro</td><td>Dar de alta usuarios, productos, clientes y facturas</td></tr>
+          <tr><td>Consulta</td><td>Buscar información (estado de cuenta, clientes)</td></tr>
+          <tr><td>Reporte</td><td>Reportes de facturación</td></tr>
+          <tr><td>Configuración</td><td>Opciones del sistema</td></tr>
+          <tr><td>Salir</td><td>Cerrar sesión o cerrar el programa</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="chapter" id="u-cliente">
+      <h2>4. Registrar un Cliente</h2>
+      <ol>
+        <li>Ve a <strong>Registro → Cliente</strong>.</li>
+        <li>Llena el <strong>Nombre</strong> (obligatorio) y los demás datos que tengas: dirección, sector, país/ciudad, teléfonos, cédula o RNC, correo.</li>
+        <li>Elige el <strong>Estatus</strong> (Activo por defecto) y marca <strong>Paga Impuesto</strong> si aplica.</li>
+        <li>Presiona <strong>Guardar</strong>. El sistema asigna el código automáticamente.</li>
+        <li>Para editar un cliente ya existente, escribe su código en el primer campo y sal de esa casilla (Tab) — los datos se cargan solos.</li>
+      </ol>
+      <div class="callout"><strong>Borrar</strong> no elimina al cliente, lo marca como <strong>Inactivo</strong> — así no se pierde su historial.</div>
+    </section>
+
+    <section class="chapter" id="u-producto">
+      <h2>5. Registrar un Producto</h2>
+      <ol>
+        <li>Ve a <strong>Registro → Productos</strong>.</li>
+        <li>El <strong>Código del Producto</strong> se sugiere automáticamente; puedes escribir uno existente para editarlo.</li>
+        <li>Llena Descripción, Cantidad de Existencia, Costo, Precio de Venta, Impuesto y Código de Barra.</li>
+        <li>Puedes agregar una foto del producto haciendo clic sobre el cuadro de imagen.</li>
+        <li>Presiona <strong>Guardar</strong>.</li>
+        <li>En la pestaña <strong>Código de barra</strong> puedes generar e imprimir la etiqueta del producto.</li>
+      </ol>
+    </section>
+
+    <section class="chapter" id="u-factura">
+      <h2>6. Hacer una Factura</h2>
+      <ol>
+        <li>Ve a <strong>Registro → Factura</strong>. El número de factura se asigna solo.</li>
+        <li>Escribe el código del <strong>Cliente</strong> y sal de la casilla (o usa la lupa para buscarlo por nombre).</li>
+        <li>Escribe el código del <strong>Artículo</strong>, la <strong>Cantidad</strong>, y presiona <strong>Insertar Línea</strong> para agregarlo a la tabla.</li>
+        <li>Repite el paso anterior por cada producto de la venta.</li>
+        <li>Si te equivocas en una línea: selecciónala en la tabla y usa <strong>Editar Línea</strong> o <strong>Borrar Línea</strong>.</li>
+        <li>Revisa el <strong>Subtotal</strong>, <strong>Impuesto</strong> y <strong>Total</strong> al final.</li>
+        <li>Presiona <strong>Guardar</strong> para completar la factura. El inventario del producto se descuenta automáticamente.</li>
+      </ol>
+      <p>Para volver a abrir una factura ya hecha, usa el botón de lupa junto a "Número Factura".</p>
+    </section>
+
+    <section class="chapter" id="u-usuarios">
+      <h2>7. Gestión de Usuarios <span style="font-weight:400; color:var(--ink-soft); font-size:.7em;">(solo administradores)</span></h2>
+      <p>Ve a <strong>Registro → Usuario</strong> para:</p>
+      <ul>
+        <li>Crear un nuevo usuario (usuario, contraseña, puesto, nombre completo).</li>
+        <li>Cambiar la contraseña de alguien: escribe su usuario, sal de la casilla, cambia la contraseña y presiona <strong>Guardar</strong>.</li>
+        <li><strong>Desactivar</strong> a alguien que ya no debe entrar (no borra su historial de facturas).</li>
+      </ul>
+    </section>
+
+    <section class="chapter" id="u-cerrar">
+      <h2>8. Cerrar el programa</h2>
+      <ul>
+        <li><strong>Cerrar sesión</strong>: vuelve a la pantalla de login sin cerrar el programa (para que otra persona entre con su usuario).</li>
+        <li><strong>Cerrar programa</strong>: cierra Andrómeda por completo.</li>
+        <li>También puedes usar la tecla <strong>Esc</strong> en la mayoría de las pantallas para salir de ellas.</li>
+      </ul>
+    </section>
+
+    <section class="chapter" id="u-faq">
+      <h2>Preguntas frecuentes</h2>
+      <dl class="faq">
+        <dt>¿Qué hago si el programa no abre o se congela?</dt>
+        <dd>Ciérralo desde el Administrador de Tareas y ábrelo de nuevo. Si el problema persiste, avisa para revisar la conexión a la base de datos.</dd>
+        <dt>¿Puedo cambiar el tamaño de las ventanas?</dt>
+        <dd>Sí, todas las pantallas de trabajo (menú, factura, productos, clientes, usuarios y búsquedas) se pueden maximizar o agrandar y se ajustan solas.</dd>
+        <dt>¿Se pierden los datos si borro un cliente o producto?</dt>
+        <dd>No. "Borrar" los desactiva, pero su historial de facturas se conserva.</dd>
+      </dl>
+    </section>
+
+    <div class="divider-manual"><span>Manual Técnico</span></div>
+
+    <!-- ============ MANUAL TECNICO ============ -->
+    <div class="doc-hero">
+      <div class="eyebrow">Parte II</div>
+      <h1>Manual Técnico</h1>
+      <p>Referencia para dar mantenimiento o seguir desarrollando el sistema.</p>
+    </div>
+
+    <section class="chapter" id="t-stack">
+      <h2>1. Stack tecnológico</h2>
+      <ul>
+        <li><strong>Lenguaje/Framework</strong>: C#, .NET Framework 4.7.2, WinForms</li>
+        <li><strong>IDE</strong>: Visual Studio 2022 Community</li>
+        <li><strong>Base de datos</strong>: SQL Server (ADO.NET puro, sin ORM)</li>
+        <li><strong>Reportes/PDF</strong>: iTextSharp (<code>itextsharp.dll</code>, referenciado localmente)</li>
+        <li><strong>Control de versiones</strong>: Git</li>
+      </ul>
+    </section>
+
+    <section class="chapter" id="t-estructura">
+      <h2>2. Estructura del proyecto</h2>
+      <div class="tree">PSC09/                         ← Carpeta del proyecto (PSC09.csproj)
+├── BaseDeDatos/
+│   └── crear_base_datos.sql   ← Script de instalación limpia (tablas + semillas)
+├── Clases/
+│   ├── clsBusco.cs            ← cnn.db (conexión), Item, Busco.BuscaUltimoNumero()
+│   ├── ConvertImage.cs        ← Conversión byte[] &lt;-&gt; Image
+│   └── Tema.cs                ← Paleta de colores/fuentes de Andrómeda
+├── Documentacion/              ← Estos manuales
+├── Formularios/                ← Todas las pantallas (Form + Designer + resx)
+├── Properties/                 ← AssemblyInfo, Resources, Settings
+├── Resources/                  ← Íconos e imágenes embebidas
+├── App.config                  ← Cadena de conexión (connectionStrings)
+└── Program.cs                  ← Punto de entrada (Main)</div>
+      <p>El <code>.sln</code> en la raíz del repo referencia <code>PSC09/PSC09.csproj</code>. <strong>Ojo</strong>: en commits anteriores hubo una copia duplicada anidada del proyecto (<code>PSC09/PSC09/PSC09/...</code>) por un error de copiado; fue eliminada. Si algún día reaparece algo así, no es parte del proyecto real — el real es el que abre el <code>.sln</code>.</p>
+    </section>
+
+    <section class="chapter" id="t-conexion">
+      <h2>3. Conexión a la base de datos</h2>
+      <p>La cadena de conexión vive en <code>App.config</code>:</p>
+      <pre><code>&lt;connectionStrings&gt;
+  &lt;add name="sistemaFacturacion"
+       connectionString="server=(local); database=sistemaFacturacion; integrated security=true"
+       providerName="System.Data.SqlClient" /&gt;
+&lt;/connectionStrings&gt;</code></pre>
+      <p><code>clsBusco.cs</code> la lee así: <code>ConfigurationManager.ConnectionStrings["sistemaFacturacion"].ConnectionString</code>. Para apuntar a otro servidor (por ejemplo <code>.\SQLEXPRESS</code> en una instalación nueva), solo se edita este archivo — <strong>no requiere recompilar</strong>.</p>
+      <p>Para levantar la base de datos desde cero en una computadora nueva: ejecutar <code>BaseDeDatos/crear_base_datos.sql</code> completo en SQL Server Management Studio. Crea las 8 tablas, sus llaves primarias/foráneas, semillas de País/Ciudad/Estatus, y un usuario <code>admin</code> / <code>admin123</code>.</p>
+    </section>
+
+    <section class="chapter" id="t-modelo">
+      <h2>4. Modelo de datos <span style="font-weight:400;color:var(--ink-soft);font-size:.65em;">(normalizado a 3FN)</span></h2>
+      <table>
+        <thead><tr><th>Tabla</th><th>Propósito</th><th>Notas</th></tr></thead>
+        <tbody>
+          <tr><td><code>USUARIO</code></td><td>Cuentas de acceso</td><td><code>activo</code> es <code>'1'</code>/<code>'0'</code> como texto</td></tr>
+          <tr><td><code>CLIENTES</code></td><td>Clientes del negocio</td><td><code>idCiudad</code>→CIUDADES, <code>idEstatus</code>→mESTATUSCTE</td></tr>
+          <tr><td><code>PAISES</code> / <code>CIUDADES</code></td><td>Catálogo geográfico</td><td>Evita repetir país/ciudad como texto libre</td></tr>
+          <tr><td><code>mESTATUSCTE</code></td><td>Estatus de cliente</td><td>Reutilizada; antes existía sin usarse</td></tr>
+          <tr><td><code>PRODUCTOS</code></td><td>Inventario</td><td>PK <code>item</code> (código manual)</td></tr>
+          <tr><td><code>HFACTURA</code></td><td>Encabezado de factura</td><td>PK <code>factura</code></td></tr>
+          <tr><td><code>DFACTURA</code></td><td>Detalle (líneas) de factura</td><td>FK a HFACTURA y PRODUCTOS. Ya no guarda cliente/fecha (dependencia transitiva corregida)</td></tr>
+          <tr><td><code>MUTOCTE</code></td><td>Movimientos de cuenta (ledger)</td><td>FK a CLIENTES</td></tr>
+          <tr><td><code>SECUENCIA</code></td><td>Contadores de numeración</td><td>Leída por <code>Busco.BuscaUltimoNumero(id)</code></td></tr>
+        </tbody>
+      </table>
+      <p>Diagrama simplificado de relaciones:</p>
+      <div class="diagram">PAISES ── CIUDADES ──┐
+                      ├── CLIENTES ──┬── HFACTURA ── DFACTURA ── PRODUCTOS
+mESTATUSCTE ──────────┘              └── MUTOCTE
+
+SECUENCIA (independiente, solo contadores)
+USUARIO (independiente, solo login)</div>
+    </section>
+
+    <section class="chapter" id="t-formularios">
+      <h2>5. Formularios principales</h2>
+      <table>
+        <thead><tr><th>Formulario</th><th>Función</th></tr></thead>
+        <tbody>
+          <tr><td><code>frmSplashScreen</code></td><td>Pantalla de carga inicial (tamaño fijo)</td></tr>
+          <tr><td><code>frmLogin</code></td><td>Autenticación contra USUARIO (tamaño fijo)</td></tr>
+          <tr><td><code>frmMenu</code></td><td>Menú principal, punto de navegación</td></tr>
+          <tr><td><code>frmFactura</code></td><td>Alta de facturas (encabezado + líneas vía DataGridView)</td></tr>
+          <tr><td><code>frmProductos</code></td><td>CRUD de productos + código de barra (Code128 vía iTextSharp)</td></tr>
+          <tr><td><code>frmCliente</code></td><td>CRUD de clientes, combos en cascada País→Ciudad</td></tr>
+          <tr><td><code>frmUsuario</code></td><td>CRUD de usuarios del sistema (incluye cambio de contraseña)</td></tr>
+          <tr><td><code>frmVENCTE</code> / <code>frmVENPRO</code> / <code>frmVENFACT</code></td><td>Ventanas emergentes de búsqueda (cliente, producto, factura) desde Factura</td></tr>
+        </tbody>
+      </table>
+      <p>Patrón repetido en casi todos: <code>BuscarData()</code>, <code>InsertarData()</code>/<code>ActualizaData()</code>, <code>BorrarData()</code> (baja lógica, no física), <code>LimpiarFormulario()</code>.</p>
+    </section>
+
+    <section class="chapter" id="t-tema">
+      <h2>6. Tema visual <span style="font-weight:400;color:var(--ink-soft);font-size:.65em;">(Clases/Tema.cs)</span></h2>
+      <p>Paleta y tipografía centralizadas, inspiradas en el logo de la galaxia:</p>
+      <ul>
+        <li><code>EspacioProfundo</code> (indigo oscuro) — títulos y encabezados</li>
+        <li><code>NebulosaIndigo</code> — barra de menú, encabezados de tabla</li>
+        <li><code>OroEstelar</code> (dorado) — acento de botones primarios y selección en tablas</li>
+        <li><code>LavandaSuave</code> — fondo de etiquetas de campo</li>
+        <li>Fuente: Segoe UI (reemplazó Microsoft Sans Serif)</li>
+      </ul>
+      <p><code>Tema.EstilizarBotonPrimario(btn)</code> / <code>EstilizarBotonSecundario(btn)</code> aplican colores, fuente y <code>FlatStyle</code> consistentes. Al agregar un formulario nuevo, usar estos helpers en vez de colores sueltos.</p>
+      <div class="callout"><strong>Cuidado con el ancho de los botones</strong>: Segoe UI Bold necesita más espacio que la fuente original del proyecto. Botones angostos (~80px) pueden partir el texto en dos líneas; ya corregido en los existentes, pero vigilarlo en botones nuevos con texto largo ("Seleccionar", "Desactivar").</div>
+    </section>
+
+    <section class="chapter" id="t-responsive">
+      <h2>7. Diseño responsivo</h2>
+      <p>Los formularios de trabajo (todos menos Login/Splash) usan <code>Anchor</code> para adaptarse al tamaño de ventana:</p>
+      <ul>
+        <li>Títulos: <code>Top, Left, Right</code></li>
+        <li>Barra de botones: <code>Top, Right</code></li>
+        <li>Tablas (<code>DataGridView</code>) y <code>TabControl</code>: <code>Top, Bottom, Left, Right</code> (se estiran)</li>
+        <li>Controles bajo una tabla que crece (totales, botones de línea en Factura): <code>Bottom, Left</code> o <code>Bottom, Right</code></li>
+        <li>Cada formulario tiene <code>MinimumSize</code> para que nunca se encimen los controles</li>
+      </ul>
+      <p>La columna de texto más larga de cada grilla (Descripción, Nombre) usa <code>AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill</code> para aprovechar el espacio extra en pantallas grandes.</p>
+    </section>
+
+    <section class="chapter" id="t-seguridad">
+      <h2>8. Seguridad — deuda técnica conocida</h2>
+      <ul>
+        <li><strong>Inyección SQL</strong>: la mayoría de las consultas de búsqueda (<code>BuscarCliente</code>, <code>BuscarArticulo</code>, login, etc.) concatenan strings en vez de usar parámetros. Los <code>INSERT</code>/<code>UPDATE</code> principales sí usan parámetros (<code>AddWithValue</code>). Si se expone esta app a más usuarios o a internet, esto debe corregirse primero.</li>
+        <li><strong>Contraseñas en texto plano</strong>: se guardan y comparan tal cual en <code>USUARIO.clave</code>, sin hash. Aceptable para un sistema interno de un solo local, pero no debe reutilizarse ese patrón si el sistema crece.</li>
+        <li><strong>Sin <code>try/catch</code> en la mayoría de los accesos a datos</strong>: solo el login y el guardado de cliente/factura manejan errores de conexión. El resto puede lanzar excepciones no controladas si la base de datos no responde.</li>
+      </ul>
+    </section>
+
+    <section class="chapter" id="t-compilar">
+      <h2>9. Cómo compilar</h2>
+      <p>Requisitos: Visual Studio 2022 Community (o el Build Tools equivalente) con la carga de trabajo ".NET desktop development", que incluye MSBuild y las Reference Assemblies de .NET Framework 4.7.2.</p>
+      <pre><code>MSBuild.exe PSC09/PSC09.csproj -t:Rebuild -p:Configuration=Debug</code></pre>
+      <p>El ejecutable queda en <code>PSC09/PSC09/bin/Debug/Andromeda.exe</code>.</p>
+    </section>
+
+    <section class="chapter" id="t-pendientes">
+      <h2>10. Pendientes / ideas para continuar</h2>
+      <ul>
+        <li>Las pantallas de "Puesto de Trabajo" y "Departamento" existen en el menú pero no están conectadas a ningún formulario.</li>
+        <li>La función de "Recibo" (existe una secuencia reservada, id=3 en SECUENCIA) no está implementada en el proyecto real.</li>
+        <li>Las consultas de "Estado de Cuenta" y "Alfabético de Clientes" (menú Consulta) no tienen formulario asociado todavía.</li>
+        <li>Migrar las consultas concatenadas a parámetros (ver sección 8) cuando haya tiempo.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer class="page">Andrómeda · Sistema de Facturación · Documentación interna</footer>
+
+<script>
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.side a'));
+  var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  function onScroll(){
+    var pos = window.scrollY + 90;
+    var current = 0;
+    for (var i=0;i<sections.length;i++){
+      if (sections[i] && sections[i].offsetTop <= pos) current = i;
+    }
+    links.forEach(function(a,i){ a.classList.toggle('active', i===current); });
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>

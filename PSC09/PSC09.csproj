@@ -226,5 +226,11 @@
   <ItemGroup>
     <None Include="BaseDeDatos\crear_base_datos.sql" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Documentacion\MANUAL_USUARIO.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Documentacion\MANUAL_TECNICO.md" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
