@@ -30,8 +30,11 @@ namespace PSC09
             this.dgv.Rows.Clear();
             this.dgv.Refresh();
 
+            // ESTATUSPRODUCTO = 1 para no ofrecer en el Punto de Venta ni en Factura un
+            // producto ya desactivado (mismo criterio que Reporte de Inventario).
             SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            string stQuery = "SELECT ITEM, DESCRIPCION, PRECIOVENTA FROM PRODUCTOS WHERE DESCRIPCION LIKE @busqueda" +
+            string stQuery = "SELECT ITEM, DESCRIPCION, PRECIOVENTA FROM PRODUCTOS " +
+                             "WHERE DESCRIPCION LIKE @busqueda AND ESTATUSPRODUCTO = 1" +
                              " ORDER BY DESCRIPCION ASC";
 
             SqlCommand cmd = new SqlCommand(stQuery, cnx);
@@ -50,6 +53,11 @@ namespace PSC09
             cmd.Dispose();
             cnx.Close();
 
+            // Deja la primera fila activa para que Tab/flechas naveguen de una vez.
+            if (dgv.Rows.Count > 0)
+            {
+                dgv.CurrentCell = dgv.Rows[0].Cells[0];
+            }
         }
 
         private void btnBuscar_Click(object sender, EventArgs e)
@@ -59,12 +67,20 @@ namespace PSC09
 
         private void btnSeleccionar_Click(object sender, EventArgs e)
         {
-            if (dgv.RowCount > 0)
+            SeleccionarProductoActual();
+        }
+
+        private void SeleccionarProductoActual()
+        {
+            if (dgv.CurrentRow == null)
             {
-                var1 = dgv.CurrentRow.Cells[0].Value.ToString();
-                var2 = dgv.CurrentRow.Cells[1].Value.ToString();
-                this.Close();
+                MessageBox.Show("Selecciona un producto de la lista primero.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
+
+            var1 = dgv.CurrentRow.Cells[0].Value.ToString();
+            var2 = dgv.CurrentRow.Cells[1].Value.ToString();
+            this.Close();
         }
 
         private void btnLimpiar_Click(object sender, EventArgs e)
@@ -76,6 +92,19 @@ namespace PSC09
         private void btnSalir_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        // Abre el alta de productos como diálogo modal (frmProductos.btnSalir_Click
+        // revisa this.Modal para no reabrir el menú principal al cerrarse desde aquí) y
+        // refresca la búsqueda al volver, por si el producto recién creado ya aparece.
+        private void btnNuevoProducto_Click(object sender, EventArgs e)
+        {
+            using (frmProductos frm = new frmProductos())
+            {
+                frm.ShowDialog(this);
+            }
+
+            BuscaData();
         }
 
         private void frmVENPRO_KeyDown(object sender, KeyEventArgs e)
@@ -91,6 +120,30 @@ namespace PSC09
             btnSeleccionar.PerformClick();
         }
 
+        // Enter selecciona el producto resaltado; Tab / Shift+Tab mueven la fila activa
+        // hacia abajo/arriba en vez de saltar de columna (mismo patrón que frmVENCTE).
+        private void dgv_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                SeleccionarProductoActual();
+            }
+            else if (e.KeyCode == Keys.Tab)
+            {
+                if (dgv.CurrentCell != null)
+                {
+                    int filaDestino = dgv.CurrentCell.RowIndex + (e.Shift ? -1 : 1);
+                    if (filaDestino >= 0 && filaDestino < dgv.Rows.Count)
+                    {
+                        dgv.CurrentCell = dgv.Rows[filaDestino].Cells[dgv.CurrentCell.ColumnIndex];
+                    }
+                }
+                e.Handled = true;
+            }
+        }
+
         private void EstiloDataGridView()
         {
             this.dgv.EnableHeadersVisualStyles = false;
@@ -98,6 +151,8 @@ namespace PSC09
             this.dgv.AllowUserToDeleteRows = false;
             this.dgv.ColumnHeadersVisible = false;
             this.dgv.RowHeadersVisible = false;
+            this.dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            this.dgv.MultiSelect = false;
 
             this.dgv.Columns.Add("Col00", "ITEM");
             this.dgv.Columns.Add("Col01", "DESCRIPCION");

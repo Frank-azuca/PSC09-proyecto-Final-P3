@@ -25,6 +25,7 @@ namespace PSC09
         decimal nmCant;
         decimal nmPrec;
         string archivo = "";
+        int? consumidorFinalId;
 
         List<TipoComprobante> tiposComprobante = new List<TipoComprobante>();
 
@@ -78,9 +79,35 @@ namespace PSC09
                 {
                     if (rdr.Read())
                     {
-                        lblNombre.Text = rdr["NOMBRE"].ToString();
+                        txtNombre.Text = rdr["NOMBRE"].ToString();
+                        ActualizarEditabilidadNombre(nmCliente);
                     }
                 }
+            }
+        }
+
+        // El nombre del cliente sólo se puede escribir libremente cuando el cliente
+        // activo es "Consumidor Final" (para poner el nombre real del comprador en el
+        // recibo sin registrarlo como cliente nuevo); con cualquier otro cliente ya
+        // registrado, queda de solo lectura para no desfigurar sus datos reales. Mismo
+        // criterio que frmPuntoVenta.AplicarCliente().
+        private void ActualizarEditabilidadNombre(string idClienteTexto)
+        {
+            int idCliente;
+            txtNombre.ReadOnly = !(consumidorFinalId.HasValue
+                && int.TryParse(idClienteTexto, out idCliente)
+                && idCliente == consumidorFinalId.Value);
+        }
+
+        private void CargarConsumidorFinalId()
+        {
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand("SELECT TOP 1 IDCLIENTE FROM CLIENTES WHERE NOMBRE = 'Consumidor Final'", cnx);
+
+                object resultado = cmd.ExecuteScalar();
+                consumidorFinalId = (resultado == null || resultado == DBNull.Value) ? (int?)null : Convert.ToInt32(resultado);
             }
         }
 
@@ -137,7 +164,8 @@ namespace PSC09
 
             lblFactura.Text = "";
             txtCliente.Clear();
-            lblNombre.Text = "";
+            txtNombre.Text = "";
+            txtNombre.ReadOnly = true;
             lblSubtotal.Text = "";
             lblImpuesto.Text = "";
             lblTotal.Text = "";
@@ -234,7 +262,8 @@ namespace PSC09
                             dtpFechaFactura.Value = fechaFactura;
                         }
                         txtCliente.Text = Convert.ToString(rdr["CLIENTE"]);
-                        lblNombre.Text = Convert.ToString(rdr["NOMBRE"]);
+                        txtNombre.Text = Convert.ToString(rdr["NOMBRE"]);
+                        ActualizarEditabilidadNombre(txtCliente.Text);
                         lblSubtotal.Text = Convert.ToString(rdr["SUBTOTAL"]);
                         lblImpuesto.Text = Convert.ToString(rdr["IMPUESTO"]);
                         lblTotal.Text = Convert.ToString(rdr["MONTOFACTURADO"]);
@@ -385,6 +414,7 @@ namespace PSC09
 
             EstiloDataGridView();
             CargarTiposComprobante();
+            CargarConsumidorFinalId();
 
             dtpFechaFactura.Value = DateTime.Now;
             ExisteLaData = false;
@@ -640,18 +670,21 @@ namespace PSC09
             frm.ShowDialog();
 
             txtCliente.Text = frm.var1;
-            lblNombre.Text = frm.var2;
+            txtNombre.Text = frm.var2;
+            ActualizarEditabilidadNombre(frm.var1);
         }
 
         private void btnArticulo_Click(object sender, EventArgs e)
         {
-            //frmVENPRO frm = new frmVENPRO();
-            //frm.showDialog();
+            frmConsultaArticulos frm = new frmConsultaArticulos();
+            frm.ShowDialog();
 
-            //txtArticulo.Text = frm.var1;
-            //lblArticulo.Text = frm.var1;
-
-            //BuscarArticulo(txtArticulo.Text);
+            if (!string.IsNullOrWhiteSpace(frm.var1))
+            {
+                txtArticulo.Text = frm.var1;
+                BuscarArticulo(txtArticulo.Text);
+                txtCantidad.Focus();
+            }
         }
 
         private void btnGuardar_Click(object sender, EventArgs e)
@@ -719,7 +752,7 @@ namespace PSC09
                 lblFactura.Text,
                 txtComprobante.Text,
                 dtpFechaFactura.Value,
-                lblNombre.Text,
+                txtNombre.Text,
                 ArmarLineas(),
                 Convert.ToDecimal(lblSubtotal.Text),
                 Convert.ToDecimal(lblImpuesto.Text),

@@ -63,6 +63,15 @@ namespace PSC09
 
         private void btnSalir_Click(object sender, EventArgs e)
         {
+            // Si se abrió como diálogo modal (por ejemplo, "Nuevo Producto" desde el
+            // buscador de artículos) no se debe reabrir el menú principal detrás: eso le
+            // corresponde sólo a la pantalla que abrió éste directamente desde el menú.
+            if (this.Modal)
+            {
+                this.Close();
+                return;
+            }
+
             this.Close();
             frmMenu menu = new frmMenu();
             menu.Show();

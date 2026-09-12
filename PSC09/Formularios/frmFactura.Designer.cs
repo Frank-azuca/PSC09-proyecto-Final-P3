@@ -35,7 +35,7 @@
             this.label4 = new System.Windows.Forms.Label();
             this.txtCliente = new System.Windows.Forms.TextBox();
             this.dtpFechaFactura = new System.Windows.Forms.DateTimePicker();
-            this.lblNombre = new System.Windows.Forms.Label();
+            this.txtNombre = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.txtArticulo = new System.Windows.Forms.TextBox();
             this.lblArticulo = new System.Windows.Forms.Label();
@@ -151,15 +151,16 @@
             this.dtpFechaFactura.Size = new System.Drawing.Size(183, 27);
             this.dtpFechaFactura.TabIndex = 17;
             //
-            // lblNombre
-            // 
-            this.lblNombre.BackColor = System.Drawing.Color.White;
-            this.lblNombre.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lblNombre.Location = new System.Drawing.Point(459, 124);
-            this.lblNombre.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
-            this.lblNombre.Name = "lblNombre";
-            this.lblNombre.Size = new System.Drawing.Size(417, 23);
-            this.lblNombre.TabIndex = 19;
+            // txtNombre
+            //
+            this.txtNombre.BackColor = System.Drawing.Color.White;
+            this.txtNombre.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtNombre.Location = new System.Drawing.Point(459, 122);
+            this.txtNombre.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.txtNombre.Name = "txtNombre";
+            this.txtNombre.ReadOnly = true;
+            this.txtNombre.Size = new System.Drawing.Size(417, 26);
+            this.txtNombre.TabIndex = 19;
             // 
             // label6
             // 
@@ -651,7 +652,7 @@
             this.Controls.Add(this.btnVENCTE);
             this.Controls.Add(this.txtArticulo);
             this.Controls.Add(this.label6);
-            this.Controls.Add(this.lblNombre);
+            this.Controls.Add(this.txtNombre);
             this.Controls.Add(this.btnArticulo);
             this.Controls.Add(this.dtpFechaFactura);
             this.Controls.Add(this.txtCliente);
@@ -692,7 +693,7 @@
         private System.Windows.Forms.TextBox txtCliente;
         private System.Windows.Forms.DateTimePicker dtpFechaFactura;
         private System.Windows.Forms.Button btnArticulo;
-        private System.Windows.Forms.Label lblNombre;
+        private System.Windows.Forms.TextBox txtNombre;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox txtArticulo;
         private System.Windows.Forms.Button btnVENCTE;

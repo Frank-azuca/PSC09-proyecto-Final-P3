@@ -11,8 +11,9 @@ namespace PSC09
     // (o suma cantidad si ya estaba), y "Cobrar" guarda la factura e imprime el PDF en
     // un solo paso. Reutiliza toda la lógica ya existente (ComprobanteFiscal para el
     // comprobante fiscal, FacturaService para guardar/generar PDF/imprimir, frmVENCTE
-    // para elegir cliente, frmCambiarComprobante para corregir el comprobante) en vez
-    // de duplicarla: esta pantalla es sólo una interfaz distinta sobre los mismos
+    // para elegir cliente, frmConsultaArticulos para buscar artículos (compartida con
+    // frmFactura), frmCambiarComprobante para corregir el comprobante) en vez de
+    // duplicarla: esta pantalla es sólo una interfaz distinta sobre los mismos
     // servicios que ya usa frmFactura.
     public partial class frmPuntoVenta : Form
     {
@@ -36,6 +37,7 @@ namespace PSC09
 
         private List<TipoComprobante> tiposComprobante = new List<TipoComprobante>();
         private int? clienteIdActual;
+        private int? consumidorFinalId;
         private decimal zSubtotal, zImpuesto, zTotal;
 
         private TipoComprobante TipoComprobanteSeleccionado
@@ -73,6 +75,10 @@ namespace PSC09
             else if (e.KeyCode == Keys.F4)
             {
                 btnCambiarCliente.PerformClick();
+            }
+            else if (e.KeyCode == Keys.F3)
+            {
+                btnBuscarArticulo.PerformClick();
             }
         }
 
@@ -146,13 +152,64 @@ namespace PSC09
                 {
                     if (rdr.Read())
                     {
-                        clienteIdActual = Convert.ToInt32(rdr["IDCLIENTE"]);
-                        lblNombreCliente.Text = Convert.ToString(rdr["NOMBRE"]);
+                        consumidorFinalId = Convert.ToInt32(rdr["IDCLIENTE"]);
+                    }
+                }
+            }
+
+            if (consumidorFinalId != null)
+            {
+                AplicarCliente(consumidorFinalId.Value, "Consumidor Final");
+            }
+            else
+            {
+                clienteIdActual = null;
+                txtClienteCodigo.Clear();
+                txtNombreCliente.Text = "(elige un cliente)";
+                txtNombreCliente.ReadOnly = true;
+            }
+        }
+
+        // Centraliza el cambio de cliente (por código, por "Cambiar" o al arrancar): el
+        // nombre sólo se puede escribir libremente cuando el cliente activo es
+        // "Consumidor Final" (para poner el nombre real del comprador en el recibo sin
+        // tener que registrarlo como cliente nuevo); con cualquier otro cliente ya
+        // registrado, el nombre queda de solo lectura para no desfigurar sus datos reales.
+        private void AplicarCliente(int idCliente, string nombre)
+        {
+            clienteIdActual = idCliente;
+            txtClienteCodigo.Text = idCliente.ToString();
+            txtNombreCliente.Text = nombre;
+            txtNombreCliente.ReadOnly = !(consumidorFinalId.HasValue && idCliente == consumidorFinalId.Value);
+        }
+
+        private void BuscarClientePorCodigo()
+        {
+            string codigo = txtClienteCodigo.Text.Trim();
+            if (codigo == "") return;
+
+            int idCliente;
+            if (!int.TryParse(codigo, out idCliente))
+            {
+                MessageBox.Show("El código de cliente debe ser un número.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand("SELECT NOMBRE FROM CLIENTES WHERE IDCLIENTE = @id", cnx);
+                cmd.Parameters.AddWithValue("@id", idCliente);
+
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    if (rdr.Read())
+                    {
+                        AplicarCliente(idCliente, Convert.ToString(rdr["NOMBRE"]));
                     }
                     else
                     {
-                        clienteIdActual = null;
-                        lblNombreCliente.Text = "(elige un cliente)";
+                        MessageBox.Show("No se encontró ningún cliente con ese código.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }
@@ -302,6 +359,15 @@ namespace PSC09
             lblCambio.Text = "";
             txtCodigo.Clear();
             txtCantidadRapida.Text = "1";
+
+            // Vuelve al cliente por defecto para la siguiente venta: no tendría sentido
+            // que el próximo cliente de mostrador quedara facturado con el nombre o el
+            // código del anterior.
+            if (consumidorFinalId != null)
+            {
+                AplicarCliente(consumidorFinalId.Value, "Consumidor Final");
+            }
+
             txtCodigo.Focus();
         }
 
@@ -370,6 +436,20 @@ namespace PSC09
             if (resultado == DialogResult.Yes) LimpiarVenta();
         }
 
+        private void txtClienteCodigo_Leave(object sender, EventArgs e)
+        {
+            BuscarClientePorCodigo();
+        }
+
+        private void txtClienteCodigo_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if ((int)e.KeyChar != (int)Keys.Enter) return;
+            e.Handled = true;
+
+            BuscarClientePorCodigo();
+            txtCodigo.Focus();
+        }
+
         private void btnCambiarCliente_Click(object sender, EventArgs e)
         {
             frmVENCTE frm = new frmVENCTE();
@@ -377,9 +457,26 @@ namespace PSC09
 
             if (!string.IsNullOrWhiteSpace(frm.var1))
             {
-                clienteIdActual = Convert.ToInt32(frm.var1);
-                lblNombreCliente.Text = frm.var2;
+                AplicarCliente(Convert.ToInt32(frm.var1), frm.var2);
             }
+        }
+
+        private void btnBuscarArticulo_Click(object sender, EventArgs e)
+        {
+            frmConsultaArticulos frm = new frmConsultaArticulos();
+            frm.ShowDialog();
+
+            if (!string.IsNullOrWhiteSpace(frm.var1))
+            {
+                decimal cantidad;
+                if (!decimal.TryParse(txtCantidadRapida.Text, out cantidad) || cantidad <= 0) cantidad = 1;
+
+                AgregarAlCarrito(frm.var1, cantidad);
+
+                txtCantidadRapida.Text = "1";
+            }
+
+            txtCodigo.Focus();
         }
 
         private void cboTipoComprobante_SelectedIndexChanged(object sender, EventArgs e)
@@ -449,7 +546,7 @@ namespace PSC09
                     numeroFactura,
                     txtComprobante.Text,
                     DateTime.Now,
-                    lblNombreCliente.Text,
+                    txtNombreCliente.Text,
                     lineas,
                     zSubtotal,
                     zImpuesto,

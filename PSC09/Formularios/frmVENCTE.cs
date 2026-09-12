@@ -114,6 +114,19 @@ namespace PSC09
             this.dgv.Refresh();
         }
 
+        // Abre el alta de clientes como diálogo modal (frmCliente.btnSalir_Click revisa
+        // this.Modal para no reabrir el menú principal al cerrarse desde aquí) y refresca
+        // la búsqueda al volver, por si el cliente recién creado ya aparece en la lista.
+        private void btnNuevoCliente_Click(object sender, EventArgs e)
+        {
+            using (frmCliente frm = new frmCliente())
+            {
+                frm.ShowDialog(this);
+            }
+
+            BuscaData();
+        }
+
         private void btnSalir_Click(object sender, EventArgs e)
         {
             this.Close();

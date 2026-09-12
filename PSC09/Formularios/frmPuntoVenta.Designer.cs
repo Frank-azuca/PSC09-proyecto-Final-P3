@@ -22,7 +22,8 @@ namespace PSC09
             this.btnCerrar = new System.Windows.Forms.Button();
             this.btnCobrar = new System.Windows.Forms.Button();
             this.lblClienteTitulo = new System.Windows.Forms.Label();
-            this.lblNombreCliente = new System.Windows.Forms.Label();
+            this.txtClienteCodigo = new System.Windows.Forms.TextBox();
+            this.txtNombreCliente = new System.Windows.Forms.TextBox();
             this.btnCambiarCliente = new System.Windows.Forms.Button();
             this.lblComprobante = new System.Windows.Forms.Label();
             this.cboTipoComprobante = new System.Windows.Forms.ComboBox();
@@ -33,6 +34,7 @@ namespace PSC09
             this.txtCodigo = new System.Windows.Forms.TextBox();
             this.lblCantidadRapida = new System.Windows.Forms.Label();
             this.txtCantidadRapida = new System.Windows.Forms.TextBox();
+            this.btnBuscarArticulo = new System.Windows.Forms.Button();
             this.dgv = new System.Windows.Forms.DataGridView();
             this.btnQuitarLinea = new System.Windows.Forms.Button();
             this.btnCancelarVenta = new System.Windows.Forms.Button();
@@ -98,20 +100,29 @@ namespace PSC09
             this.lblClienteTitulo.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblClienteTitulo.Location = new System.Drawing.Point(14, 90);
             this.lblClienteTitulo.Name = "lblClienteTitulo";
-            this.lblClienteTitulo.Size = new System.Drawing.Size(120, 23);
+            this.lblClienteTitulo.Size = new System.Drawing.Size(70, 23);
             this.lblClienteTitulo.TabIndex = 3;
             this.lblClienteTitulo.Text = "Cliente";
             this.lblClienteTitulo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
-            // lblNombreCliente
+            // txtClienteCodigo
             //
-            this.lblNombreCliente.BackColor = System.Drawing.Color.White;
-            this.lblNombreCliente.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lblNombreCliente.Location = new System.Drawing.Point(140, 90);
-            this.lblNombreCliente.Name = "lblNombreCliente";
-            this.lblNombreCliente.Size = new System.Drawing.Size(300, 23);
-            this.lblNombreCliente.TabIndex = 4;
-            this.lblNombreCliente.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.txtClienteCodigo.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtClienteCodigo.Location = new System.Drawing.Point(86, 90);
+            this.txtClienteCodigo.Name = "txtClienteCodigo";
+            this.txtClienteCodigo.Size = new System.Drawing.Size(70, 26);
+            this.txtClienteCodigo.TabIndex = 4;
+            this.txtClienteCodigo.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtClienteCodigo_KeyPress);
+            this.txtClienteCodigo.Leave += new System.EventHandler(this.txtClienteCodigo_Leave);
+            //
+            // txtNombreCliente
+            //
+            this.txtNombreCliente.BackColor = System.Drawing.Color.White;
+            this.txtNombreCliente.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtNombreCliente.Location = new System.Drawing.Point(162, 90);
+            this.txtNombreCliente.Name = "txtNombreCliente";
+            this.txtNombreCliente.Size = new System.Drawing.Size(280, 26);
+            this.txtNombreCliente.TabIndex = 5;
             //
             // btnCambiarCliente
             //
@@ -119,7 +130,7 @@ namespace PSC09
             this.btnCambiarCliente.Location = new System.Drawing.Point(446, 88);
             this.btnCambiarCliente.Name = "btnCambiarCliente";
             this.btnCambiarCliente.Size = new System.Drawing.Size(130, 27);
-            this.btnCambiarCliente.TabIndex = 5;
+            this.btnCambiarCliente.TabIndex = 6;
             this.btnCambiarCliente.Text = "Cambiar (F4)";
             this.btnCambiarCliente.UseVisualStyleBackColor = false;
             PSC09.Tema.EstilizarBotonSecundario(this.btnCambiarCliente);
@@ -132,7 +143,7 @@ namespace PSC09
             this.lblComprobante.Location = new System.Drawing.Point(14, 124);
             this.lblComprobante.Name = "lblComprobante";
             this.lblComprobante.Size = new System.Drawing.Size(150, 26);
-            this.lblComprobante.TabIndex = 6;
+            this.lblComprobante.TabIndex = 7;
             this.lblComprobante.Text = "Comprobante Fiscal";
             this.lblComprobante.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
@@ -143,7 +154,7 @@ namespace PSC09
             this.cboTipoComprobante.Location = new System.Drawing.Point(170, 122);
             this.cboTipoComprobante.Name = "cboTipoComprobante";
             this.cboTipoComprobante.Size = new System.Drawing.Size(230, 28);
-            this.cboTipoComprobante.TabIndex = 7;
+            this.cboTipoComprobante.TabIndex = 8;
             this.cboTipoComprobante.SelectedIndexChanged += new System.EventHandler(this.cboTipoComprobante_SelectedIndexChanged);
             //
             // txtComprobante
@@ -155,7 +166,7 @@ namespace PSC09
             this.txtComprobante.Name = "txtComprobante";
             this.txtComprobante.ReadOnly = true;
             this.txtComprobante.Size = new System.Drawing.Size(190, 26);
-            this.txtComprobante.TabIndex = 8;
+            this.txtComprobante.TabIndex = 9;
             //
             // cmsComprobante
             //
@@ -179,7 +190,7 @@ namespace PSC09
             this.lblCodigo.Location = new System.Drawing.Point(14, 160);
             this.lblCodigo.Name = "lblCodigo";
             this.lblCodigo.Size = new System.Drawing.Size(420, 23);
-            this.lblCodigo.TabIndex = 9;
+            this.lblCodigo.TabIndex = 10;
             this.lblCodigo.Text = "Código / Código de barra (Enter agrega)";
             this.lblCodigo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
@@ -189,7 +200,7 @@ namespace PSC09
             this.txtCodigo.Location = new System.Drawing.Point(14, 186);
             this.txtCodigo.Name = "txtCodigo";
             this.txtCodigo.Size = new System.Drawing.Size(300, 36);
-            this.txtCodigo.TabIndex = 10;
+            this.txtCodigo.TabIndex = 11;
             this.txtCodigo.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtCodigo_KeyPress);
             //
             // lblCantidadRapida
@@ -199,7 +210,7 @@ namespace PSC09
             this.lblCantidadRapida.Location = new System.Drawing.Point(324, 160);
             this.lblCantidadRapida.Name = "lblCantidadRapida";
             this.lblCantidadRapida.Size = new System.Drawing.Size(90, 23);
-            this.lblCantidadRapida.TabIndex = 11;
+            this.lblCantidadRapida.TabIndex = 12;
             this.lblCantidadRapida.Text = "Cantidad";
             this.lblCantidadRapida.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
@@ -209,9 +220,22 @@ namespace PSC09
             this.txtCantidadRapida.Location = new System.Drawing.Point(324, 186);
             this.txtCantidadRapida.Name = "txtCantidadRapida";
             this.txtCantidadRapida.Size = new System.Drawing.Size(90, 36);
-            this.txtCantidadRapida.TabIndex = 12;
+            this.txtCantidadRapida.TabIndex = 13;
             this.txtCantidadRapida.Text = "1";
             this.txtCantidadRapida.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            //
+            // btnBuscarArticulo
+            //
+            this.btnBuscarArticulo.Image = global::PSC09.Properties.Resources.search1;
+            this.btnBuscarArticulo.Location = new System.Drawing.Point(424, 182);
+            this.btnBuscarArticulo.Name = "btnBuscarArticulo";
+            this.btnBuscarArticulo.Size = new System.Drawing.Size(100, 44);
+            this.btnBuscarArticulo.TabIndex = 14;
+            this.btnBuscarArticulo.Text = "Buscar (F3)";
+            this.btnBuscarArticulo.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
+            this.btnBuscarArticulo.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnBuscarArticulo);
+            this.btnBuscarArticulo.Click += new System.EventHandler(this.btnBuscarArticulo_Click);
             //
             // dgv
             //
@@ -224,7 +248,7 @@ namespace PSC09
             this.dgv.RowHeadersWidth = 24;
             this.dgv.RowTemplate.Height = 28;
             this.dgv.Size = new System.Drawing.Size(1142, 300);
-            this.dgv.TabIndex = 13;
+            this.dgv.TabIndex = 15;
             this.dgv.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_CellEndEdit);
             //
             // btnQuitarLinea
@@ -391,6 +415,7 @@ namespace PSC09
             this.Controls.Add(this.btnCancelarVenta);
             this.Controls.Add(this.btnQuitarLinea);
             this.Controls.Add(this.dgv);
+            this.Controls.Add(this.btnBuscarArticulo);
             this.Controls.Add(this.txtCantidadRapida);
             this.Controls.Add(this.lblCantidadRapida);
             this.Controls.Add(this.txtCodigo);
@@ -399,7 +424,8 @@ namespace PSC09
             this.Controls.Add(this.cboTipoComprobante);
             this.Controls.Add(this.lblComprobante);
             this.Controls.Add(this.btnCambiarCliente);
-            this.Controls.Add(this.lblNombreCliente);
+            this.Controls.Add(this.txtNombreCliente);
+            this.Controls.Add(this.txtClienteCodigo);
             this.Controls.Add(this.lblClienteTitulo);
             this.Controls.Add(this.btnCobrar);
             this.Controls.Add(this.btnCerrar);
@@ -423,7 +449,8 @@ namespace PSC09
         private System.Windows.Forms.Button btnCerrar;
         private System.Windows.Forms.Button btnCobrar;
         private System.Windows.Forms.Label lblClienteTitulo;
-        private System.Windows.Forms.Label lblNombreCliente;
+        private System.Windows.Forms.TextBox txtClienteCodigo;
+        private System.Windows.Forms.TextBox txtNombreCliente;
         private System.Windows.Forms.Button btnCambiarCliente;
         private System.Windows.Forms.Label lblComprobante;
         private System.Windows.Forms.ComboBox cboTipoComprobante;
@@ -434,6 +461,7 @@ namespace PSC09
         private System.Windows.Forms.TextBox txtCodigo;
         private System.Windows.Forms.Label lblCantidadRapida;
         private System.Windows.Forms.TextBox txtCantidadRapida;
+        private System.Windows.Forms.Button btnBuscarArticulo;
         private System.Windows.Forms.DataGridView dgv;
         private System.Windows.Forms.Button btnQuitarLinea;
         private System.Windows.Forms.Button btnCancelarVenta;

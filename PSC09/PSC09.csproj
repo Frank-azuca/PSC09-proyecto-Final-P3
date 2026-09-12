@@ -94,6 +94,12 @@
     <Compile Include="Formularios\frmPuntoVenta.Designer.cs">
       <DependentUpon>frmPuntoVenta.cs</DependentUpon>
     </Compile>
+    <Compile Include="Formularios\frmConsultaArticulos.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmConsultaArticulos.Designer.cs">
+      <DependentUpon>frmConsultaArticulos.cs</DependentUpon>
+    </Compile>
     <Compile Include="Formularios\frmFactura.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -173,6 +179,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmPuntoVenta.resx">
       <DependentUpon>frmPuntoVenta.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmConsultaArticulos.resx">
+      <DependentUpon>frmConsultaArticulos.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmFactura.resx">
       <DependentUpon>frmFactura.cs</DependentUpon>
