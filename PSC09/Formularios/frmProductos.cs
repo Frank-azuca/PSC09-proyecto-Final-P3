@@ -231,7 +231,8 @@ namespace PSC09
                         txtExistencia.Text = rcd["CANTIDAD"].ToString();
                         txtCostoProducto.Text = rcd["COSTO"].ToString();
                         txtPrecioVenta.Text = rcd["PRECIOVENTA"].ToString();
-                        txtImpuesto.Text = rcd["IMPUESTO"].ToString();
+                        // IMPUESTO es DECIMAL(9,4): sin el "0.####" se veria "0.1800" en vez de "0.18".
+                        txtImpuesto.Text = Convert.ToDecimal(rcd["IMPUESTO"]).ToString("0.####");
                         txtBarCode.Text = rcd["BARCODE"].ToString();
                         chkImpuestoIncluido.Checked = rcd["TIENEIMPUESTO"] != DBNull.Value && Convert.ToInt32(rcd["TIENEIMPUESTO"]) == 1;
                     }

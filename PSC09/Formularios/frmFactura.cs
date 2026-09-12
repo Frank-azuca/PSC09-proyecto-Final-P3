@@ -173,9 +173,9 @@ namespace PSC09
                 zTotal = zTotal + nTotal;
             }
 
-            lblSubtotal.Text = zSubtotal.ToString();
-            lblImpuesto.Text = zImpuesto.ToString();
-            lblTotal.Text = zTotal.ToString();
+            lblSubtotal.Text = Math.Round(zSubtotal, 2).ToString();
+            lblImpuesto.Text = Math.Round(zImpuesto, 2).ToString();
+            lblTotal.Text = Math.Round(zTotal, 2).ToString();
         }
 
 
@@ -587,6 +587,9 @@ namespace PSC09
                         subtotal = nmPrec * nmCant;
                         totalImp = lnImpuesto * subtotal;
                     }
+
+                    subtotal = Math.Round(subtotal, 2);
+                    totalImp = Math.Round(totalImp, 2);
 
                     lblImpuestoLn.Text = totalImp.ToString();
                     lblTotalLn.Text = subtotal.ToString();
