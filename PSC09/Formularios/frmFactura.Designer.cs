@@ -28,12 +28,13 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.txtCliente = new System.Windows.Forms.TextBox();
-            this.lblFechaFactura = new System.Windows.Forms.Label();
+            this.dtpFechaFactura = new System.Windows.Forms.DateTimePicker();
             this.lblNombre = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.txtArticulo = new System.Windows.Forms.TextBox();
@@ -138,17 +139,18 @@
             this.txtCliente.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtCliente_KeyDown);
             this.txtCliente.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtCliente_KeyPress);
             this.txtCliente.Leave += new System.EventHandler(this.txtCliente_Leave);
-            // 
-            // lblFechaFactura
-            // 
-            this.lblFechaFactura.BackColor = System.Drawing.Color.White;
-            this.lblFechaFactura.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lblFechaFactura.Location = new System.Drawing.Point(211, 153);
-            this.lblFechaFactura.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
-            this.lblFechaFactura.Name = "lblFechaFactura";
-            this.lblFechaFactura.Size = new System.Drawing.Size(183, 23);
-            this.lblFechaFactura.TabIndex = 17;
-            // 
+            //
+            // dtpFechaFactura
+            //
+            this.dtpFechaFactura.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dtpFechaFactura.CustomFormat = "dd/MM/yyyy";
+            this.dtpFechaFactura.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.dtpFechaFactura.Location = new System.Drawing.Point(211, 153);
+            this.dtpFechaFactura.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.dtpFechaFactura.Name = "dtpFechaFactura";
+            this.dtpFechaFactura.Size = new System.Drawing.Size(183, 27);
+            this.dtpFechaFactura.TabIndex = 17;
+            //
             // lblNombre
             // 
             this.lblNombre.BackColor = System.Drawing.Color.White;
@@ -651,7 +653,7 @@
             this.Controls.Add(this.label6);
             this.Controls.Add(this.lblNombre);
             this.Controls.Add(this.btnArticulo);
-            this.Controls.Add(this.lblFechaFactura);
+            this.Controls.Add(this.dtpFechaFactura);
             this.Controls.Add(this.txtCliente);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
@@ -688,7 +690,7 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox txtCliente;
-        private System.Windows.Forms.Label lblFechaFactura;
+        private System.Windows.Forms.DateTimePicker dtpFechaFactura;
         private System.Windows.Forms.Button btnArticulo;
         private System.Windows.Forms.Label lblNombre;
         private System.Windows.Forms.Label label6;

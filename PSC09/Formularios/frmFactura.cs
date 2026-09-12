@@ -145,6 +145,7 @@ namespace PSC09
             lblTotal.Text = "";
 
             lblFactura.Text = Busco.BuscaUltimoNumero("2");
+            dtpFechaFactura.Value = DateTime.Now;
 
             cboTipoComprobante.SelectedIndex = -1;
             txtComprobante.Clear();
@@ -273,10 +274,13 @@ namespace PSC09
                     {
                         ExisteLaData = true;
 
-                        lblFechaFactura.Text = Convert.ToString(rdr["FECHA"]);
+                        DateTime fechaFactura;
+                        if (DateTime.TryParseExact(Convert.ToString(rdr["FECHA"]), "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out fechaFactura))
+                        {
+                            dtpFechaFactura.Value = fechaFactura;
+                        }
                         txtCliente.Text = Convert.ToString(rdr["CLIENTE"]);
                         lblNombre.Text = Convert.ToString(rdr["NOMBRE"]);
-                        lblFechaFactura.Text = Convert.ToString(rdr["FECHA"]);
                         lblSubtotal.Text = Convert.ToString(rdr["SUBTOTAL"]);
                         lblImpuesto.Text = Convert.ToString(rdr["IMPUESTO"]);
                         lblTotal.Text = Convert.ToString(rdr["MONTOFACTURADO"]);
@@ -404,7 +408,7 @@ namespace PSC09
 
                         cmd.Parameters.AddWithValue("@A0", lblFactura.Text);
                         cmd.Parameters.AddWithValue("@A1", txtCliente.Text);
-                        cmd.Parameters.AddWithValue("@A2", lblFechaFactura.Text);
+                        cmd.Parameters.AddWithValue("@A2", dtpFechaFactura.Value.ToString("dd/MM/yyyy"));
                         cmd.Parameters.AddWithValue("@A3", lblSubtotal.Text);
                         cmd.Parameters.AddWithValue("@A4", lblImpuesto.Text);
                         cmd.Parameters.AddWithValue("@A5", lblTotal.Text);
@@ -473,7 +477,7 @@ namespace PSC09
             EstiloDataGridView();
             CargarTiposComprobante();
 
-            lblFechaFactura.Text = DateTime.Now.ToString("dd/MM/yyyy");
+            dtpFechaFactura.Value = DateTime.Now;
             ExisteLaData = false;
             lblFactura.Text = Busco.BuscaUltimoNumero("2");
         }
@@ -806,7 +810,7 @@ namespace PSC09
             doc.Add(new Paragraph("FACTURA"));
             doc.Add(new Paragraph("Numero: " + lblFactura.Text));
             doc.Add(new Paragraph("Comprobante Fiscal: " + txtComprobante.Text));
-            doc.Add(new Paragraph("Fecha: " + lblFechaFactura.Text));
+            doc.Add(new Paragraph("Fecha: " + dtpFechaFactura.Value.ToString("dd/MM/yyyy")));
             doc.Add(new Paragraph("Cliente: " + lblNombre.Text));
             doc.Add(new Paragraph(" "));
 

@@ -166,12 +166,21 @@ CREATE TABLE SECUENCIA (
 GO
 
 -- Semillas necesarias para que Andrómeda numere Productos, Facturas y Recibos.
+-- En algunas instalaciones SECUENCIA.id quedó como IDENTITY (no lo es en este
+-- script, pero pudo crearse así antes); si es el caso, hay que activar
+-- IDENTITY_INSERT para poder insertar el id exacto que el resto del código espera.
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
+    SET IDENTITY_INSERT SECUENCIA ON;
+
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 1)
     INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (1, 'Productos', 0);
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 2)
     INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (2, 'Factura', 0);
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 3)
     INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (3, 'Recibo', 0);
+
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
+    SET IDENTITY_INSERT SECUENCIA OFF;
 GO
 
 -- ============================================================
@@ -240,6 +249,9 @@ IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 108)
     INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (108, 'E44', 'Gubernamental Electrónico', 13, 1);
 GO
 
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
+    SET IDENTITY_INSERT SECUENCIA ON;
+
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 101) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (101, 'Comprobante B01', 0);
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 102) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (102, 'Comprobante B02', 0);
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 103) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (103, 'Comprobante B14', 0);
@@ -248,6 +260,9 @@ IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 105) INSERT INTO SECUENCIA (id
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 106) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (106, 'Comprobante E32', 0);
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 107) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (107, 'Comprobante E34', 0);
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 108) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (108, 'Comprobante E44', 0);
+
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
+    SET IDENTITY_INSERT SECUENCIA OFF;
 GO
 
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HFACTURA') AND name = 'idTipoComprobante')

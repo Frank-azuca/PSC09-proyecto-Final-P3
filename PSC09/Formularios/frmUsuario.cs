@@ -171,9 +171,13 @@ namespace PSC09
                     MessageBox.Show("Usuario creado correctamente", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
-            catch (SqlException)
+            catch (SqlException ex)
             {
-                MessageBox.Show("No se pudo conectar con la base de datos.", "Sin conexión", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "No se pudo guardar el usuario.\n\nDetalle: " + ex.Message,
+                    "Error de base de datos",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
 
