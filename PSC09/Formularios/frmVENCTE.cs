@@ -48,6 +48,12 @@ namespace PSC09
             cmd.Dispose();
             cnx.Close();
 
+            // Deja la primera fila como celda activa para que las flechas y el Tab
+            // puedan navegar la lista de una vez, sin necesidad de hacer click primero.
+            if (dgv.Rows.Count > 0)
+            {
+                dgv.CurrentCell = dgv.Rows[0].Cells[0];
+            }
         }
         private void btnBuscar_Click(object sender, EventArgs e)
         {
@@ -56,11 +62,49 @@ namespace PSC09
 
         private void btnSeleccionar_Click(object sender, EventArgs e)
         {
-            if (dgv.RowCount > 0)
-            {
-                var1 = dgv.CurrentRow.Cells[0].Value.ToString();
-                var2 = dgv.CurrentRow.Cells[1].Value.ToString();
+            SeleccionarClienteActual();
+        }
 
+        // Antes sólo guardaba var1/var2 sin cerrar el diálogo, así que desde afuera
+        // (frmFactura/frmPuntoVenta esperando a que ShowDialog() regrese) parecía que
+        // "Seleccionar" no hacía nada hasta que además se cerraba la ventana a mano.
+        private void SeleccionarClienteActual()
+        {
+            if (dgv.CurrentRow == null)
+            {
+                MessageBox.Show("Selecciona un cliente de la lista primero.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var1 = dgv.CurrentRow.Cells[0].Value.ToString();
+            var2 = dgv.CurrentRow.Cells[1].Value.ToString();
+
+            this.DialogResult = DialogResult.OK;
+            this.Close();
+        }
+
+        // Enter selecciona el cliente resaltado (igual que darle click a "Seleccionar");
+        // Tab / Shift+Tab mueven la fila activa hacia abajo/arriba dentro de la misma
+        // columna, en vez del comportamiento normal de moverse entre columnas.
+        private void dgv_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                SeleccionarClienteActual();
+            }
+            else if (e.KeyCode == Keys.Tab)
+            {
+                if (dgv.CurrentCell != null)
+                {
+                    int filaDestino = dgv.CurrentCell.RowIndex + (e.Shift ? -1 : 1);
+                    if (filaDestino >= 0 && filaDestino < dgv.Rows.Count)
+                    {
+                        dgv.CurrentCell = dgv.Rows[filaDestino].Cells[dgv.CurrentCell.ColumnIndex];
+                    }
+                }
+                e.Handled = true;
             }
         }
 
@@ -92,6 +136,8 @@ namespace PSC09
             this.dgv.AllowUserToDeleteRows = false;
             this.dgv.ColumnHeadersVisible = true;
             this.dgv.RowHeadersVisible = false;
+            this.dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            this.dgv.MultiSelect = false;
 
             this.dgv.Columns.Add("Col00", "CLIENTE");
             this.dgv.Columns.Add("Col01", "NOMBRE");

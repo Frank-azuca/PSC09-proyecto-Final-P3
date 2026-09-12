@@ -129,7 +129,8 @@
             this.dgv.Name = "dgv";
             this.dgv.Size = new System.Drawing.Size(689, 374);
             this.dgv.TabIndex = 13;
-            // 
+            this.dgv.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgv_KeyDown);
+            //
             // frmVENCTE
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);

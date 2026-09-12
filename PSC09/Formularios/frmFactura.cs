@@ -9,8 +9,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using iTextSharp.text;
-using iTextSharp.text.pdf;
 using System.IO;
 
 namespace PSC09
@@ -335,96 +333,47 @@ namespace PSC09
             this.dgv.ColumnHeadersDefaultCellStyle.ForeColor = Tema.TextoClaro;
         }
 
+        // Arma la lista de líneas ya calculadas a partir del dgv, para pasarla tal cual
+        // a FacturaService.GuardarFactura() (misma lógica de guardado que usa el Punto
+        // de Venta, sin duplicar la transacción de encabezado + detalle + inventario).
+        private List<LineaFactura> ArmarLineas()
+        {
+            List<LineaFactura> lineas = new List<LineaFactura>();
+
+            for (int xrow = 0; xrow < dgv.Rows.Count; xrow++)
+            {
+                lineas.Add(new LineaFactura
+                {
+                    Articulo = dgv.Rows[xrow].Cells[0].Value.ToString(),
+                    Descripcion = dgv.Rows[xrow].Cells[1].Value.ToString(),
+                    Cantidad = Convert.ToDecimal(dgv.Rows[xrow].Cells[2].Value),
+                    PrecioVenta = Convert.ToDecimal(dgv.Rows[xrow].Cells[3].Value),
+                    Impuesto = Convert.ToDecimal(dgv.Rows[xrow].Cells[4].Value),
+                    MontoLinea = Convert.ToDecimal(dgv.Rows[xrow].Cells[5].Value)
+                });
+            }
+
+            return lineas;
+        }
+
         // Inserta el encabezado, actualiza ambas secuencias (factura y comprobante fiscal)
         // e inserta el detalle con su descuento de inventario, todo en una sola transacción:
-        // o la factura queda completa, o no se guarda nada de ella.
+        // o la factura queda completa, o no se guarda nada de ella. Reutiliza el mismo
+        // numero de factura que ya se mostro en pantalla (lblFactura.Text).
         private void InsertarData()
         {
             if (dgv.RowCount == 0 || lblTotal.Text == string.Empty) return;
 
-            if (TipoComprobanteSeleccionado == null || string.IsNullOrWhiteSpace(txtComprobante.Text))
-            {
-                throw new Exception("Selecciona un tipo de Comprobante Fiscal antes de guardar la factura.");
-            }
-
-            string errorComprobante;
-            if (!ComprobanteFiscal.ValidarFormato(TipoComprobanteSeleccionado, txtComprobante.Text, out errorComprobante))
-            {
-                throw new Exception(errorComprobante + " Corrígelo con click derecho sobre el comprobante, o configura el rango en Configuración → Comprobantes Fiscales.");
-            }
-
-            using (SqlConnection cnx = new SqlConnection(cnn.db))
-            {
-                cnx.Open();
-
-                using (SqlTransaction tx = cnx.BeginTransaction())
-                {
-                    try
-                    {
-                        string stQuery = " INSERT INTO HFACTURA (FACTURA, CLIENTE, FECHA, SUBTOTAL, IMPUESTO, MONTOFACTURADO, ACTIVO, IDTIPOCOMPROBANTE, COMPROBANTEFISCAL) " +
-                                         " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8); ";
-
-                        SqlCommand cmd = new SqlCommand(stQuery, cnx, tx);
-
-                        cmd.Parameters.AddWithValue("@A0", lblFactura.Text);
-                        cmd.Parameters.AddWithValue("@A1", txtCliente.Text);
-                        cmd.Parameters.AddWithValue("@A2", dtpFechaFactura.Value.ToString("dd/MM/yyyy"));
-                        cmd.Parameters.AddWithValue("@A3", lblSubtotal.Text);
-                        cmd.Parameters.AddWithValue("@A4", lblImpuesto.Text);
-                        cmd.Parameters.AddWithValue("@A5", lblTotal.Text);
-                        cmd.Parameters.AddWithValue("@A6", "1");
-                        cmd.Parameters.AddWithValue("@A7", TipoComprobanteSeleccionado.Id);
-                        cmd.Parameters.AddWithValue("@A8", txtComprobante.Text);
-                        cmd.ExecuteNonQuery();
-
-                        SqlCommand cmdSecFactura = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 2", cnx, tx);
-                        cmdSecFactura.Parameters.AddWithValue("@numero", lblFactura.Text);
-                        cmdSecFactura.ExecuteNonQuery();
-
-                        ComprobanteFiscal.ActualizaSecuencia(cnx, tx, TipoComprobanteSeleccionado, txtComprobante.Text);
-
-                        InsertaDetalleFactura(cnx, tx);
-
-                        tx.Commit();
-                    }
-                    catch
-                    {
-                        tx.Rollback();
-                        throw;
-                    }
-                }
-            }
-        }
-
-        private void InsertaDetalleFactura(SqlConnection cnx, SqlTransaction tx)
-        {
-            string stQuery = " INSERT INTO DFACTURA (FACTURA, ARTICULO, CANTIDAD, PRECIOVENTA, IMPUESTO, MONTOLINEA, ACTIVO) " +
-                             " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6) ";
-
-            for (int xrow = 0; xrow < dgv.Rows.Count ; xrow++)
-            {
-                string nmArt = dgv.Rows[xrow].Cells[0].Value.ToString();
-                string nmCan = dgv.Rows[xrow].Cells[2].Value.ToString();
-                string nmPre = dgv.Rows[xrow].Cells[3].Value.ToString();
-                string nmImp = dgv.Rows[xrow].Cells[4].Value.ToString();
-                string nmTot = dgv.Rows[xrow].Cells[5].Value.ToString();
-
-                SqlCommand cmm = new SqlCommand(stQuery, cnx, tx);
-
-                cmm.Parameters.AddWithValue("@A0", lblFactura.Text);
-                cmm.Parameters.AddWithValue("@A1", nmArt);
-                cmm.Parameters.AddWithValue("@A2", nmCan);
-                cmm.Parameters.AddWithValue("@A3", nmPre);
-                cmm.Parameters.AddWithValue("@A4", nmImp);
-                cmm.Parameters.AddWithValue("@A5", nmTot);
-                cmm.Parameters.AddWithValue("@A6", "1");
-                cmm.ExecuteNonQuery();
-
-                SqlCommand cmdStock = new SqlCommand("UPDATE PRODUCTOS SET CANTIDAD = CANTIDAD - @cant WHERE ITEM = @item", cnx, tx);
-                cmdStock.Parameters.AddWithValue("@cant", nmCan);
-                cmdStock.Parameters.AddWithValue("@item", nmArt);
-                cmdStock.ExecuteNonQuery();
-            }
+            FacturaService.GuardarFactura(
+                lblFactura.Text,
+                txtCliente.Text,
+                dtpFechaFactura.Value,
+                TipoComprobanteSeleccionado,
+                txtComprobante.Text,
+                ArmarLineas(),
+                Convert.ToDecimal(lblSubtotal.Text),
+                Convert.ToDecimal(lblImpuesto.Text),
+                Convert.ToDecimal(lblTotal.Text));
         }
 
         // Eventos
@@ -752,73 +701,33 @@ namespace PSC09
 
             try
             {
-                Process.Start(new ProcessStartInfo
+                bool enviadoDirecto = FacturaService.ImprimirPdf(archivo);
+                if (!enviadoDirecto)
                 {
-                    FileName = archivo,
-                    Verb = "print",
-                    UseShellExecute = true,
-                    CreateNoWindow = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
-                });
+                    MessageBox.Show("No se pudo enviar directo a la impresora. Se abrió el PDF para que lo imprimas manualmente (Ctrl+P).", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
             catch (Exception ex)
             {
-                // Si el verbo "print" no esta disponible (depende del visor de PDF
-                // instalado), al menos se abre el PDF para poder imprimirlo a mano.
-                try
-                {
-                    Process.Start(new ProcessStartInfo { FileName = archivo, UseShellExecute = true });
-                    MessageBox.Show("No se pudo enviar directo a la impresora. Se abrió el PDF para que lo imprimas manualmente (Ctrl+P).", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                catch
-                {
-                    MessageBox.Show("Error al imprimir: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                MessageBox.Show("Error al imprimir: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void GenerarPDF()
         {
-            string ruta = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            string carpeta = Path.Combine(ruta, "Facturas");
-            Directory.CreateDirectory(carpeta);
-
-            archivo = Path.Combine(carpeta, "Factura_" + lblFactura.Text + ".pdf");
-
-            Document doc = new Document();
-            PdfWriter.GetInstance(doc, new FileStream(archivo, FileMode.Create));
-            doc.Open();
-
-            doc.Add(new Paragraph("FACTURA"));
-            doc.Add(new Paragraph("Numero: " + lblFactura.Text));
-            doc.Add(new Paragraph("Comprobante Fiscal: " + txtComprobante.Text));
-            doc.Add(new Paragraph("Fecha: " + dtpFechaFactura.Value.ToString("dd/MM/yyyy")));
-            doc.Add(new Paragraph("Cliente: " + lblNombre.Text));
-            doc.Add(new Paragraph(" "));
-
-            foreach (DataGridViewRow row in dgv.Rows)
-            {
-                if (row.Cells[0].Value != null)
-                {
-                    string linea =
-                        row.Cells[1].Value.ToString() + " | " +
-                        row.Cells[2].Value.ToString() + " | " +
-                        row.Cells[3].Value.ToString();
-
-                    doc.Add(new Paragraph(linea));
-                }
-            }
-
-            doc.Add(new Paragraph(" "));
-            doc.Add(new Paragraph("Subtotal: " + lblSubtotal.Text));
-            doc.Add(new Paragraph("Impuesto: " + lblImpuesto.Text));
-            doc.Add(new Paragraph("Total: " + lblTotal.Text));
-
-            doc.Close();
+            archivo = FacturaService.GenerarPdf(
+                lblFactura.Text,
+                txtComprobante.Text,
+                dtpFechaFactura.Value,
+                lblNombre.Text,
+                ArmarLineas(),
+                Convert.ToDecimal(lblSubtotal.Text),
+                Convert.ToDecimal(lblImpuesto.Text),
+                Convert.ToDecimal(lblTotal.Text));
 
             MessageBox.Show("PDF generado en: " + archivo);
 
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            Process.Start(new ProcessStartInfo
             {
                 FileName = archivo,
                 UseShellExecute = true

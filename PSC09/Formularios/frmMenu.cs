@@ -93,6 +93,14 @@ namespace PSC09
             factura.Show();
         }
 
+        private void puntoVentaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmPuntoVenta frm = new frmPuntoVenta();
+            frm.Show();
+        }
+
         private void cerrarSesionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             {

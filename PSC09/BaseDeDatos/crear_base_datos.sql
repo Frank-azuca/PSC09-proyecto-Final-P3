@@ -326,6 +326,14 @@ IF NOT EXISTS (SELECT * FROM mESTATUSCTE WHERE estatus = 'Inactivo')
     INSERT INTO mESTATUSCTE (estatus, tipoEstatus) VALUES ('Inactivo', 0);
 GO
 
+-- Cliente genérico "Consumidor Final", usado como cliente por defecto en el
+-- Punto de Venta rápido (frmPuntoVenta) para no obligar a capturar un cliente
+-- real en cada venta de mostrador.
+IF NOT EXISTS (SELECT * FROM CLIENTES WHERE nombre = 'Consumidor Final')
+    INSERT INTO CLIENTES (nombre, idEstatus, pagaImpuesto)
+    VALUES ('Consumidor Final', (SELECT id FROM mESTATUSCTE WHERE estatus = 'Activo'), 0);
+GO
+
 -- Usuario inicial para poder entrar por primera vez.
 -- Usuario: admin   Contraseña: admin123
 -- Se guarda en texto plano a propósito: frmLogin.cs detecta que no tiene el

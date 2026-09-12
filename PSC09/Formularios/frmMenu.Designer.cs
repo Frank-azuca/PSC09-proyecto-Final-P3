@@ -30,6 +30,7 @@
         {
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.registroToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.puntoVentaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.usuarioToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.puestoDeTrabajoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.departamentoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -64,6 +65,7 @@
             this.menuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.registroToolStripMenuItem,
+            this.puntoVentaToolStripMenuItem,
             this.consultaToolStripMenuItem,
             this.reporteToolStripMenuItem,
             this.configuraciónToolStripMenuItem,
@@ -88,7 +90,14 @@
             this.registroToolStripMenuItem.Name = "registroToolStripMenuItem";
             this.registroToolStripMenuItem.Size = new System.Drawing.Size(62, 22);
             this.registroToolStripMenuItem.Text = "Registro";
-            // 
+            //
+            // puntoVentaToolStripMenuItem
+            //
+            this.puntoVentaToolStripMenuItem.Name = "puntoVentaToolStripMenuItem";
+            this.puntoVentaToolStripMenuItem.Size = new System.Drawing.Size(95, 22);
+            this.puntoVentaToolStripMenuItem.Text = "Punto de Venta";
+            this.puntoVentaToolStripMenuItem.Click += new System.EventHandler(this.puntoVentaToolStripMenuItem_Click);
+            //
             // usuarioToolStripMenuItem
             // 
             this.usuarioToolStripMenuItem.Name = "usuarioToolStripMenuItem";
@@ -273,6 +282,7 @@
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.ToolStripMenuItem registroToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem puntoVentaToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem consultaToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem reporteToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem usuarioToolStripMenuItem;
