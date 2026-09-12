@@ -203,7 +203,7 @@ GO
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TIPOCOMPROBANTE')
 CREATE TABLE TIPOCOMPROBANTE (
     id                INT PRIMARY KEY,
-    prefijo           VARCHAR(3)   NOT NULL,
+    prefijo           VARCHAR(3)   NOT NULL UNIQUE,
     nombre            NVARCHAR(60) NOT NULL,
     longitudTotal     INT          NOT NULL,
     esElectronico     BIT          NOT NULL,
@@ -213,6 +213,12 @@ CREATE TABLE TIPOCOMPROBANTE (
     fechaVencimiento  NVARCHAR(12) NULL,
     minimoAlerta      BIGINT       NULL
 );
+GO
+
+-- Para bases ya creadas antes de este cambio: evita prefijos duplicados al usar
+-- Configuración -> Comprobantes Fiscales -> Nuevo Tipo.
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UQ_TIPOCOMPROBANTE_PREFIJO')
+    ALTER TABLE TIPOCOMPROBANTE ADD CONSTRAINT UQ_TIPOCOMPROBANTE_PREFIJO UNIQUE (prefijo);
 GO
 
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('TIPOCOMPROBANTE') AND name = 'activo')
@@ -246,7 +252,9 @@ IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 106)
 IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 107)
     INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (107, 'E34', 'Nota de Crédito Electrónica', 13, 1);
 IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 108)
-    INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (108, 'E44', 'Gubernamental Electrónico', 13, 1);
+    INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (108, 'E44', 'Factura Especial Electrónica', 13, 1);
+IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 109)
+    INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (109, 'E45', 'Gubernamental Electrónico', 13, 1);
 GO
 
 IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
@@ -260,6 +268,7 @@ IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 105) INSERT INTO SECUENCIA (id
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 106) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (106, 'Comprobante E32', 0);
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 107) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (107, 'Comprobante E34', 0);
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 108) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (108, 'Comprobante E44', 0);
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 109) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (109, 'Comprobante E44', 0);
 
 IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
     SET IDENTITY_INSERT SECUENCIA OFF;

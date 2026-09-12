@@ -10,7 +10,7 @@ namespace PSC09
 {
     public partial class frmComprobantesFiscales : Form
     {
-        private const string UrlOficinaVirtualDGII = "https://ov.dgii.gov.do/";
+        private const string UrlOficinaVirtualDGII = "https://dgii.gov.do/ofv/login.aspx";
 
         public frmComprobantesFiscales()
         {
@@ -41,9 +41,9 @@ namespace PSC09
             dgv.RowHeadersVisible = false;
             dgv.EnableHeadersVisualStyles = false;
 
-            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colPrefijo", HeaderText = "Prefijo", ReadOnly = true, Width = 75 });
-            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colNombre", HeaderText = "Nombre", ReadOnly = true, AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
-            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colElectronico", HeaderText = "Electrónico", ReadOnly = true, Width = 90 });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colPrefijo", HeaderText = "Prefijo", MaxInputLength = 3, Width = 75 });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colNombre", HeaderText = "Nombre", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
+            dgv.Columns.Add(new DataGridViewCheckBoxColumn { Name = "colElectronico", HeaderText = "Electrónico", Width = 90 });
             dgv.Columns.Add(new DataGridViewCheckBoxColumn { Name = "colActivo", HeaderText = "Activo", Width = 60 });
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colRangoInicial", HeaderText = "Rango Inicial", Width = 110 });
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colRangoFinal", HeaderText = "Rango Final", Width = 110 });
@@ -72,6 +72,7 @@ namespace PSC09
             foreach (TipoComprobante tipo in tipos)
             {
                 long proximo = ComprobanteFiscal.ObtenerProximoNumero(tipo);
+                bool tieneFacturas = ComprobanteFiscal.TipoTieneFacturas(tipo.Id);
 
                 int idx = dgv.Rows.Add();
                 DataGridViewRow row = dgv.Rows[idx];
@@ -79,8 +80,18 @@ namespace PSC09
 
                 row.Cells["colPrefijo"].Value = tipo.Prefijo;
                 row.Cells["colNombre"].Value = tipo.Nombre;
-                row.Cells["colElectronico"].Value = tipo.EsElectronico ? "Sí" : "No";
+                row.Cells["colElectronico"].Value = tipo.EsElectronico;
                 row.Cells["colActivo"].Value = tipo.Activo;
+
+                row.Cells["colPrefijo"].ReadOnly = tieneFacturas;
+                row.Cells["colElectronico"].ReadOnly = tieneFacturas;
+                if (tieneFacturas)
+                {
+                    row.Cells["colPrefijo"].Style.BackColor = Color.Gainsboro;
+                    row.Cells["colElectronico"].Style.BackColor = Color.Gainsboro;
+                    row.Cells["colPrefijo"].ToolTipText = "Ya tiene facturas emitidas: no se puede cambiar el prefijo.";
+                    row.Cells["colElectronico"].ToolTipText = "Ya tiene facturas emitidas: no se puede cambiar entre físico y electrónico.";
+                }
                 row.Cells["colRangoInicial"].Value = tipo.RangoInicial.HasValue ? tipo.RangoInicial.Value.ToString() : "";
                 row.Cells["colRangoFinal"].Value = tipo.RangoFinal.HasValue ? tipo.RangoFinal.Value.ToString() : "";
                 row.Cells["colProximoNumero"].Value = proximo.ToString();
@@ -89,6 +100,25 @@ namespace PSC09
             }
 
             VerificarAlertas();
+        }
+
+        // Si el tipo todavía no tiene facturas, escribir el Rango Inicial sugiere ese
+        // mismo número como Próximo Número (para no escribirlo dos veces): en un tipo sin
+        // uso, el primer comprobante que se va a usar es justo el inicio del rango.
+        private void dgv_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            if (dgv.Columns[e.ColumnIndex].Name != "colRangoInicial") return;
+
+            DataGridViewRow row = dgv.Rows[e.RowIndex];
+            bool tieneFacturas = row.Cells["colPrefijo"].ReadOnly;
+            if (tieneFacturas) return;
+
+            string texto = Convert.ToString(row.Cells["colRangoInicial"].Value).Trim();
+            long valor;
+            if (long.TryParse(texto, out valor) && valor > 0)
+            {
+                row.Cells["colProximoNumero"].Value = valor.ToString();
+            }
         }
 
         // Avisa si a algún tipo activo le quedan pocos comprobantes según su Mínimo configurado.
@@ -127,12 +157,60 @@ namespace PSC09
             dgv.EndEdit();
 
             List<string> errores = new List<string>();
+            List<string> prefijosNuevos = new List<string>();
             List<Tuple<TipoComprobante, long>> pendientes = new List<Tuple<TipoComprobante, long>>();
 
             foreach (DataGridViewRow row in dgv.Rows)
             {
                 TipoComprobante tipo = (TipoComprobante)row.Tag;
                 string prefijo = tipo.Prefijo;
+
+                bool bloqueado = row.Cells["colPrefijo"].ReadOnly;
+                string nombreNuevo = Convert.ToString(row.Cells["colNombre"].Value).Trim();
+
+                if (nombreNuevo == "")
+                {
+                    errores.Add(prefijo + ": el Nombre no puede quedar vacío.");
+                    continue;
+                }
+
+                string prefijoNuevo = tipo.Prefijo;
+                bool esElectronicoNuevo = tipo.EsElectronico;
+
+                if (!bloqueado)
+                {
+                    prefijoNuevo = Convert.ToString(row.Cells["colPrefijo"].Value).Trim().ToUpper();
+                    esElectronicoNuevo = row.Cells["colElectronico"].Value != null && Convert.ToBoolean(row.Cells["colElectronico"].Value);
+
+                    if (prefijoNuevo.Length != 3)
+                    {
+                        errores.Add(prefijo + ": el Prefijo debe tener exactamente 3 caracteres.");
+                        continue;
+                    }
+
+                    bool prefijoValido = true;
+                    foreach (char c in prefijoNuevo)
+                    {
+                        if (!char.IsLetterOrDigit(c)) prefijoValido = false;
+                    }
+                    if (!prefijoValido)
+                    {
+                        errores.Add(prefijo + ": el Prefijo solo puede tener letras y números.");
+                        continue;
+                    }
+                }
+
+                bool prefijoRepetido = false;
+                foreach (string yaVisto in prefijosNuevos)
+                {
+                    if (yaVisto.Equals(prefijoNuevo, StringComparison.OrdinalIgnoreCase)) prefijoRepetido = true;
+                }
+                if (prefijoRepetido)
+                {
+                    errores.Add(prefijo + ": el prefijo " + prefijoNuevo + " está repetido con otro tipo.");
+                    continue;
+                }
+                prefijosNuevos.Add(prefijoNuevo);
 
                 string txtRangoInicial = Convert.ToString(row.Cells["colRangoInicial"].Value).Trim();
                 string txtRangoFinal = Convert.ToString(row.Cells["colRangoFinal"].Value).Trim();
@@ -179,7 +257,16 @@ namespace PSC09
                     continue;
                 }
 
-                int digitosDisponibles = tipo.LongitudTotal - tipo.Prefijo.Length;
+                long? maximoUsado = ComprobanteFiscal.ObtenerMaximoComprobanteUsado(tipo);
+                if (maximoUsado.HasValue && proximo <= maximoUsado.Value)
+                {
+                    errores.Add(prefijo + ": el Próximo Número no puede ser menor o igual que " + maximoUsado.Value +
+                                " (el número más alto que ya se facturó con ese tipo); haría que se repita un comprobante.");
+                    continue;
+                }
+
+                int longitudTotalNueva = esElectronicoNuevo ? 13 : 11;
+                int digitosDisponibles = longitudTotalNueva - prefijoNuevo.Length;
                 if (proximo.ToString().Length > digitosDisponibles)
                 {
                     errores.Add(prefijo + ": el Próximo Número no puede tener más de " + digitosDisponibles + " dígitos.");
@@ -223,6 +310,10 @@ namespace PSC09
                 tipo.RangoFinal = rangoFinal;
                 tipo.FechaVencimiento = txtVencimiento;
                 tipo.MinimoAlerta = minimoAlerta;
+                tipo.Nombre = nombreNuevo;
+                tipo.Prefijo = prefijoNuevo;
+                tipo.EsElectronico = esElectronicoNuevo;
+                tipo.LongitudTotal = longitudTotalNueva;
 
                 pendientes.Add(Tuple.Create(tipo, proximo));
             }
@@ -267,6 +358,35 @@ namespace PSC09
 
             MessageBox.Show("Configuración guardada correctamente.", "Comprobantes Fiscales", MessageBoxButtons.OK, MessageBoxIcon.Information);
             CargarGrid();
+        }
+
+        private void btnNuevoTipo_Click(object sender, EventArgs e)
+        {
+            using (frmNuevoTipoComprobante frm = new frmNuevoTipoComprobante())
+            {
+                if (frm.ShowDialog(this) != DialogResult.OK) return;
+
+                foreach (DataGridViewRow row in dgv.Rows)
+                {
+                    TipoComprobante existente = (TipoComprobante)row.Tag;
+                    if (existente.Prefijo.Equals(frm.Prefijo, StringComparison.OrdinalIgnoreCase))
+                    {
+                        MessageBox.Show("Ya existe un tipo con el prefijo " + frm.Prefijo + ".", "Prefijo repetido", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+                }
+
+                try
+                {
+                    ComprobanteFiscal.CrearTipo(frm.Prefijo, frm.Nombre, frm.EsElectronico);
+                    MessageBox.Show("Tipo de comprobante creado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    CargarGrid();
+                }
+                catch (Exception error)
+                {
+                    MessageBox.Show(error.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
         private void btnCerrar_Click(object sender, EventArgs e)

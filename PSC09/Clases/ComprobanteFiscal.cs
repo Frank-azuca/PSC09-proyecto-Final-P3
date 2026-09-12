@@ -225,7 +225,8 @@ namespace PSC09
 
         public static void GuardarConfiguracion(SqlConnection cnx, SqlTransaction tx, TipoComprobante tipo)
         {
-            string stQuery = " UPDATE TIPOCOMPROBANTE SET ACTIVO = @A1, RANGOINICIAL = @A2, RANGOFINAL = @A3, FECHAVENCIMIENTO = @A4, MINIMOALERTA = @A5 " +
+            string stQuery = " UPDATE TIPOCOMPROBANTE SET ACTIVO = @A1, RANGOINICIAL = @A2, RANGOFINAL = @A3, FECHAVENCIMIENTO = @A4, MINIMOALERTA = @A5, " +
+                             " PREFIJO = @A6, NOMBRE = @A7, LONGITUDTOTAL = @A8, ESELECTRONICO = @A9 " +
                              " WHERE id = @A0 ";
 
             SqlCommand cmd = new SqlCommand(stQuery, cnx, tx);
@@ -236,8 +237,139 @@ namespace PSC09
             cmd.Parameters.AddWithValue("@A3", (object)tipo.RangoFinal ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@A4", string.IsNullOrWhiteSpace(tipo.FechaVencimiento) ? (object)DBNull.Value : tipo.FechaVencimiento);
             cmd.Parameters.AddWithValue("@A5", (object)tipo.MinimoAlerta ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@A6", tipo.Prefijo);
+            cmd.Parameters.AddWithValue("@A7", tipo.Nombre);
+            cmd.Parameters.AddWithValue("@A8", tipo.LongitudTotal);
+            cmd.Parameters.AddWithValue("@A9", tipo.EsElectronico);
 
             cmd.ExecuteNonQuery();
+        }
+
+        // True si ya existe al menos una factura con este tipo de comprobante: en ese
+        // caso, Prefijo y Fisico/Electronico deben quedar bloqueados (cambiar la longitud
+        // o el prefijo dejaría sin sentido los comprobantes ya emitidos con ese tipo).
+        public static bool TipoTieneFacturas(int idTipoComprobante)
+        {
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM HFACTURA WHERE IDTIPOCOMPROBANTE = @id", cnx);
+                cmd.Parameters.AddWithValue("@id", idTipoComprobante);
+                return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+            }
+        }
+
+        // El número más alto ya usado de verdad en una factura con este tipo, o null si
+        // todavía no se ha facturado ninguno. Sirve para no dejar retroceder el Próximo
+        // Número por debajo de lo ya emitido (evitaría un comprobante fiscal duplicado).
+        public static long? ObtenerMaximoComprobanteUsado(TipoComprobante tipo)
+        {
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand(
+                    "SELECT COMPROBANTEFISCAL FROM HFACTURA WHERE IDTIPOCOMPROBANTE = @id AND COMPROBANTEFISCAL IS NOT NULL", cnx);
+                cmd.Parameters.AddWithValue("@id", tipo.Id);
+
+                long? maximo = null;
+
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        string comprobante = Convert.ToString(rdr["COMPROBANTEFISCAL"]).Trim();
+                        if (comprobante.Length <= tipo.Prefijo.Length) continue;
+
+                        string parteNumerica = comprobante.Substring(tipo.Prefijo.Length);
+                        long numero;
+                        if (long.TryParse(parteNumerica, out numero))
+                        {
+                            if (!maximo.HasValue || numero > maximo.Value) maximo = numero;
+                        }
+                    }
+                }
+
+                return maximo;
+            }
+        }
+
+        // Crea un tipo de comprobante nuevo (ej. B03 Nota de Débito) con su propia
+        // secuencia en SECUENCIA, arrancando en 0. El id se asigna solo (el siguiente
+        // disponible después del mayor id existente en TIPOCOMPROBANTE).
+        public static TipoComprobante CrearTipo(string prefijo, string nombre, bool esElectronico)
+        {
+            int longitudTotal = esElectronico ? 13 : 11;
+
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+
+                using (SqlTransaction tx = cnx.BeginTransaction())
+                {
+                    try
+                    {
+                        SqlCommand cmdMax = new SqlCommand("SELECT ISNULL(MAX(id), 100) FROM TIPOCOMPROBANTE", cnx, tx);
+                        int nuevoId = Convert.ToInt32(cmdMax.ExecuteScalar()) + 1;
+
+                        SqlCommand cmdIns = new SqlCommand(
+                            " INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico, activo) " +
+                            " VALUES (@id, @prefijo, @nombre, @longitud, @esElectronico, 1) ", cnx, tx);
+                        cmdIns.Parameters.AddWithValue("@id", nuevoId);
+                        cmdIns.Parameters.AddWithValue("@prefijo", prefijo);
+                        cmdIns.Parameters.AddWithValue("@nombre", nombre);
+                        cmdIns.Parameters.AddWithValue("@longitud", longitudTotal);
+                        cmdIns.Parameters.AddWithValue("@esElectronico", esElectronico);
+                        cmdIns.ExecuteNonQuery();
+
+                        // En algunas instalaciones SECUENCIA.id quedó como IDENTITY (no lo es
+                        // en el script de instalación, pero pudo crearse así antes); si es el
+                        // caso, hay que activar IDENTITY_INSERT para poder insertar el id exacto.
+                        bool secuenciaEsIdentity = EsColumnaIdentity(cnx, tx, "SECUENCIA", "id");
+
+                        if (secuenciaEsIdentity)
+                        {
+                            new SqlCommand("SET IDENTITY_INSERT SECUENCIA ON", cnx, tx).ExecuteNonQuery();
+                        }
+
+                        SqlCommand cmdSec = new SqlCommand(
+                            "INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (@id, @descripcion, 0)", cnx, tx);
+                        cmdSec.Parameters.AddWithValue("@id", nuevoId);
+                        cmdSec.Parameters.AddWithValue("@descripcion", "Comprobante " + prefijo);
+                        cmdSec.ExecuteNonQuery();
+
+                        if (secuenciaEsIdentity)
+                        {
+                            new SqlCommand("SET IDENTITY_INSERT SECUENCIA OFF", cnx, tx).ExecuteNonQuery();
+                        }
+
+                        tx.Commit();
+
+                        return new TipoComprobante
+                        {
+                            Id = nuevoId,
+                            Prefijo = prefijo,
+                            Nombre = nombre,
+                            LongitudTotal = longitudTotal,
+                            EsElectronico = esElectronico,
+                            Activo = true
+                        };
+                    }
+                    catch
+                    {
+                        tx.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        private static bool EsColumnaIdentity(SqlConnection cnx, SqlTransaction tx, string tabla, string columna)
+        {
+            SqlCommand cmd = new SqlCommand(
+                "SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID(@tabla) AND name = @columna AND is_identity = 1", cnx, tx);
+            cmd.Parameters.AddWithValue("@tabla", tabla);
+            cmd.Parameters.AddWithValue("@columna", columna);
+            return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
         }
     }
 }

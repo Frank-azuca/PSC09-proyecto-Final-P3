@@ -81,6 +81,12 @@
     <Compile Include="Formularios\frmReporteInventario.Designer.cs">
       <DependentUpon>frmReporteInventario.cs</DependentUpon>
     </Compile>
+    <Compile Include="Formularios\frmNuevoTipoComprobante.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmNuevoTipoComprobante.Designer.cs">
+      <DependentUpon>frmNuevoTipoComprobante.cs</DependentUpon>
+    </Compile>
     <Compile Include="Formularios\frmFactura.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -154,6 +160,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmReporteInventario.resx">
       <DependentUpon>frmReporteInventario.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmNuevoTipoComprobante.resx">
+      <DependentUpon>frmNuevoTipoComprobante.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmFactura.resx">
       <DependentUpon>frmFactura.cs</DependentUpon>
