@@ -58,6 +58,7 @@ namespace PSC09
             this.dgv.Size = new System.Drawing.Size(420, 170);
             this.dgv.TabIndex = 2;
             this.dgv.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_CellEndEdit);
+            this.dgv.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgv_DataError);
             //
             // btnAgregarLinea
             //

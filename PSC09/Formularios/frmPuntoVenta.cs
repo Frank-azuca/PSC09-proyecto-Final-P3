@@ -571,6 +571,7 @@ namespace PSC09
                     numeroFactura,
                     txtComprobante.Text,
                     DateTime.Now,
+                    clienteIdActual.Value.ToString(),
                     txtNombreCliente.Text,
                     lineas,
                     zSubtotal,

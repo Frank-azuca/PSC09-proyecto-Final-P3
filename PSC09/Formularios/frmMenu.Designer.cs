@@ -48,6 +48,8 @@
             this.opcionesDelMenuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.permisoAUsuarioToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.comprobantesFiscalesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.datosEmpresaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.tiposPagoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.salirToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.cerrarProgramaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -196,7 +198,9 @@
             this.configuraciónToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.opcionesDelMenuToolStripMenuItem,
             this.permisoAUsuarioToolStripMenuItem,
-            this.comprobantesFiscalesToolStripMenuItem});
+            this.comprobantesFiscalesToolStripMenuItem,
+            this.datosEmpresaToolStripMenuItem,
+            this.tiposPagoToolStripMenuItem});
             this.configuraciónToolStripMenuItem.Name = "configuraciónToolStripMenuItem";
             this.configuraciónToolStripMenuItem.Size = new System.Drawing.Size(95, 22);
             this.configuraciónToolStripMenuItem.Text = "Configuración";
@@ -220,8 +224,22 @@
             this.comprobantesFiscalesToolStripMenuItem.Text = "Comprobantes Fiscales";
             this.comprobantesFiscalesToolStripMenuItem.Click += new System.EventHandler(this.comprobantesFiscalesToolStripMenuItem_Click);
             //
+            // datosEmpresaToolStripMenuItem
+            //
+            this.datosEmpresaToolStripMenuItem.Name = "datosEmpresaToolStripMenuItem";
+            this.datosEmpresaToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.datosEmpresaToolStripMenuItem.Text = "Datos de la Empresa";
+            this.datosEmpresaToolStripMenuItem.Click += new System.EventHandler(this.datosEmpresaToolStripMenuItem_Click);
+            //
+            // tiposPagoToolStripMenuItem
+            //
+            this.tiposPagoToolStripMenuItem.Name = "tiposPagoToolStripMenuItem";
+            this.tiposPagoToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.tiposPagoToolStripMenuItem.Text = "Tipos de Pago";
+            this.tiposPagoToolStripMenuItem.Click += new System.EventHandler(this.tiposPagoToolStripMenuItem_Click);
+            //
             // pictureBox1
-            // 
+            //
             this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.pictureBox1.Image = global::PSC09.Properties.Resources.andromeda_logo;
             this.pictureBox1.Location = new System.Drawing.Point(499, 242);
@@ -299,6 +317,8 @@
         private System.Windows.Forms.ToolStripMenuItem alfabeticoDelClienteToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem opcionesDelMenuToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem permisoAUsuarioToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem datosEmpresaToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem tiposPagoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem comprobantesFiscalesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem facturaToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem inventarioToolStripMenuItem;

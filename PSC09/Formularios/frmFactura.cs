@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -175,8 +174,35 @@ namespace PSC09
 
             cboTipoComprobante.SelectedIndex = -1;
             txtComprobante.Clear();
+            cboTipoVenta.SelectedIndex = 0;
+            lblEstadoPago.Text = "";
 
             ExisteLaData = false;
+        }
+
+        // Muestra si la factura cargada ya está saldada o cuánto le queda pendiente
+        // (CuentaCliente.ObtenerSaldoFactura), para que se vea en la misma pantalla que
+        // en Estado de Cuenta. En una factura nueva sin guardar todavía, queda vacío.
+        private void ActualizarEstadoPago()
+        {
+            decimal total;
+            if (!ExisteLaData || string.IsNullOrWhiteSpace(lblFactura.Text) || !decimal.TryParse(lblTotal.Text, out total))
+            {
+                lblEstadoPago.Text = "";
+                return;
+            }
+
+            decimal saldo = CuentaCliente.ObtenerSaldoFactura(lblFactura.Text, total);
+            if (saldo <= 0)
+            {
+                lblEstadoPago.Text = "SALDADA";
+                lblEstadoPago.ForeColor = Color.SeaGreen;
+            }
+            else
+            {
+                lblEstadoPago.Text = "PENDIENTE: " + DocumentoPdf.FormatoMoneda(saldo);
+                lblEstadoPago.ForeColor = Color.Firebrick;
+            }
         }
 
         private void TotalizarFactura()
@@ -289,6 +315,7 @@ namespace PSC09
 
             BuscarDetalle(nmrFactura);
             TotalizarFactura();
+            ActualizarEstadoPago();
         }
 
         private void BuscarDetalle(string nmrFactura)
@@ -419,6 +446,8 @@ namespace PSC09
             dtpFechaFactura.Value = DateTime.Now;
             ExisteLaData = false;
             lblFactura.Text = Busco.BuscaUltimoNumero("2");
+            cboTipoVenta.SelectedIndex = 0;
+            lblEstadoPago.Text = "";
         }
 
         private void frmFactura_KeyDown(object sender, KeyEventArgs e)
@@ -695,12 +724,73 @@ namespace PSC09
                 return;
             }
 
+            bool esCredito = string.Equals(Convert.ToString(cboTipoVenta.SelectedItem), "Crédito", StringComparison.OrdinalIgnoreCase);
+
+            int idClienteActual;
+            int.TryParse(txtCliente.Text, out idClienteActual);
+
+            if (esCredito && consumidorFinalId.HasValue && idClienteActual == consumidorFinalId.Value)
+            {
+                MessageBox.Show(
+                    "No se puede vender a crédito a \"Consumidor Final\". Elige un cliente registrado, o cambia el Tipo de Venta a Contado.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Se valida antes de guardar nada: si la base de datos todavia no tiene el
+            // catalogo de formas de pago (falta volver a ejecutar el script), es mejor
+            // avisar aqui que dejar la factura guardada y luego fallar al abrir el Cobro.
+            if (!esCredito && CuentaCliente.ObtenerTiposPago().Count == 0)
+            {
+                MessageBox.Show(
+                    "No hay formas de pago activas configuradas (TIPOPAGO). Vuelve a ejecutar el script de base de datos para crearlas, o cambia el Tipo de Venta a Crédito.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             try
             {
                 InsertarData();
                 GenerarPDF();
+
+                string numeroFactura = lblFactura.Text;
+                decimal total = Convert.ToDecimal(lblTotal.Text);
+                string mensaje = "Factura " + numeroFactura + " guardada. Total: " + total.ToString("0.00");
+
+                if (esCredito)
+                {
+                    // A crédito: se imprime la factura de una vez, porque no hay ningún
+                    // cobro que esperar (queda pendiente en la cuenta del cliente).
+                    try { FacturaService.ImprimirPdf(archivo); }
+                    catch { /* la factura ya se guardó; sólo no se pudo mandar a imprimir */ }
+
+                    mensaje += "\n\nVenta a crédito: queda pendiente en la cuenta del cliente (Consulta → Estado de Cuenta).";
+                    MessageBox.Show(mensaje, "Venta a crédito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    // Venta de contado: primero se cobra con una o varias formas de pago
+                    // (frmCobro, que genera e imprime su propio recibo); la factura sólo
+                    // se manda a imprimir después de que el cobro se confirma, no antes.
+                    using (frmCobro frmCobrar = new frmCobro(idClienteActual, txtNombre.Text, numeroFactura, total))
+                    {
+                        if (frmCobrar.ShowDialog(this) == DialogResult.OK)
+                        {
+                            try { FacturaService.ImprimirPdf(archivo); }
+                            catch { /* la venta y el cobro ya se guardaron; sólo no se pudo mandar a imprimir */ }
+
+                            MessageBox.Show(mensaje + "\n\nCobrada de contado.", "Venta completada", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            MessageBox.Show(
+                                mensaje + "\n\nEl cobro quedó pendiente: la factura se guardó, pero el pago no se registró ni se imprimió. Puedes cobrarla luego desde Consulta → Estado de Cuenta.",
+                                "Cobro pendiente", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                }
+
                 LimpiarFormulario();
-                MessageBox.Show("Datos insertados correctamente", "Factura Guardada", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception error)
             {
@@ -746,25 +836,22 @@ namespace PSC09
             }
         }
 
+        // Sólo genera el PDF (Facturas\Factura_<numero>.pdf) y lo guarda en "archivo";
+        // ya no lo abre ni lo imprime aquí: btnGuardar_Click decide cuándo imprimirlo
+        // según el Tipo de Venta (de una vez si es Crédito, o después de cobrar si es
+        // Contado), y btnImprimir_Click lo hace bajo pedido para una factura reabierta.
         private void GenerarPDF()
         {
             archivo = FacturaService.GenerarPdf(
                 lblFactura.Text,
                 txtComprobante.Text,
                 dtpFechaFactura.Value,
+                txtCliente.Text,
                 txtNombre.Text,
                 ArmarLineas(),
                 Convert.ToDecimal(lblSubtotal.Text),
                 Convert.ToDecimal(lblImpuesto.Text),
                 Convert.ToDecimal(lblTotal.Text));
-
-            MessageBox.Show("PDF generado en: " + archivo);
-
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = archivo,
-                UseShellExecute = true
-            });
         }
     }
 }

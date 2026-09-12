@@ -73,6 +73,9 @@
             this.txtComprobante = new System.Windows.Forms.TextBox();
             this.cmsComprobante = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.mnuCambiarComprobante = new System.Windows.Forms.ToolStripMenuItem();
+            this.lblEstadoPago = new System.Windows.Forms.Label();
+            this.lblTipoVenta = new System.Windows.Forms.Label();
+            this.cboTipoVenta = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.dgv)).BeginInit();
             this.cmsComprobante.SuspendLayout();
             this.SuspendLayout();
@@ -346,6 +349,39 @@
             this.mnuCambiarComprobante.Size = new System.Drawing.Size(213, 22);
             this.mnuCambiarComprobante.Text = "Cambiar comprobante...";
             this.mnuCambiarComprobante.Click += new System.EventHandler(this.mnuCambiarComprobante_Click);
+            //
+            // lblEstadoPago
+            //
+            this.lblEstadoPago.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblEstadoPago.Location = new System.Drawing.Point(700, 90);
+            this.lblEstadoPago.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.lblEstadoPago.Name = "lblEstadoPago";
+            this.lblEstadoPago.Size = new System.Drawing.Size(360, 26);
+            this.lblEstadoPago.TabIndex = 51;
+            this.lblEstadoPago.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // lblTipoVenta
+            //
+            this.lblTipoVenta.BackColor = PSC09.Tema.LavandaSuave;
+            this.lblTipoVenta.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTipoVenta.Location = new System.Drawing.Point(700, 184);
+            this.lblTipoVenta.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.lblTipoVenta.Name = "lblTipoVenta";
+            this.lblTipoVenta.Size = new System.Drawing.Size(110, 26);
+            this.lblTipoVenta.TabIndex = 52;
+            this.lblTipoVenta.Text = "Tipo de Venta";
+            this.lblTipoVenta.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // cboTipoVenta
+            //
+            this.cboTipoVenta.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboTipoVenta.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cboTipoVenta.Items.AddRange(new object[] { "Contado", "Crédito" });
+            this.cboTipoVenta.Location = new System.Drawing.Point(816, 182);
+            this.cboTipoVenta.Margin = new System.Windows.Forms.Padding(2);
+            this.cboTipoVenta.Name = "cboTipoVenta";
+            this.cboTipoVenta.Size = new System.Drawing.Size(150, 28);
+            this.cboTipoVenta.TabIndex = 53;
             //
             // dgv
             //
@@ -623,6 +659,9 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = PSC09.Tema.FondoClaro;
             this.ClientSize = new System.Drawing.Size(1166, 721);
+            this.Controls.Add(this.cboTipoVenta);
+            this.Controls.Add(this.lblTipoVenta);
+            this.Controls.Add(this.lblEstadoPago);
             this.Controls.Add(this.txtComprobante);
             this.Controls.Add(this.cboTipoComprobante);
             this.Controls.Add(this.lblComprobante);
@@ -725,5 +764,8 @@
         private System.Windows.Forms.TextBox txtComprobante;
         private System.Windows.Forms.ContextMenuStrip cmsComprobante;
         private System.Windows.Forms.ToolStripMenuItem mnuCambiarComprobante;
+        private System.Windows.Forms.Label lblEstadoPago;
+        private System.Windows.Forms.Label lblTipoVenta;
+        private System.Windows.Forms.ComboBox cboTipoVenta;
     }
 }

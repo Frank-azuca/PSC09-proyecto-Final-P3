@@ -63,6 +63,22 @@ namespace PSC09
             frm.Show();
         }
 
+        private void datosEmpresaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmDatosEmpresa frm = new frmDatosEmpresa();
+            frm.Show();
+        }
+
+        private void tiposPagoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmTiposPago frm = new frmTiposPago();
+            frm.Show();
+        }
+
         private void reporteFacturaToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Close();

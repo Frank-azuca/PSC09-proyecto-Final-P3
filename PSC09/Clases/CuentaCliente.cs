@@ -17,12 +17,41 @@ namespace PSC09
         public decimal Monto;
         public decimal SaldoDespues;
         public bool EsAbono;
+
+        // Sólo para abonos: a qué factura se aplicó este recibo (RECIBO.factura), o ""
+        // si fue un abono general sin factura específica.
+        public string FacturaAplicada;
+
+        // Sólo para cargos: cuánto queda pendiente de ESA factura en particular (no el
+        // saldo general del cliente). <= 0 significa que ya quedó saldada.
+        public decimal SaldoDocumento;
     }
 
+    // Una factura con saldo pendiente de un cliente, para elegir a cuál aplicar un
+    // Recibo de Ingreso (frmReciboIngreso).
+    public class FacturaPendiente
+    {
+        public string Factura;
+        public string Fecha;
+        public decimal Monto;
+        public decimal Saldo;
+
+        public override string ToString()
+        {
+            return "Factura " + Factura + " (" + Fecha + ") — Pendiente: " + DocumentoPdf.FormatoMoneda(Saldo);
+        }
+    }
+
+    // Propiedades (no campos): DataGridViewComboBoxColumn.DisplayMember/ValueMember
+    // (ver frmCobro.ConfigurarGrid) resuelven por reflexion via TypeDescriptor, que
+    // sólo encuentra propiedades .NET (con get/set) — un campo publico simple como
+    // "public string Nombre;" es invisible para ese mecanismo y el binding falla en
+    // tiempo de ejecucion con "el campo denominado 'Nombre' no existe".
     public class TipoPago
     {
-        public int Id;
-        public string Nombre;
+        public int Id { get; set; }
+        public string Nombre { get; set; }
+        public bool Activo { get; set; }
 
         public override string ToString()
         {
@@ -82,13 +111,18 @@ namespace PSC09
             {
                 cnx.Open();
                 SqlCommand cmd = new SqlCommand(
-                    "SELECT ID, NOMBRE FROM TIPOPAGO " + (soloActivos ? " WHERE ACTIVO = 1 " : "") + " ORDER BY ID", cnx);
+                    "SELECT ID, NOMBRE, ACTIVO FROM TIPOPAGO " + (soloActivos ? " WHERE ACTIVO = 1 " : "") + " ORDER BY ID", cnx);
 
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
                     while (rdr.Read())
                     {
-                        lista.Add(new TipoPago { Id = Convert.ToInt32(rdr["ID"]), Nombre = Convert.ToString(rdr["NOMBRE"]) });
+                        lista.Add(new TipoPago
+                        {
+                            Id = Convert.ToInt32(rdr["ID"]),
+                            Nombre = Convert.ToString(rdr["NOMBRE"]),
+                            Activo = rdr["ACTIVO"] != DBNull.Value && Convert.ToInt32(rdr["ACTIVO"]) == 1
+                        });
                     }
                 }
             }
@@ -97,10 +131,10 @@ namespace PSC09
         }
 
         // Registra un recibo de ingreso: uno o varios pagos (lineas) de un cliente,
-        // cada uno con su forma de pago. Si factura no es null, el recibo queda ligado
-        // a esa venta (cobro de una venta al contado en Punto de Venta, en el mismo
-        // momento de la venta); si es null, es un pago posterior contra el saldo
-        // pendiente de una venta a crédito (registrado desde Estado de Cuenta).
+        // cada uno con su forma de pago. factura liga el recibo a una venta concreta
+        // (cobro al contado desde Punto de Venta/Factura, en el mismo momento de la
+        // venta, o un pago posterior elegido a mano desde frmReciboIngreso contra una
+        // factura a crédito pendiente); null = abono general, sin factura específica.
         // Devuelve el número de recibo asignado.
         public static string RegistrarRecibo(int idCliente, DateTime fecha, string factura, List<LineaPago> lineas, string nota)
         {
@@ -130,13 +164,12 @@ namespace PSC09
                     try
                     {
                         SqlCommand cmd = new SqlCommand(
-                            " INSERT INTO RECIBO (RECIBO, IDCLIENTE, FECHA, FACTURA, MONTO, NOTA, ACTIVO) " +
-                            " VALUES (@recibo, @idCliente, @fecha, @factura, @monto, @nota, 1) ", cnx, tx);
+                            " INSERT INTO RECIBO (RECIBO, IDCLIENTE, FECHA, FACTURA, NOTA, ACTIVO) " +
+                            " VALUES (@recibo, @idCliente, @fecha, @factura, @nota, 1) ", cnx, tx);
                         cmd.Parameters.AddWithValue("@recibo", numeroRecibo);
                         cmd.Parameters.AddWithValue("@idCliente", idCliente);
                         cmd.Parameters.AddWithValue("@fecha", fecha.ToString("dd/MM/yyyy"));
                         cmd.Parameters.AddWithValue("@factura", (object)factura ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@monto", total);
                         cmd.Parameters.AddWithValue("@nota", (object)nota ?? DBNull.Value);
                         cmd.ExecuteNonQuery();
 
@@ -169,36 +202,68 @@ namespace PSC09
             return numeroRecibo;
         }
 
-        // Genera el PDF del recibo en Recibos\Recibo_<numero>.pdf y devuelve la ruta.
-        public static string GenerarReciboPdf(string numeroRecibo, DateTime fecha, string clienteNombre, List<LineaPago> lineas, decimal total, string nota)
+        // Genera el PDF del recibo en Recibos\Recibo_<numero>.pdf y devuelve la ruta. El
+        // diseño (encabezado con logo/datos de la empresa, tabla, totales) vive en
+        // Clases/DocumentoPdf.cs, compartido con FacturaService.GenerarPdf.
+        public static string GenerarReciboPdf(string numeroRecibo, DateTime fecha, string clienteNombre, string facturaAplicada, List<LineaPago> lineas, decimal total, string nota)
         {
+            DatosEmpresa empresa = Empresa.ObtenerDatos();
+
             string ruta = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             string carpeta = Path.Combine(ruta, "Recibos");
             Directory.CreateDirectory(carpeta);
 
             string archivo = Path.Combine(carpeta, "Recibo_" + numeroRecibo + ".pdf");
 
-            Document doc = new Document();
+            Document doc = new Document(PageSize.A4, 30, 30, 20, 30);
             PdfWriter.GetInstance(doc, new FileStream(archivo, FileMode.Create));
             doc.Open();
 
-            doc.Add(new Paragraph("RECIBO DE INGRESO"));
-            doc.Add(new Paragraph("Numero: " + numeroRecibo));
-            doc.Add(new Paragraph("Fecha: " + fecha.ToString("dd/MM/yyyy")));
-            doc.Add(new Paragraph("Cliente: " + clienteNombre));
-            doc.Add(new Paragraph(" "));
+            doc.Add(DocumentoPdf.Encabezado(empresa, "RECIBO DE INGRESO", numeroRecibo, null, fecha));
 
+            Paragraph pCliente = new Paragraph();
+            pCliente.SpacingBefore = 14;
+            pCliente.Add(new Chunk("Recibí de: ", DocumentoPdf.FuenteEtiqueta));
+            pCliente.Add(new Chunk(clienteNombre ?? "", DocumentoPdf.FuenteValor));
+            doc.Add(pCliente);
+
+            Paragraph pAplicado = new Paragraph();
+            pAplicado.Add(new Chunk("Aplicado a: ", DocumentoPdf.FuenteEtiqueta));
+            pAplicado.Add(new Chunk(string.IsNullOrWhiteSpace(facturaAplicada) ? "Abono general (sin factura específica)" : "Factura " + facturaAplicada, DocumentoPdf.FuenteValor));
+            doc.Add(pAplicado);
+
+            PdfPTable tablaPagos = new PdfPTable(2);
+            tablaPagos.WidthPercentage = 100;
+            tablaPagos.SpacingBefore = 10;
+            tablaPagos.SetWidths(new float[] { 3f, 2f });
+
+            tablaPagos.AddCell(DocumentoPdf.CeldaEncabezadoTabla("Forma de Pago"));
+            tablaPagos.AddCell(DocumentoPdf.CeldaEncabezadoTabla("Monto"));
+
+            bool alterna = false;
             foreach (LineaPago linea in lineas)
             {
-                doc.Add(new Paragraph(linea.NombreTipoPago + ": " + linea.Monto.ToString("0.00")));
+                tablaPagos.AddCell(DocumentoPdf.CeldaTabla(linea.NombreTipoPago, Element.ALIGN_LEFT, alterna));
+                tablaPagos.AddCell(DocumentoPdf.CeldaTabla(DocumentoPdf.FormatoNumero(linea.Monto), Element.ALIGN_RIGHT, alterna));
+                alterna = !alterna;
             }
+            doc.Add(tablaPagos);
 
-            doc.Add(new Paragraph(" "));
-            doc.Add(new Paragraph("Total: " + total.ToString("0.00")));
+            PdfPTable tablaTotales = DocumentoPdf.TablaTotales();
+            tablaTotales.SpacingBefore = 12;
+            DocumentoPdf.AgregarTotal(tablaTotales, "TOTAL RECIBIDO:", DocumentoPdf.FormatoMoneda(total), true);
+            doc.Add(tablaTotales);
+
             if (!string.IsNullOrWhiteSpace(nota))
             {
-                doc.Add(new Paragraph("Nota: " + nota));
+                Paragraph pNota = new Paragraph();
+                pNota.SpacingBefore = 10;
+                pNota.Add(new Chunk("Nota: ", DocumentoPdf.FuenteEtiqueta));
+                pNota.Add(new Chunk(nota, DocumentoPdf.FuenteValor));
+                doc.Add(pNota);
             }
+
+            DocumentoPdf.Pie(doc, "Este recibo confirma el pago recibido. Gracias por su preferencia.");
 
             doc.Close();
 
@@ -250,10 +315,16 @@ namespace PSC09
             using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
                 cnx.Open();
+                // LEFT JOIN RECIBO sólo aplica a los abonos (M.ORIGEN = OrigenAbono, donde
+                // M.DOCUMENTO es un número de recibo); en los cargos R.FACTURA sale NULL
+                // porque M.DOCUMENTO ahí es un número de factura, no de recibo.
                 SqlCommand cmd = new SqlCommand(
-                    " SELECT FECHA, ORIGEN, DOCUMENTO, MONTO, BCPENDIENTE FROM MUTOCTE " +
-                    " WHERE IDCLIENTE = @id AND ACTIVO = 1 ORDER BY ID ", cnx);
+                    " SELECT M.FECHA, M.ORIGEN, M.DOCUMENTO, M.MONTO, M.BCPENDIENTE, R.FACTURA AS FACTURAAPLICADA " +
+                    " FROM MUTOCTE M " +
+                    " LEFT JOIN RECIBO R ON M.ORIGEN = @origenAbono AND M.DOCUMENTO = R.RECIBO " +
+                    " WHERE M.IDCLIENTE = @id AND M.ACTIVO = 1 ORDER BY M.ID ", cnx);
                 cmd.Parameters.AddWithValue("@id", idCliente);
+                cmd.Parameters.AddWithValue("@origenAbono", OrigenAbono);
 
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
@@ -265,13 +336,113 @@ namespace PSC09
                             Documento = Convert.ToString(rdr["DOCUMENTO"]),
                             Monto = Convert.ToDecimal(rdr["MONTO"]),
                             SaldoDespues = rdr["BCPENDIENTE"] == DBNull.Value ? 0 : Convert.ToDecimal(rdr["BCPENDIENTE"]),
-                            EsAbono = Convert.ToInt32(rdr["ORIGEN"]) == OrigenAbono
+                            EsAbono = Convert.ToInt32(rdr["ORIGEN"]) == OrigenAbono,
+                            FacturaAplicada = rdr["FACTURAAPLICADA"] == DBNull.Value ? "" : Convert.ToString(rdr["FACTURAAPLICADA"])
                         });
                     }
                 }
             }
 
+            // Para los cargos, el saldo pendiente de ESA factura en particular (no el
+            // saldo general del cliente) se calcula aparte: requiere su propia consulta
+            // por fila, así que se hace en una segunda pasada para no anidar un
+            // SqlDataReader dentro de otro sobre la misma conexión.
+            foreach (MovimientoCuenta mov in lista)
+            {
+                if (!mov.EsAbono)
+                {
+                    mov.SaldoDocumento = ObtenerSaldoFactura(mov.Documento, mov.Monto);
+                }
+            }
+
             return lista;
+        }
+
+        // Cuánto se ha pagado en total contra una factura específica (suma de las
+        // líneas de todos los recibos activos que quedaron ligados a ella).
+        public static decimal ObtenerMontoPagadoDeFactura(string numeroFactura)
+        {
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand(
+                    " SELECT ISNULL(SUM(D.MONTO), 0) FROM DETALLERECIBO D " +
+                    " INNER JOIN RECIBO R ON D.RECIBO = R.RECIBO " +
+                    " WHERE R.FACTURA = @factura AND R.ACTIVO = 1 ", cnx);
+                cmd.Parameters.AddWithValue("@factura", numeroFactura);
+                return Convert.ToDecimal(cmd.ExecuteScalar());
+            }
+        }
+
+        // Saldo pendiente de una factura específica: su monto facturado menos lo que ya
+        // se le ha abonado. <= 0 significa que ya está saldada.
+        public static decimal ObtenerSaldoFactura(string numeroFactura, decimal montoFacturado)
+        {
+            return Math.Round(montoFacturado - ObtenerMontoPagadoDeFactura(numeroFactura), 2);
+        }
+
+        // Facturas activas de un cliente que todavía tienen saldo pendiente, para que
+        // frmReciboIngreso pueda elegir a cuál aplicar un pago.
+        public static List<FacturaPendiente> ObtenerFacturasPendientes(int idCliente)
+        {
+            List<Tuple<string, string, decimal>> facturas = new List<Tuple<string, string, decimal>>();
+
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand(
+                    "SELECT FACTURA, FECHA, MONTOFACTURADO FROM HFACTURA WHERE CLIENTE = @id AND ACTIVO = 1 ORDER BY FACTURA", cnx);
+                cmd.Parameters.AddWithValue("@id", idCliente);
+
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        facturas.Add(Tuple.Create(
+                            Convert.ToString(rdr["FACTURA"]),
+                            Convert.ToString(rdr["FECHA"]),
+                            Convert.ToDecimal(rdr["MONTOFACTURADO"])));
+                    }
+                }
+            }
+
+            List<FacturaPendiente> lista = new List<FacturaPendiente>();
+            foreach (Tuple<string, string, decimal> f in facturas)
+            {
+                decimal saldo = ObtenerSaldoFactura(f.Item1, f.Item3);
+                if (saldo > 0.001m)
+                {
+                    lista.Add(new FacturaPendiente { Factura = f.Item1, Fecha = f.Item2, Monto = f.Item3, Saldo = saldo });
+                }
+            }
+
+            return lista;
+        }
+
+        // Administración del catálogo de formas de pago (Configuración → Tipos de Pago).
+        public static int CrearTipoPago(string nombre)
+        {
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand(
+                    "INSERT INTO TIPOPAGO (NOMBRE, ACTIVO) OUTPUT INSERTED.ID VALUES (@nombre, 1)", cnx);
+                cmd.Parameters.AddWithValue("@nombre", nombre);
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
+
+        public static void ActualizarTipoPago(int id, string nombre, bool activo)
+        {
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand("UPDATE TIPOPAGO SET NOMBRE = @nombre, ACTIVO = @activo WHERE ID = @id", cnx);
+                cmd.Parameters.AddWithValue("@nombre", nombre);
+                cmd.Parameters.AddWithValue("@activo", activo ? 1 : 0);
+                cmd.Parameters.AddWithValue("@id", id);
+                cmd.ExecuteNonQuery();
+            }
         }
 
         // Formas de pago usadas en un recibo (por ejemplo "Efectivo, Tarjeta" si se

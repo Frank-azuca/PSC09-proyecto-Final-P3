@@ -7,8 +7,9 @@ namespace PSC09
 {
     // Cuentas por cobrar por cliente: cada factura genera un cargo y cada anulación lo
     // revierte (ver FacturaService.GuardarFactura/AnularFactura y Clases/
-    // CuentaCliente.cs); esta pantalla sólo consulta esos movimientos y permite
-    // registrar abonos (pagos) que reducen el saldo pendiente.
+    // CuentaCliente.cs); esta pantalla consulta esos movimientos, muestra si cada
+    // factura ya quedó saldada (o cuánto le falta) y a cuál factura se aplicó cada
+    // abono, y permite registrar nuevos abonos (pagos) desde Recibo de Ingreso.
     public partial class frmEstadoCuenta : Form
     {
         private int? clienteIdActual;
@@ -48,9 +49,10 @@ namespace PSC09
 
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colFecha", HeaderText = "Fecha", Width = 100 });
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colTipo", HeaderText = "Tipo", Width = 220 });
-            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colDocumento", HeaderText = "Documento", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colDocumento", HeaderText = "Documento", Width = 100 });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colEstado", HeaderText = "Estado / Aplicado a", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colMonto", HeaderText = "Monto", Width = 130 });
-            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colSaldo", HeaderText = "Saldo", Width = 130 });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colSaldo", HeaderText = "Saldo Cuenta", Width = 130 });
 
             dgv.BorderStyle = BorderStyle.None;
             dgv.AlternatingRowsDefaultCellStyle.BackColor = Tema.LavandaSuave;
@@ -89,21 +91,35 @@ namespace PSC09
                 DataGridViewRow fila = dgv.Rows[idx];
 
                 fila.Cells["colFecha"].Value = mov.Fecha;
+                fila.Cells["colDocumento"].Value = mov.Documento;
+                fila.Cells["colMonto"].Value = mov.Monto.ToString("0.00");
+                fila.Cells["colSaldo"].Value = mov.SaldoDespues.ToString("0.00");
 
                 if (mov.EsAbono)
                 {
                     string formasPago = CuentaCliente.ObtenerFormasPagoDeRecibo(mov.Documento);
                     fila.Cells["colTipo"].Value = string.IsNullOrEmpty(formasPago) ? "Abono" : "Abono (" + formasPago + ")";
+                    fila.Cells["colEstado"].Value = string.IsNullOrEmpty(mov.FacturaAplicada)
+                        ? "Abono general"
+                        : "Aplicado a factura " + mov.FacturaAplicada;
                     fila.DefaultCellStyle.ForeColor = Color.SeaGreen;
                 }
                 else
                 {
                     fila.Cells["colTipo"].Value = "Cargo";
-                }
 
-                fila.Cells["colDocumento"].Value = mov.Documento;
-                fila.Cells["colMonto"].Value = mov.Monto.ToString("0.00");
-                fila.Cells["colSaldo"].Value = mov.SaldoDespues.ToString("0.00");
+                    if (mov.SaldoDocumento <= 0)
+                    {
+                        fila.Cells["colEstado"].Value = "SALDADA";
+                        fila.Cells["colEstado"].Style.ForeColor = Color.SeaGreen;
+                        fila.Cells["colEstado"].Style.Font = new Font(dgv.Font, FontStyle.Bold);
+                    }
+                    else
+                    {
+                        fila.Cells["colEstado"].Value = "PENDIENTE: " + DocumentoPdf.FormatoMoneda(mov.SaldoDocumento);
+                        fila.Cells["colEstado"].Style.ForeColor = Color.Firebrick;
+                    }
+                }
             }
 
             decimal saldo = CuentaCliente.ObtenerSaldoPendiente(clienteIdActual.Value);

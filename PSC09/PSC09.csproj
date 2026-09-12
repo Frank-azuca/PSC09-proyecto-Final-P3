@@ -54,7 +54,9 @@
     <Compile Include="Clases\clsBusco.cs" />
     <Compile Include="Clases\ComprobanteFiscal.cs" />
     <Compile Include="Clases\ConvertImage.cs" />
+    <Compile Include="Clases\DocumentoPdf.cs" />
     <Compile Include="Clases\CuentaCliente.cs" />
+    <Compile Include="Clases\Empresa.cs" />
     <Compile Include="Clases\ExportadorCsv.cs" />
     <Compile Include="Clases\FacturaService.cs" />
     <Compile Include="Clases\Seguridad.cs" />
@@ -70,6 +72,18 @@
     </Compile>
     <Compile Include="Formularios\frmComprobantesFiscales.Designer.cs">
       <DependentUpon>frmComprobantesFiscales.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmDatosEmpresa.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmDatosEmpresa.Designer.cs">
+      <DependentUpon>frmDatosEmpresa.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmTiposPago.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmTiposPago.Designer.cs">
+      <DependentUpon>frmTiposPago.cs</DependentUpon>
     </Compile>
     <Compile Include="Formularios\frmReporteFactura.cs">
       <SubType>Form</SubType>
@@ -192,6 +206,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmComprobantesFiscales.resx">
       <DependentUpon>frmComprobantesFiscales.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmDatosEmpresa.resx">
+      <DependentUpon>frmDatosEmpresa.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmTiposPago.resx">
+      <DependentUpon>frmTiposPago.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmReporteFactura.resx">
       <DependentUpon>frmReporteFactura.cs</DependentUpon>

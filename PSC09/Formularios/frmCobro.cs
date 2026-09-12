@@ -39,14 +39,23 @@ namespace PSC09
 
         private void ConfigurarGrid()
         {
+            // DataSource/DisplayMember/ValueMember (en vez de Items.Add(tipo) con el
+            // objeto TipoPago completo) es el patrón que espera DataGridViewComboBoxColumn:
+            // usar objetos sueltos sin esos dos miembros hace que, al cambiar de forma de
+            // pago en una celda ya puesta, la grilla no pueda convertir el valor elegido de
+            // vuelta y dispare el DataError genérico de WinForms ("para reemplazar el
+            // cuadro de diálogo predeterminado, controle el evento DataError"). Con
+            // ValueMember = "Id", el valor real de cada celda es el id (int), no el objeto.
             DataGridViewComboBoxColumn colTipoPago = new DataGridViewComboBoxColumn
             {
                 Name = "colTipoPago",
                 HeaderText = "Forma de Pago",
                 Width = 220,
+                DataSource = new List<TipoPago>(tiposPago),
+                DisplayMember = "Nombre",
+                ValueMember = "Id",
                 DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox
             };
-            foreach (TipoPago tipo in tiposPago) colTipoPago.Items.Add(tipo);
 
             dgv.Columns.Add(colTipoPago);
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colMonto", HeaderText = "Monto", Width = 150 });
@@ -65,8 +74,17 @@ namespace PSC09
         private void AgregarLinea(decimal monto)
         {
             int idx = dgv.Rows.Add();
-            if (tiposPago.Count > 0) dgv.Rows[idx].Cells["colTipoPago"].Value = tiposPago[0];
+            if (tiposPago.Count > 0) dgv.Rows[idx].Cells["colTipoPago"].Value = tiposPago[0].Id;
             dgv.Rows[idx].Cells["colMonto"].Value = monto > 0 ? monto.ToString("0.00") : "";
+        }
+
+        private TipoPago BuscarTipoPago(int id)
+        {
+            foreach (TipoPago tipo in tiposPago)
+            {
+                if (tipo.Id == id) return tipo;
+            }
+            return null;
         }
 
         private decimal SumaLineas()
@@ -95,6 +113,14 @@ namespace PSC09
             ActualizarFalta();
         }
 
+        // Red de seguridad: con DataSource/ValueMember bien puestos (ver ConfigurarGrid)
+        // no debería dispararse, pero sin esto un error aquí mostraría el cuadro de
+        // diálogo genérico de WinForms en vez de fallar en silencio para el usuario.
+        private void dgv_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        {
+            e.ThrowException = false;
+        }
+
         private void btnAgregarLinea_Click(object sender, EventArgs e)
         {
             decimal falta = Math.Max(0, Math.Round(totalAPagar - SumaLineas(), 2));
@@ -117,7 +143,12 @@ namespace PSC09
 
             foreach (DataGridViewRow fila in dgv.Rows)
             {
-                TipoPago tipo = fila.Cells["colTipoPago"].Value as TipoPago;
+                object valorCelda = fila.Cells["colTipoPago"].Value;
+                int idTipoPago;
+                TipoPago tipo = (valorCelda != null && int.TryParse(Convert.ToString(valorCelda), out idTipoPago))
+                    ? BuscarTipoPago(idTipoPago)
+                    : null;
+
                 decimal monto;
                 bool montoValido = decimal.TryParse(Convert.ToString(fila.Cells["colMonto"].Value), out monto) && monto > 0;
 
@@ -139,7 +170,7 @@ namespace PSC09
             try
             {
                 string numeroRecibo = CuentaCliente.RegistrarRecibo(idCliente, DateTime.Now, numeroFactura, lineas, "Venta de contado - Factura " + numeroFactura);
-                string archivo = CuentaCliente.GenerarReciboPdf(numeroRecibo, DateTime.Now, nombreCliente, lineas, totalAPagar, "Venta de contado - Factura " + numeroFactura);
+                string archivo = CuentaCliente.GenerarReciboPdf(numeroRecibo, DateTime.Now, nombreCliente, numeroFactura, lineas, totalAPagar, "Venta de contado - Factura " + numeroFactura);
 
                 try { FacturaService.ImprimirPdf(archivo); }
                 catch { /* la venta y el cobro ya quedaron guardados; solo no se pudo mandar a imprimir */ }

@@ -41,6 +41,26 @@ GO
 ALTER TABLE USUARIO ALTER COLUMN clave NVARCHAR(200) NULL;
 GO
 
+-- Datos de la empresa: fila única (id = 1), configurable desde Configuración → Datos
+-- de la Empresa (frmDatosEmpresa). Se usan en el encabezado de las facturas y recibos
+-- impresos (ver Clases/Empresa.cs).
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'EMPRESA')
+CREATE TABLE EMPRESA (
+    id              INT PRIMARY KEY,
+    nombreComercial NVARCHAR(100) NULL,
+    razonSocial     NVARCHAR(100) NULL,
+    rnc             NVARCHAR(20)  NULL,
+    direccion       NVARCHAR(150) NULL,
+    telefono        NVARCHAR(20)  NULL,
+    correo          NVARCHAR(80)  NULL,
+    logo            IMAGE         NULL
+);
+GO
+
+IF NOT EXISTS (SELECT * FROM EMPRESA WHERE id = 1)
+    INSERT INTO EMPRESA (id, nombreComercial) VALUES (1, 'Andrómeda');
+GO
+
 -- Normalizadas a 3FN: País y Ciudad viven en sus propias tablas para que
 -- "país" no dependa transitivamente de "ciudad" dentro de CLIENTES.
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PAISES')
@@ -205,19 +225,29 @@ IF NOT EXISTS (SELECT * FROM TIPOPAGO WHERE nombre = 'Cheque')
 GO
 
 -- Encabezado de un recibo de ingreso (pago de un cliente): puede venir de
--- cobrar una venta al contado en Punto de Venta (factura NOT NULL, mismo
--- momento de la venta) o de un pago posterior contra el saldo pendiente de
--- una venta a crédito (factura NULL, registrado desde Estado de Cuenta).
+-- cobrar una venta al contado en Punto de Venta o en Factura (factura NOT
+-- NULL, mismo momento de la venta) o de un pago posterior contra el saldo
+-- pendiente de una venta a crédito (factura NULL o con la factura elegida,
+-- registrado desde Estado de Cuenta). No guarda un total propio: el monto de
+-- un recibo es siempre SUM(DETALLERECIBO.monto) de sus líneas, para no tener
+-- el mismo dato en dos lugares (ver Clases/CuentaCliente.cs).
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'RECIBO')
 CREATE TABLE RECIBO (
     recibo      NVARCHAR(10) PRIMARY KEY,
     idCliente   INT NULL FOREIGN KEY REFERENCES CLIENTES(idCliente),
     fecha       NVARCHAR(12) NULL,
     factura     NVARCHAR(10) NULL FOREIGN KEY REFERENCES HFACTURA(factura),
-    monto       DECIMAL(18,2) NULL,
     nota        NVARCHAR(100) NULL,
     activo      INT NULL
 );
+GO
+
+-- Para bases ya creadas antes de este cambio: RECIBO.monto era redundante
+-- (siempre igual a la suma de sus líneas en DETALLERECIBO, y ningún formulario
+-- llegó a leerlo) así que se elimina para no arrastrar un dato que se puede
+-- desincronizar de su propia tabla de detalle.
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('RECIBO') AND name = 'monto')
+    ALTER TABLE RECIBO DROP COLUMN monto;
 GO
 
 -- Detalle del recibo: un recibo puede repartirse entre varias formas de pago

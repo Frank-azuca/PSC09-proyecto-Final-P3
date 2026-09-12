@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
@@ -124,37 +125,101 @@ namespace PSC09
         }
 
         // Genera el PDF de la factura en Facturas\Factura_<numero>.pdf (misma ruta que
-        // espera frmFactura.btnImprimir_Click) y devuelve la ruta del archivo.
-        public static string GenerarPdf(string numeroFactura, string comprobante, DateTime fecha, string clienteNombre,
+        // espera frmFactura.btnImprimir_Click) y devuelve la ruta del archivo. El
+        // diseño (encabezado con logo/datos de la empresa, tabla de líneas, totales)
+        // vive en Clases/DocumentoPdf.cs, compartido con CuentaCliente.GenerarReciboPdf.
+        public static string GenerarPdf(string numeroFactura, string comprobante, DateTime fecha, string clienteId, string clienteNombre,
             List<LineaFactura> lineas, decimal subtotal, decimal impuesto, decimal total)
         {
+            string clienteIdentificacion = "";
+            string clienteDireccion = "";
+
+            int idClienteParsed;
+            if (int.TryParse(clienteId, out idClienteParsed))
+            {
+                using (SqlConnection cnx = new SqlConnection(cnn.db))
+                {
+                    cnx.Open();
+                    SqlCommand cmd = new SqlCommand("SELECT IDIDENTIFICACION, DIRECCION FROM CLIENTES WHERE IDCLIENTE = @id", cnx);
+                    cmd.Parameters.AddWithValue("@id", idClienteParsed);
+
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        if (rdr.Read())
+                        {
+                            clienteIdentificacion = rdr["IDIDENTIFICACION"] == DBNull.Value ? "" : Convert.ToString(rdr["IDIDENTIFICACION"]);
+                            clienteDireccion = rdr["DIRECCION"] == DBNull.Value ? "" : Convert.ToString(rdr["DIRECCION"]);
+                        }
+                    }
+                }
+            }
+
+            DatosEmpresa empresa = Empresa.ObtenerDatos();
+
             string ruta = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             string carpeta = Path.Combine(ruta, "Facturas");
             Directory.CreateDirectory(carpeta);
 
             string archivo = Path.Combine(carpeta, "Factura_" + numeroFactura + ".pdf");
 
-            Document doc = new Document();
+            Document doc = new Document(PageSize.A4, 30, 30, 20, 30);
             PdfWriter.GetInstance(doc, new FileStream(archivo, FileMode.Create));
             doc.Open();
 
-            doc.Add(new Paragraph("FACTURA"));
-            doc.Add(new Paragraph("Numero: " + numeroFactura));
-            doc.Add(new Paragraph("Comprobante Fiscal: " + comprobante));
-            doc.Add(new Paragraph("Fecha: " + fecha.ToString("dd/MM/yyyy")));
-            doc.Add(new Paragraph("Cliente: " + clienteNombre));
-            doc.Add(new Paragraph(" "));
+            doc.Add(DocumentoPdf.Encabezado(empresa, "FACTURA", numeroFactura, comprobante, fecha));
 
-            foreach (LineaFactura linea in lineas)
+            Paragraph pCliente = new Paragraph();
+            pCliente.SpacingBefore = 14;
+            pCliente.Add(new Chunk("Cliente: ", DocumentoPdf.FuenteEtiqueta));
+            pCliente.Add(new Chunk(clienteNombre ?? "", DocumentoPdf.FuenteValor));
+            if (!string.IsNullOrWhiteSpace(clienteIdentificacion))
             {
-                string texto = linea.Descripcion + " | " + linea.Cantidad + " | " + linea.PrecioVenta;
-                doc.Add(new Paragraph(texto));
+                pCliente.Add(new Chunk("      RNC/Cédula: ", DocumentoPdf.FuenteEtiqueta));
+                pCliente.Add(new Chunk(clienteIdentificacion, DocumentoPdf.FuenteValor));
+            }
+            doc.Add(pCliente);
+
+            if (!string.IsNullOrWhiteSpace(clienteDireccion))
+            {
+                Paragraph pDireccion = new Paragraph();
+                pDireccion.Add(new Chunk("Dirección: ", DocumentoPdf.FuenteEtiqueta));
+                pDireccion.Add(new Chunk(clienteDireccion, DocumentoPdf.FuenteValor));
+                doc.Add(pDireccion);
             }
 
-            doc.Add(new Paragraph(" "));
-            doc.Add(new Paragraph("Subtotal: " + subtotal));
-            doc.Add(new Paragraph("Impuesto: " + impuesto));
-            doc.Add(new Paragraph("Total: " + total));
+            PdfPTable tablaLineas = new PdfPTable(6);
+            tablaLineas.WidthPercentage = 100;
+            tablaLineas.SpacingBefore = 10;
+            tablaLineas.SetWidths(new float[] { 1.2f, 3.2f, 0.9f, 1.3f, 1.1f, 1.4f });
+
+            tablaLineas.AddCell(DocumentoPdf.CeldaEncabezadoTabla("Código"));
+            tablaLineas.AddCell(DocumentoPdf.CeldaEncabezadoTabla("Descripción"));
+            tablaLineas.AddCell(DocumentoPdf.CeldaEncabezadoTabla("Cant."));
+            tablaLineas.AddCell(DocumentoPdf.CeldaEncabezadoTabla("Precio"));
+            tablaLineas.AddCell(DocumentoPdf.CeldaEncabezadoTabla("ITBIS"));
+            tablaLineas.AddCell(DocumentoPdf.CeldaEncabezadoTabla("Subtotal"));
+
+            bool alterna = false;
+            foreach (LineaFactura linea in lineas)
+            {
+                tablaLineas.AddCell(DocumentoPdf.CeldaTabla(linea.Articulo, Element.ALIGN_LEFT, alterna));
+                tablaLineas.AddCell(DocumentoPdf.CeldaTabla(linea.Descripcion, Element.ALIGN_LEFT, alterna));
+                tablaLineas.AddCell(DocumentoPdf.CeldaTabla(linea.Cantidad.ToString("0.##", CultureInfo.InvariantCulture), Element.ALIGN_CENTER, alterna));
+                tablaLineas.AddCell(DocumentoPdf.CeldaTabla(DocumentoPdf.FormatoNumero(linea.PrecioVenta), Element.ALIGN_RIGHT, alterna));
+                tablaLineas.AddCell(DocumentoPdf.CeldaTabla(DocumentoPdf.FormatoNumero(linea.Impuesto), Element.ALIGN_RIGHT, alterna));
+                tablaLineas.AddCell(DocumentoPdf.CeldaTabla(DocumentoPdf.FormatoNumero(linea.MontoLinea), Element.ALIGN_RIGHT, alterna));
+                alterna = !alterna;
+            }
+            doc.Add(tablaLineas);
+
+            PdfPTable tablaTotales = DocumentoPdf.TablaTotales();
+            tablaTotales.SpacingBefore = 12;
+            DocumentoPdf.AgregarTotal(tablaTotales, "Subtotal:", DocumentoPdf.FormatoMoneda(subtotal), false);
+            DocumentoPdf.AgregarTotal(tablaTotales, "ITBIS:", DocumentoPdf.FormatoMoneda(impuesto), false);
+            DocumentoPdf.AgregarTotal(tablaTotales, "TOTAL A PAGAR:", DocumentoPdf.FormatoMoneda(total), true);
+            doc.Add(tablaTotales);
+
+            DocumentoPdf.Pie(doc, "Este documento es un comprobante fiscal válido ante la DGII. Gracias por su compra.");
 
             doc.Close();
 
