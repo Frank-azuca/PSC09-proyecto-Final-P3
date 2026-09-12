@@ -30,6 +30,8 @@ namespace PSC09
             this.txtComprobante = new System.Windows.Forms.TextBox();
             this.cmsComprobante = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.mnuCambiarComprobante = new System.Windows.Forms.ToolStripMenuItem();
+            this.lblTipoVenta = new System.Windows.Forms.Label();
+            this.cboTipoVenta = new System.Windows.Forms.ComboBox();
             this.lblCodigo = new System.Windows.Forms.Label();
             this.txtCodigo = new System.Windows.Forms.TextBox();
             this.lblCantidadRapida = new System.Windows.Forms.Label();
@@ -182,6 +184,27 @@ namespace PSC09
             this.mnuCambiarComprobante.Size = new System.Drawing.Size(213, 22);
             this.mnuCambiarComprobante.Text = "Cambiar comprobante...";
             this.mnuCambiarComprobante.Click += new System.EventHandler(this.mnuCambiarComprobante_Click);
+            //
+            // lblTipoVenta
+            //
+            this.lblTipoVenta.BackColor = PSC09.Tema.LavandaSuave;
+            this.lblTipoVenta.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTipoVenta.Location = new System.Drawing.Point(620, 124);
+            this.lblTipoVenta.Name = "lblTipoVenta";
+            this.lblTipoVenta.Size = new System.Drawing.Size(110, 26);
+            this.lblTipoVenta.TabIndex = 26;
+            this.lblTipoVenta.Text = "Tipo de Venta";
+            this.lblTipoVenta.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // cboTipoVenta
+            //
+            this.cboTipoVenta.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboTipoVenta.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cboTipoVenta.Items.AddRange(new object[] { "Contado", "Crédito" });
+            this.cboTipoVenta.Location = new System.Drawing.Point(740, 122);
+            this.cboTipoVenta.Name = "cboTipoVenta";
+            this.cboTipoVenta.Size = new System.Drawing.Size(150, 28);
+            this.cboTipoVenta.TabIndex = 27;
             //
             // lblCodigo
             //
@@ -420,6 +443,8 @@ namespace PSC09
             this.Controls.Add(this.lblCantidadRapida);
             this.Controls.Add(this.txtCodigo);
             this.Controls.Add(this.lblCodigo);
+            this.Controls.Add(this.cboTipoVenta);
+            this.Controls.Add(this.lblTipoVenta);
             this.Controls.Add(this.txtComprobante);
             this.Controls.Add(this.cboTipoComprobante);
             this.Controls.Add(this.lblComprobante);
@@ -457,6 +482,8 @@ namespace PSC09
         private System.Windows.Forms.TextBox txtComprobante;
         private System.Windows.Forms.ContextMenuStrip cmsComprobante;
         private System.Windows.Forms.ToolStripMenuItem mnuCambiarComprobante;
+        private System.Windows.Forms.Label lblTipoVenta;
+        private System.Windows.Forms.ComboBox cboTipoVenta;
         private System.Windows.Forms.Label lblCodigo;
         private System.Windows.Forms.TextBox txtCodigo;
         private System.Windows.Forms.Label lblCantidadRapida;

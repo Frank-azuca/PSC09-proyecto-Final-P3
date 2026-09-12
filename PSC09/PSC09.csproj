@@ -54,6 +54,7 @@
     <Compile Include="Clases\clsBusco.cs" />
     <Compile Include="Clases\ComprobanteFiscal.cs" />
     <Compile Include="Clases\ConvertImage.cs" />
+    <Compile Include="Clases\CuentaCliente.cs" />
     <Compile Include="Clases\ExportadorCsv.cs" />
     <Compile Include="Clases\FacturaService.cs" />
     <Compile Include="Clases\Seguridad.cs" />
@@ -99,6 +100,30 @@
     </Compile>
     <Compile Include="Formularios\frmConsultaArticulos.Designer.cs">
       <DependentUpon>frmConsultaArticulos.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmAlfabeticoClientes.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmAlfabeticoClientes.Designer.cs">
+      <DependentUpon>frmAlfabeticoClientes.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmEstadoCuenta.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmEstadoCuenta.Designer.cs">
+      <DependentUpon>frmEstadoCuenta.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmReciboIngreso.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmReciboIngreso.Designer.cs">
+      <DependentUpon>frmReciboIngreso.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmCobro.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmCobro.Designer.cs">
+      <DependentUpon>frmCobro.cs</DependentUpon>
     </Compile>
     <Compile Include="Formularios\frmFactura.cs">
       <SubType>Form</SubType>
@@ -182,6 +207,18 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmConsultaArticulos.resx">
       <DependentUpon>frmConsultaArticulos.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmAlfabeticoClientes.resx">
+      <DependentUpon>frmAlfabeticoClientes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmEstadoCuenta.resx">
+      <DependentUpon>frmEstadoCuenta.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmReciboIngreso.resx">
+      <DependentUpon>frmReciboIngreso.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmCobro.resx">
+      <DependentUpon>frmCobro.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmFactura.resx">
       <DependentUpon>frmFactura.cs</DependentUpon>

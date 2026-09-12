@@ -108,6 +108,8 @@ namespace PSC09
                             cmdStock.ExecuteNonQuery();
                         }
 
+                        CuentaCliente.RegistrarCargo(cnx, tx, cliente, fecha, numeroFactura, total);
+
                         tx.Commit();
                     }
                     catch
@@ -224,6 +226,8 @@ namespace PSC09
                         SqlCommand cmdHdr = new SqlCommand("UPDATE HFACTURA SET ACTIVO = '0' WHERE FACTURA = @factura", cnx, tx);
                         cmdHdr.Parameters.AddWithValue("@factura", numFactura);
                         cmdHdr.ExecuteNonQuery();
+
+                        CuentaCliente.AnularCargosDeFactura(cnx, tx, numFactura);
 
                         tx.Commit();
                     }

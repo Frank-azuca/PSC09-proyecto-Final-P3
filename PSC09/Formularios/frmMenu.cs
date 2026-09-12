@@ -101,6 +101,22 @@ namespace PSC09
             frm.Show();
         }
 
+        private void estadoDeCuentaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmEstadoCuenta frm = new frmEstadoCuenta();
+            frm.Show();
+        }
+
+        private void alfabeticoDelClienteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmAlfabeticoClientes frm = new frmAlfabeticoClientes();
+            frm.Show();
+        }
+
         private void cerrarSesionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             {

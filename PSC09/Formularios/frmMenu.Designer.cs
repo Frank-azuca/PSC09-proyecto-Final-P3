@@ -159,12 +159,14 @@
             this.estadoDeCuentaToolStripMenuItem.Name = "estadoDeCuentaToolStripMenuItem";
             this.estadoDeCuentaToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
             this.estadoDeCuentaToolStripMenuItem.Text = "Estado de Cuenta";
-            // 
+            this.estadoDeCuentaToolStripMenuItem.Click += new System.EventHandler(this.estadoDeCuentaToolStripMenuItem_Click);
+            //
             // alfabeticoDelClienteToolStripMenuItem
-            // 
+            //
             this.alfabeticoDelClienteToolStripMenuItem.Name = "alfabeticoDelClienteToolStripMenuItem";
             this.alfabeticoDelClienteToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
             this.alfabeticoDelClienteToolStripMenuItem.Text = "Alfabetico del Clientes";
+            this.alfabeticoDelClienteToolStripMenuItem.Click += new System.EventHandler(this.alfabeticoDelClienteToolStripMenuItem_Click);
             // 
             // reporteToolStripMenuItem
             // 

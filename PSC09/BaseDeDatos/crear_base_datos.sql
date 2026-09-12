@@ -183,6 +183,54 @@ CREATE TABLE MUTOCTE (
 );
 GO
 
+-- Catálogo de formas de pago (Efectivo, Tarjeta, etc.), usado por Recibo de
+-- Ingreso (Estado de Cuenta) y por el Cobro de una venta al contado en Punto
+-- de Venta.
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TIPOPAGO')
+CREATE TABLE TIPOPAGO (
+    id      INT IDENTITY(1,1) PRIMARY KEY,
+    nombre  NVARCHAR(30) NULL,
+    activo  INT NULL
+);
+GO
+
+IF NOT EXISTS (SELECT * FROM TIPOPAGO WHERE nombre = 'Efectivo')
+    INSERT INTO TIPOPAGO (nombre, activo) VALUES ('Efectivo', 1);
+IF NOT EXISTS (SELECT * FROM TIPOPAGO WHERE nombre = 'Tarjeta')
+    INSERT INTO TIPOPAGO (nombre, activo) VALUES ('Tarjeta', 1);
+IF NOT EXISTS (SELECT * FROM TIPOPAGO WHERE nombre = 'Transferencia')
+    INSERT INTO TIPOPAGO (nombre, activo) VALUES ('Transferencia', 1);
+IF NOT EXISTS (SELECT * FROM TIPOPAGO WHERE nombre = 'Cheque')
+    INSERT INTO TIPOPAGO (nombre, activo) VALUES ('Cheque', 1);
+GO
+
+-- Encabezado de un recibo de ingreso (pago de un cliente): puede venir de
+-- cobrar una venta al contado en Punto de Venta (factura NOT NULL, mismo
+-- momento de la venta) o de un pago posterior contra el saldo pendiente de
+-- una venta a crédito (factura NULL, registrado desde Estado de Cuenta).
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'RECIBO')
+CREATE TABLE RECIBO (
+    recibo      NVARCHAR(10) PRIMARY KEY,
+    idCliente   INT NULL FOREIGN KEY REFERENCES CLIENTES(idCliente),
+    fecha       NVARCHAR(12) NULL,
+    factura     NVARCHAR(10) NULL FOREIGN KEY REFERENCES HFACTURA(factura),
+    monto       DECIMAL(18,2) NULL,
+    nota        NVARCHAR(100) NULL,
+    activo      INT NULL
+);
+GO
+
+-- Detalle del recibo: un recibo puede repartirse entre varias formas de pago
+-- (por ejemplo, una parte en efectivo y otra con tarjeta).
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DETALLERECIBO')
+CREATE TABLE DETALLERECIBO (
+    secuencia   INT IDENTITY(1,1) PRIMARY KEY,
+    recibo      NVARCHAR(10) NULL FOREIGN KEY REFERENCES RECIBO(recibo),
+    idTipoPago  INT NULL FOREIGN KEY REFERENCES TIPOPAGO(id),
+    monto       DECIMAL(18,2) NULL
+);
+GO
+
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'SECUENCIA')
 CREATE TABLE SECUENCIA (
     id          INT PRIMARY KEY,

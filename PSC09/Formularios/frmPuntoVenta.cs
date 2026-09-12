@@ -14,7 +14,9 @@ namespace PSC09
     // para elegir cliente, frmConsultaArticulos para buscar artículos (compartida con
     // frmFactura), frmCambiarComprobante para corregir el comprobante) en vez de
     // duplicarla: esta pantalla es sólo una interfaz distinta sobre los mismos
-    // servicios que ya usa frmFactura.
+    // servicios que ya usa frmFactura. Además, si el Tipo de Venta es Contado, abre
+    // frmCobro justo después de guardar para cobrar de inmediato (una o varias formas
+    // de pago); si es Crédito, la venta queda pendiente en Estado de Cuenta.
     public partial class frmPuntoVenta : Form
     {
         // Línea del carrito: además de lo que ya trae LineaFactura (lo que hace falta
@@ -58,6 +60,8 @@ namespace PSC09
             EstiloDataGridView();
             CargarTiposComprobante();
             CargarClientePorDefecto();
+
+            cboTipoVenta.SelectedIndex = 0;
 
             txtCodigo.Focus();
         }
@@ -359,6 +363,7 @@ namespace PSC09
             lblCambio.Text = "";
             txtCodigo.Clear();
             txtCantidadRapida.Text = "1";
+            cboTipoVenta.SelectedIndex = 0;
 
             // Vuelve al cliente por defecto para la siguiente venta: no tendría sentido
             // que el próximo cliente de mostrador quedara facturado con el nombre o el
@@ -527,6 +532,26 @@ namespace PSC09
                 return;
             }
 
+            bool esCredito = string.Equals(Convert.ToString(cboTipoVenta.SelectedItem), "Crédito", StringComparison.OrdinalIgnoreCase);
+            if (esCredito && consumidorFinalId.HasValue && clienteIdActual.Value == consumidorFinalId.Value)
+            {
+                MessageBox.Show(
+                    "No se puede vender a crédito a \"Consumidor Final\". Elige un cliente registrado con \"Cambiar\", o cambia el Tipo de Venta a Contado.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Se valida antes de guardar nada: si la base de datos todavia no tiene el
+            // catalogo de formas de pago (falta volver a ejecutar el script), es mejor
+            // avisar aqui que dejar la factura guardada y luego fallar al abrir el Cobro.
+            if (!esCredito && CuentaCliente.ObtenerTiposPago().Count == 0)
+            {
+                MessageBox.Show(
+                    "No hay formas de pago activas configuradas (TIPOPAGO). Vuelve a ejecutar el script de base de datos para crearlas (Efectivo, Tarjeta, Transferencia, Cheque), o cambia el Tipo de Venta a Crédito.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             try
             {
                 List<LineaFactura> lineas = dgv.Rows.Cast<DataGridViewRow>().Select(f => (LineaFactura)f.Tag).ToList();
@@ -552,12 +577,41 @@ namespace PSC09
                     zImpuesto,
                     zTotal);
 
-                try { FacturaService.ImprimirPdf(archivo); }
-                catch { /* la venta ya se guardó; sólo no se pudo mandar a imprimir */ }
-
-                string mensaje = "Venta cobrada. Factura " + numeroFactura + ". Total: " + zTotal.ToString("0.00");
+                string mensaje = "Factura " + numeroFactura + " guardada. Total: " + zTotal.ToString("0.00");
                 if (hayRecibido) mensaje += "\nCambio: " + (recibido - zTotal).ToString("0.00");
-                MessageBox.Show(mensaje, "Venta completada", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                if (esCredito)
+                {
+                    // A crédito: se imprime la factura de una vez, porque no hay ningún
+                    // cobro que esperar (queda pendiente en la cuenta del cliente).
+                    try { FacturaService.ImprimirPdf(archivo); }
+                    catch { /* la venta ya se guardó; sólo no se pudo mandar a imprimir */ }
+
+                    mensaje += "\n\nVenta a crédito: queda pendiente en la cuenta del cliente (Consulta → Estado de Cuenta).";
+                    MessageBox.Show(mensaje, "Venta a crédito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    // Venta de contado: primero se cobra con una o varias formas de pago
+                    // (frmCobro, que genera e imprime su propio recibo); la factura sólo
+                    // se manda a imprimir después de que el cobro se confirma, no antes.
+                    using (frmCobro frmCobrar = new frmCobro(clienteIdActual.Value, txtNombreCliente.Text, numeroFactura, zTotal))
+                    {
+                        if (frmCobrar.ShowDialog(this) == DialogResult.OK)
+                        {
+                            try { FacturaService.ImprimirPdf(archivo); }
+                            catch { /* la venta y el cobro ya se guardaron; sólo no se pudo mandar a imprimir */ }
+
+                            MessageBox.Show(mensaje + "\n\nCobrada de contado.", "Venta completada", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            MessageBox.Show(
+                                mensaje + "\n\nEl cobro quedó pendiente: la factura se guardó, pero el pago no se registró ni se imprimió. Puedes cobrarla luego desde Consulta → Estado de Cuenta.",
+                                "Cobro pendiente", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                }
 
                 LimpiarVenta();
                 ActualizarComprobantePreview();
