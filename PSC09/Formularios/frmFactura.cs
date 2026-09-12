@@ -214,8 +214,11 @@ namespace PSC09
             using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
                 cnx.Open();
-                string tsQuery = " SELECT A.FACTURA, A.CLIENTE, B.NOMBRE, A.FECHA, A.SUBTOTAL, A.IMPUESTO, A.MONTOFACTURA, A.IDTIPOCOMPROBANTE, A.COMPROBANTEFISCAL " +
-                                 " FROM HFACTURA A INNER JOIN CLIENTES B ON A.CLIENTE = B.IDCLIENTE " +
+                // LEFT JOIN (no INNER): si el codigo de cliente de la factura no
+                // encuentra pareja exacta en CLIENTES, la factura debe cargar igual
+                // (solo el nombre queda vacio), en vez de desaparecer de la busqueda.
+                string tsQuery = " SELECT A.FACTURA, A.CLIENTE, B.NOMBRE, A.FECHA, A.SUBTOTAL, A.IMPUESTO, A.MONTOFACTURADO, A.IDTIPOCOMPROBANTE, A.COMPROBANTEFISCAL " +
+                                 " FROM HFACTURA A LEFT JOIN CLIENTES B ON A.CLIENTE = B.IDCLIENTE " +
                                  " WHERE A.FACTURA = @factura AND A.ACTIVO = '1' ";
 
                 SqlCommand cms = new SqlCommand(tsQuery, cnx);
@@ -248,6 +251,10 @@ namespace PSC09
                     }
                     else
                     {
+                        ExisteLaData = false;
+                        MessageBox.Show(
+                            "No se encontró la factura " + nmrFactura + " (o está anulada).",
+                            "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         return;
                     }
                 }
@@ -721,19 +728,52 @@ namespace PSC09
 
         private void btnImprimir_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(lblFactura.Text))
+            {
+                MessageBox.Show("No hay ninguna factura cargada para imprimir.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // "archivo" solo queda con la ruta del PDF cuando se acaba de Guardar en esta
+            // misma sesion; si se reabrio una factura ya guardada (buscador/lupa), esta
+            // vacio. En ambos casos el PDF vive en Facturas\Factura_<numero>.pdf, asi que
+            // si no lo tenemos en memoria, se busca ahi por convencion antes de rendirse.
+            if (string.IsNullOrEmpty(archivo) || !File.Exists(archivo))
+            {
+                string carpeta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Facturas");
+                archivo = Path.Combine(carpeta, "Factura_" + lblFactura.Text + ".pdf");
+            }
+
+            if (!File.Exists(archivo))
+            {
+                MessageBox.Show("No se encontró el PDF de esta factura. Guárdala primero para generarlo.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             try
             {
-                System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo();
-                psi.FileName = archivo; // ruta del PDF
-                psi.Verb = "print";
-                psi.CreateNoWindow = true;
-                psi.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-
-                System.Diagnostics.Process.Start(psi);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = archivo,
+                    Verb = "print",
+                    UseShellExecute = true,
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
+                });
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al imprimir: " + ex.Message);
+                // Si el verbo "print" no esta disponible (depende del visor de PDF
+                // instalado), al menos se abre el PDF para poder imprimirlo a mano.
+                try
+                {
+                    Process.Start(new ProcessStartInfo { FileName = archivo, UseShellExecute = true });
+                    MessageBox.Show("No se pudo enviar directo a la impresora. Se abrió el PDF para que lo imprimas manualmente (Ctrl+P).", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch
+                {
+                    MessageBox.Show("Error al imprimir: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 

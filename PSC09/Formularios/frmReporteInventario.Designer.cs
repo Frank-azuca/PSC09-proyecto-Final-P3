@@ -18,6 +18,7 @@ namespace PSC09
         private void InitializeComponent()
         {
             this.label1 = new System.Windows.Forms.Label();
+            this.btnExportar = new System.Windows.Forms.Button();
             this.btnCerrar = new System.Windows.Forms.Button();
             this.lblBuscar = new System.Windows.Forms.Label();
             this.txtBuscar = new System.Windows.Forms.TextBox();
@@ -41,11 +42,25 @@ namespace PSC09
             this.label1.Text = "Reporte de Inventario";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
+            // btnExportar
+            //
+            this.btnExportar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnExportar.Image = global::PSC09.Properties.Resources.filesave;
+            this.btnExportar.Location = new System.Drawing.Point(770, 3);
+            this.btnExportar.Name = "btnExportar";
+            this.btnExportar.Size = new System.Drawing.Size(100, 74);
+            this.btnExportar.TabIndex = 7;
+            this.btnExportar.Text = "Exportar";
+            this.btnExportar.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
+            this.btnExportar.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnExportar);
+            this.btnExportar.Click += new System.EventHandler(this.btnExportar_Click);
+            //
             // btnCerrar
             //
             this.btnCerrar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCerrar.Image = global::PSC09.Properties.Resources.exit;
-            this.btnCerrar.Location = new System.Drawing.Point(770, 3);
+            this.btnCerrar.Location = new System.Drawing.Point(880, 3);
             this.btnCerrar.Name = "btnCerrar";
             this.btnCerrar.Size = new System.Drawing.Size(100, 74);
             this.btnCerrar.TabIndex = 1;
@@ -97,7 +112,7 @@ namespace PSC09
             this.dgv.RowTemplate.Height = 26;
             this.dgv.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgv.MultiSelect = false;
-            this.dgv.Size = new System.Drawing.Size(864, 400);
+            this.dgv.Size = new System.Drawing.Size(974, 400);
             this.dgv.TabIndex = 5;
             //
             // lblResumen
@@ -107,7 +122,7 @@ namespace PSC09
             this.lblResumen.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblResumen.Location = new System.Drawing.Point(8, 564);
             this.lblResumen.Name = "lblResumen";
-            this.lblResumen.Size = new System.Drawing.Size(864, 26);
+            this.lblResumen.Size = new System.Drawing.Size(974, 26);
             this.lblResumen.TabIndex = 6;
             this.lblResumen.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
@@ -116,15 +131,16 @@ namespace PSC09
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = PSC09.Tema.FondoClaro;
-            this.ClientSize = new System.Drawing.Size(880, 600);
+            this.ClientSize = new System.Drawing.Size(990, 600);
             this.Controls.Add(this.lblResumen);
             this.Controls.Add(this.dgv);
             this.Controls.Add(this.btnBuscar);
             this.Controls.Add(this.txtBuscar);
             this.Controls.Add(this.lblBuscar);
+            this.Controls.Add(this.btnExportar);
             this.Controls.Add(this.btnCerrar);
             this.Controls.Add(this.label1);
-            this.MinimumSize = new System.Drawing.Size(820, 500);
+            this.MinimumSize = new System.Drawing.Size(930, 500);
             this.Name = "frmReporteInventario";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "frmReporteInventario";
@@ -139,6 +155,7 @@ namespace PSC09
         #endregion
 
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button btnExportar;
         private System.Windows.Forms.Button btnCerrar;
         private System.Windows.Forms.Label lblBuscar;
         private System.Windows.Forms.TextBox txtBuscar;

@@ -26,6 +26,7 @@ namespace PSC09
             this.Text = "Consulta";
             existevar = false;
             EstiloDataGridView();
+            BuscaData();
         }
 
         private void btnBuscar_Click(object sender, EventArgs e)
@@ -35,12 +36,15 @@ namespace PSC09
 
         private void btnSeleccionar_Click(object sender, EventArgs e)
         {
-            if(dgv.RowCount > 0)
+            if (dgv.CurrentRow == null)
             {
-                existevar = true;
-                var1 = dgv.CurrentRow.Cells[0].Value.ToString();
-                this.Close();
+                MessageBox.Show("Selecciona una factura de la lista primero.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
+
+            existevar = true;
+            var1 = dgv.CurrentRow.Cells[0].Value.ToString();
+            this.Close();
         }
 
         private void btnLimpiar_Click(object sender, EventArgs e)
@@ -58,26 +62,40 @@ namespace PSC09
             this.dgv.Rows.Clear();
             this.dgv.Refresh();
 
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            string stQuery = "SELECT FACTURA, CLIENTE, FECHA, MONTOFACTURADO FROM HFACTURA WHERE CLIENTE = @cliente" +
-                             " ORDER BY FACTURA, FECHA ASC";
+            string filtro = txtVENFACT.Text.Trim();
 
-            SqlCommand cmd = new SqlCommand(stQuery, cnx);
-            cmd.Parameters.AddWithValue("@cliente", txtVENFACT.Text);
-            SqlDataReader rdr = cmd.ExecuteReader();
-
-            while (rdr.Read())
+            // Busca por numero de factura (parcial, con LIKE); vacio muestra todas las
+            // activas. Antes filtraba por CLIENTE, lo que no coincidia con el rotulo
+            // "Buscar Factura por ID" y hacia que nunca apareciera nada al escribir un
+            // numero de factura real.
+            string stQuery = "SELECT FACTURA, CLIENTE, FECHA, MONTOFACTURADO FROM HFACTURA WHERE ACTIVO = '1'";
+            if (filtro != "")
             {
-                dgv.Rows.Add();
-                int xRows = dgv.Rows.Count - 1;
-                dgv[0, xRows].Value = rdr["FACTURA"].ToString();
-                dgv[1, xRows].Value = rdr["FECHA"].ToString();
-                dgv[2, xRows].Value = rdr["MONTOFACTURADO"].ToString();
+                stQuery += " AND FACTURA LIKE @factura";
             }
+            stQuery += " ORDER BY FACTURA DESC";
 
-            cmd.Dispose();
-            cnx.Close();
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand(stQuery, cnx);
+                if (filtro != "")
+                {
+                    cmd.Parameters.AddWithValue("@factura", "%" + filtro + "%");
+                }
 
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        dgv.Rows.Add();
+                        int xRows = dgv.Rows.Count - 1;
+                        dgv[0, xRows].Value = rdr["FACTURA"].ToString();
+                        dgv[1, xRows].Value = rdr["FECHA"].ToString();
+                        dgv[2, xRows].Value = rdr["MONTOFACTURADO"].ToString();
+                    }
+                }
+            }
         }
         private void EstiloDataGridView()
         {

@@ -178,6 +178,11 @@ namespace PSC09
             }
         }
 
+        private void btnExportar_Click(object sender, EventArgs e)
+        {
+            ExportadorCsv.Exportar(this, dgv, "ReporteFactura.csv");
+        }
+
         private void btnCerrar_Click(object sender, EventArgs e)
         {
             this.Close();

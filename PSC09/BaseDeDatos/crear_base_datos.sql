@@ -115,16 +115,42 @@ IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('PRODUCTOS') AN
     ALTER TABLE PRODUCTOS ALTER COLUMN impuesto DECIMAL(9,4) NULL;
 GO
 
+-- cliente es INT (no NVARCHAR) para poder tener una llave foránea real hacia
+-- CLIENTES.idCliente: así SQL Server no deja borrar un cliente que todavía tiene
+-- facturas, ni insertar una factura con un cliente que no existe.
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'HFACTURA')
 CREATE TABLE HFACTURA (
     factura         NVARCHAR(10) PRIMARY KEY,
-    cliente         NVARCHAR(35) NULL,
+    cliente         INT NULL FOREIGN KEY REFERENCES CLIENTES(idCliente),
     fecha           NVARCHAR(12) NULL,
     subtotal        DECIMAL(18,2) NULL,
     impuesto        DECIMAL(18,2) NULL,
     montoFacturado  DECIMAL(18,2) NULL,
     activo          INT NULL
 );
+GO
+
+-- Para bases ya creadas antes de este cambio: convierte cliente de NVARCHAR a INT y
+-- agrega la llave foránea. Si algún valor de cliente no es numérico, el ALTER falla
+-- con un mensaje claro en vez de convertir datos incorrectos en silencio. La llave se
+-- agrega con NOCHECK: las facturas que ya hayan quedado "huérfanas" (apuntando a un
+-- cliente que se borró directo en la base de datos antes de este cambio) se dejan como
+-- están; de aquí en adelante ya no se puede borrar un cliente con facturas.
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HFACTURA') AND name = 'cliente' AND system_type_id <> TYPE_ID('int'))
+BEGIN
+    IF EXISTS (SELECT * FROM HFACTURA WHERE cliente IS NOT NULL AND TRY_CONVERT(INT, cliente) IS NULL)
+    BEGIN
+        RAISERROR('No se puede convertir HFACTURA.cliente a INT: hay facturas con un cliente no numérico. Revísalas antes de volver a correr este script.', 16, 1);
+    END
+    ELSE
+    BEGIN
+        ALTER TABLE HFACTURA ALTER COLUMN cliente INT NULL;
+    END
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_HFACTURA_CLIENTES')
+    ALTER TABLE HFACTURA WITH NOCHECK ADD CONSTRAINT FK_HFACTURA_CLIENTES FOREIGN KEY (cliente) REFERENCES CLIENTES(idCliente);
 GO
 
 -- Nota de normalización (3FN): "cliente" y "fecha" NO se guardan aquí.
