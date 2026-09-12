@@ -54,6 +54,7 @@
     <Compile Include="Clases\clsBusco.cs" />
     <Compile Include="Clases\ComprobanteFiscal.cs" />
     <Compile Include="Clases\ConvertImage.cs" />
+    <Compile Include="Clases\FacturaService.cs" />
     <Compile Include="Clases\Seguridad.cs" />
     <Compile Include="Clases\Tema.cs" />
     <Compile Include="Formularios\frmCambiarComprobante.cs">
@@ -67,6 +68,18 @@
     </Compile>
     <Compile Include="Formularios\frmComprobantesFiscales.Designer.cs">
       <DependentUpon>frmComprobantesFiscales.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmReporteFactura.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmReporteFactura.Designer.cs">
+      <DependentUpon>frmReporteFactura.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmReporteInventario.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmReporteInventario.Designer.cs">
+      <DependentUpon>frmReporteInventario.cs</DependentUpon>
     </Compile>
     <Compile Include="Formularios\frmFactura.cs">
       <SubType>Form</SubType>
@@ -135,6 +148,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmComprobantesFiscales.resx">
       <DependentUpon>frmComprobantesFiscales.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmReporteFactura.resx">
+      <DependentUpon>frmReporteFactura.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmReporteInventario.resx">
+      <DependentUpon>frmReporteInventario.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmFactura.resx">
       <DependentUpon>frmFactura.cs</DependentUpon>

@@ -195,61 +195,14 @@ namespace PSC09
             }
         }
 
-        // Anula la factura en vez de borrarla físicamente: devuelve al inventario cada
-        // artículo vendido y marca encabezado y detalle como inactivos (ACTIVO = 0), para
-        // conservar el historial y no violar la llave foránea DFACTURA -> HFACTURA. Todo
-        // en una sola transacción: o se anula por completo, o no cambia nada.
+        // Anula la factura en vez de borrarla físicamente (ver Clases/FacturaService.cs):
+        // devuelve al inventario cada artículo vendido y marca encabezado y detalle como
+        // inactivos, todo en una sola transacción.
         private void BorrarData(string numFactura)
         {
             if (ExisteLaData != true) return;
 
-            using (SqlConnection cnx = new SqlConnection(cnn.db))
-            {
-                cnx.Open();
-
-                using (SqlTransaction tx = cnx.BeginTransaction())
-                {
-                    try
-                    {
-                        List<Tuple<string, int>> lineas = new List<Tuple<string, int>>();
-
-                        SqlCommand cmdSel = new SqlCommand(
-                            "SELECT ARTICULO, CANTIDAD FROM DFACTURA WHERE FACTURA = @factura AND ACTIVO = '1'", cnx, tx);
-                        cmdSel.Parameters.AddWithValue("@factura", numFactura);
-
-                        using (SqlDataReader rdr = cmdSel.ExecuteReader())
-                        {
-                            while (rdr.Read())
-                            {
-                                lineas.Add(Tuple.Create(rdr["ARTICULO"].ToString(), Convert.ToInt32(rdr["CANTIDAD"])));
-                            }
-                        }
-
-                        foreach (Tuple<string, int> linea in lineas)
-                        {
-                            SqlCommand cmdStock = new SqlCommand("UPDATE PRODUCTOS SET CANTIDAD = CANTIDAD + @cant WHERE ITEM = @item", cnx, tx);
-                            cmdStock.Parameters.AddWithValue("@cant", linea.Item2);
-                            cmdStock.Parameters.AddWithValue("@item", linea.Item1);
-                            cmdStock.ExecuteNonQuery();
-                        }
-
-                        SqlCommand cmdDet = new SqlCommand("UPDATE DFACTURA SET ACTIVO = '0' WHERE FACTURA = @factura", cnx, tx);
-                        cmdDet.Parameters.AddWithValue("@factura", numFactura);
-                        cmdDet.ExecuteNonQuery();
-
-                        SqlCommand cmdHdr = new SqlCommand("UPDATE HFACTURA SET ACTIVO = '0' WHERE FACTURA = @factura", cnx, tx);
-                        cmdHdr.Parameters.AddWithValue("@factura", numFactura);
-                        cmdHdr.ExecuteNonQuery();
-
-                        tx.Commit();
-                    }
-                    catch
-                    {
-                        tx.Rollback();
-                        throw;
-                    }
-                }
-            }
+            FacturaService.AnularFactura(numFactura);
 
             ExisteLaData = false;
         }
@@ -715,27 +668,13 @@ namespace PSC09
 
         private void btnCONFACT_Click(object sender, EventArgs e)
         {
-            //frmVENFACT frm = new frmVENFACT();
-            //frm.showDialog();
+            frmVENFACT frm = new frmVENFACT();
+            frm.ShowDialog();
 
-            //if (frm.existeVar == true)
-            //{
-            //  lblFactura.Text = frm.var1;
-            //  BuscarFactura(lblFactura.Text);
-            //}
-
-            string carpeta = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-            "Facturas"
-);
-
-            if (Directory.Exists(carpeta))
+            if (frm.existevar)
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = carpeta,
-                    UseShellExecute = true
-                });
+                lblFactura.Text = frm.var1;
+                BuscarFactura(lblFactura.Text);
             }
         }
 

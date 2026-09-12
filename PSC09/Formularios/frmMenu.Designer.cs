@@ -42,6 +42,7 @@
             this.alfabeticoDelClienteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.reporteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.facturaToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.inventarioToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.configuraciónToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.opcionesDelMenuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.permisoAUsuarioToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -159,17 +160,26 @@
             // reporteToolStripMenuItem
             // 
             this.reporteToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.facturaToolStripMenuItem1});
+            this.facturaToolStripMenuItem1,
+            this.inventarioToolStripMenuItem});
             this.reporteToolStripMenuItem.Name = "reporteToolStripMenuItem";
             this.reporteToolStripMenuItem.Size = new System.Drawing.Size(60, 22);
             this.reporteToolStripMenuItem.Text = "Reporte";
-            // 
+            //
             // facturaToolStripMenuItem1
-            // 
+            //
             this.facturaToolStripMenuItem1.Name = "facturaToolStripMenuItem1";
             this.facturaToolStripMenuItem1.Size = new System.Drawing.Size(113, 22);
             this.facturaToolStripMenuItem1.Text = "Factura";
-            // 
+            this.facturaToolStripMenuItem1.Click += new System.EventHandler(this.reporteFacturaToolStripMenuItem_Click);
+            //
+            // inventarioToolStripMenuItem
+            //
+            this.inventarioToolStripMenuItem.Name = "inventarioToolStripMenuItem";
+            this.inventarioToolStripMenuItem.Size = new System.Drawing.Size(113, 22);
+            this.inventarioToolStripMenuItem.Text = "Inventario";
+            this.inventarioToolStripMenuItem.Click += new System.EventHandler(this.reporteInventarioToolStripMenuItem_Click);
+            //
             // configuraciónToolStripMenuItem
             // 
             this.configuraciónToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -279,6 +289,7 @@
         private System.Windows.Forms.ToolStripMenuItem permisoAUsuarioToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem comprobantesFiscalesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem facturaToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem inventarioToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem salirToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem cerrarProgramaToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem cerrarSesionToolStripMenuItem;

@@ -580,7 +580,7 @@
             this.btnBorrar.Name = "btnBorrar";
             this.btnBorrar.Size = new System.Drawing.Size(81, 69);
             this.btnBorrar.TabIndex = 8;
-            this.btnBorrar.Text = "Borrrar";
+            this.btnBorrar.Text = "Anular";
             this.btnBorrar.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.btnBorrar.UseVisualStyleBackColor = false;
             PSC09.Tema.EstilizarBotonSecundario(this.btnBorrar);
