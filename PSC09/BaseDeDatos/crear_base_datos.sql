@@ -27,7 +27,7 @@ GO
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'USUARIO')
 CREATE TABLE USUARIO (
     idEmpleado      INT IDENTITY(1,1) PRIMARY KEY,
-    posicion        VARCHAR(15)  NULL,
+    posicion        VARCHAR(30)  NULL,
     nombrecorto     VARCHAR(20)  NULL,
     correo          NVARCHAR(70) NULL,
     clave           NVARCHAR(200) NULL,
