@@ -37,6 +37,10 @@ namespace PSC09
             this.pictureBoxLogo = new System.Windows.Forms.PictureBox();
             this.btnQuitarLogo = new System.Windows.Forms.Button();
             this.openFileDialogLogo = new System.Windows.Forms.OpenFileDialog();
+            this.lblDescuentoMaxPorcentaje = new System.Windows.Forms.Label();
+            this.txtDescuentoMaxPorcentaje = new System.Windows.Forms.TextBox();
+            this.lblDescuentoMaxMonto = new System.Windows.Forms.Label();
+            this.txtDescuentoMaxMonto = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLogo)).BeginInit();
             this.SuspendLayout();
             //
@@ -242,12 +246,56 @@ namespace PSC09
             this.openFileDialogLogo.Filter = "Imágenes|*.jpg;*.jpeg;*.png;*.bmp;*.gif";
             this.openFileDialogLogo.Title = "Selecciona el logo de la empresa";
             //
+            // lblDescuentoMaxPorcentaje
+            //
+            this.lblDescuentoMaxPorcentaje.BackColor = PSC09.Tema.LavandaSuave;
+            this.lblDescuentoMaxPorcentaje.Font = PSC09.Tema.FuenteEtiqueta(true);
+            this.lblDescuentoMaxPorcentaje.Location = new System.Drawing.Point(14, 468);
+            this.lblDescuentoMaxPorcentaje.Name = "lblDescuentoMaxPorcentaje";
+            this.lblDescuentoMaxPorcentaje.Size = new System.Drawing.Size(400, 23);
+            this.lblDescuentoMaxPorcentaje.TabIndex = 18;
+            this.lblDescuentoMaxPorcentaje.Text = "Descuento máximo permitido (%) — vacío = sin límite";
+            this.lblDescuentoMaxPorcentaje.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // txtDescuentoMaxPorcentaje
+            //
+            this.txtDescuentoMaxPorcentaje.Font = PSC09.Tema.FuenteCampo();
+            this.txtDescuentoMaxPorcentaje.Location = new System.Drawing.Point(14, 492);
+            this.txtDescuentoMaxPorcentaje.MaxLength = 6;
+            this.txtDescuentoMaxPorcentaje.Name = "txtDescuentoMaxPorcentaje";
+            this.txtDescuentoMaxPorcentaje.Size = new System.Drawing.Size(150, 29);
+            this.txtDescuentoMaxPorcentaje.TabIndex = 19;
+            //
+            // lblDescuentoMaxMonto
+            //
+            this.lblDescuentoMaxMonto.BackColor = PSC09.Tema.LavandaSuave;
+            this.lblDescuentoMaxMonto.Font = PSC09.Tema.FuenteEtiqueta(true);
+            this.lblDescuentoMaxMonto.Location = new System.Drawing.Point(14, 530);
+            this.lblDescuentoMaxMonto.Name = "lblDescuentoMaxMonto";
+            this.lblDescuentoMaxMonto.Size = new System.Drawing.Size(400, 23);
+            this.lblDescuentoMaxMonto.TabIndex = 20;
+            this.lblDescuentoMaxMonto.Text = "Descuento máximo permitido (RD$) — vacío = sin límite";
+            this.lblDescuentoMaxMonto.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // txtDescuentoMaxMonto
+            //
+            this.txtDescuentoMaxMonto.Font = PSC09.Tema.FuenteCampo();
+            this.txtDescuentoMaxMonto.Location = new System.Drawing.Point(14, 554);
+            this.txtDescuentoMaxMonto.MaxLength = 12;
+            this.txtDescuentoMaxMonto.Name = "txtDescuentoMaxMonto";
+            this.txtDescuentoMaxMonto.Size = new System.Drawing.Size(150, 29);
+            this.txtDescuentoMaxMonto.TabIndex = 21;
+            //
             // frmDatosEmpresa
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = PSC09.Tema.FondoClaro;
-            this.ClientSize = new System.Drawing.Size(910, 480);
+            this.ClientSize = new System.Drawing.Size(910, 610);
+            this.Controls.Add(this.txtDescuentoMaxMonto);
+            this.Controls.Add(this.lblDescuentoMaxMonto);
+            this.Controls.Add(this.txtDescuentoMaxPorcentaje);
+            this.Controls.Add(this.lblDescuentoMaxPorcentaje);
             this.Controls.Add(this.btnQuitarLogo);
             this.Controls.Add(this.pictureBoxLogo);
             this.Controls.Add(this.lblLogo);
@@ -266,7 +314,7 @@ namespace PSC09
             this.Controls.Add(this.btnCerrar);
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.label1);
-            this.MinimumSize = new System.Drawing.Size(926, 520);
+            this.MinimumSize = new System.Drawing.Size(926, 650);
             this.Name = "frmDatosEmpresa";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "frmDatosEmpresa";
@@ -299,5 +347,9 @@ namespace PSC09
         private System.Windows.Forms.PictureBox pictureBoxLogo;
         private System.Windows.Forms.Button btnQuitarLogo;
         private System.Windows.Forms.OpenFileDialog openFileDialogLogo;
+        private System.Windows.Forms.Label lblDescuentoMaxPorcentaje;
+        private System.Windows.Forms.TextBox txtDescuentoMaxPorcentaje;
+        private System.Windows.Forms.Label lblDescuentoMaxMonto;
+        private System.Windows.Forms.TextBox txtDescuentoMaxMonto;
     }
 }

@@ -40,6 +40,8 @@ namespace PSC09
             txtDireccion.Text = datos.Direccion;
             txtTelefono.Text = datos.Telefono;
             txtCorreo.Text = datos.Correo;
+            txtDescuentoMaxPorcentaje.Text = datos.DescuentoMaxPorcentaje.HasValue ? datos.DescuentoMaxPorcentaje.Value.ToString("0.####") : "";
+            txtDescuentoMaxMonto.Text = datos.DescuentoMaxMonto.HasValue ? datos.DescuentoMaxMonto.Value.ToString("0.##") : "";
 
             logoActual = datos.Logo;
             MostrarLogo();
@@ -97,6 +99,33 @@ namespace PSC09
                 return;
             }
 
+            // Vacío = sin límite (NULL en EMPRESA); si se escribe algo, debe ser un número válido
+            // dentro de rango. Los dos topes son independientes entre sí a propósito: no se valida
+            // uno contra el otro.
+            decimal? descuentoMaxPorcentaje = null;
+            if (!string.IsNullOrWhiteSpace(txtDescuentoMaxPorcentaje.Text))
+            {
+                decimal valor;
+                if (!decimal.TryParse(txtDescuentoMaxPorcentaje.Text, out valor) || valor < 0 || valor > 100)
+                {
+                    MessageBox.Show("El descuento máximo por porcentaje debe ser un número entre 0 y 100 (o dejarse vacío para no limitarlo).", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                descuentoMaxPorcentaje = valor;
+            }
+
+            decimal? descuentoMaxMonto = null;
+            if (!string.IsNullOrWhiteSpace(txtDescuentoMaxMonto.Text))
+            {
+                decimal valor;
+                if (!decimal.TryParse(txtDescuentoMaxMonto.Text, out valor) || valor < 0)
+                {
+                    MessageBox.Show("El descuento máximo por monto debe ser un número mayor o igual a 0 (o dejarse vacío para no limitarlo).", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                descuentoMaxMonto = valor;
+            }
+
             try
             {
                 Empresa.GuardarDatos(new DatosEmpresa
@@ -107,7 +136,9 @@ namespace PSC09
                     Direccion = txtDireccion.Text.Trim(),
                     Telefono = txtTelefono.Text.Trim(),
                     Correo = txtCorreo.Text.Trim(),
-                    Logo = logoActual
+                    Logo = logoActual,
+                    DescuentoMaxPorcentaje = descuentoMaxPorcentaje,
+                    DescuentoMaxMonto = descuentoMaxMonto
                 });
 
                 MessageBox.Show("Datos de la empresa guardados.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);

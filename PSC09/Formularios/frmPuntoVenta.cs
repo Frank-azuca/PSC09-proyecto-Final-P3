@@ -41,6 +41,7 @@ namespace PSC09
         private int? clienteIdActual;
         private int? consumidorFinalId;
         private decimal zSubtotal, zImpuesto, zTotal;
+        private decimal zDescuento;
 
         private TipoComprobante TipoComprobanteSeleccionado
         {
@@ -98,6 +99,7 @@ namespace PSC09
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colCantidad", HeaderText = "Cantidad", Width = 90 });
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colPrecio", HeaderText = "Precio", Width = 100, ReadOnly = true });
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colImpuesto", HeaderText = "Impuesto", Width = 100, ReadOnly = true });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colDescuento", HeaderText = "Descuento", Width = 100 });
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colSubtotal", HeaderText = "Subtotal", Width = 110, ReadOnly = true });
 
             dgv.BorderStyle = BorderStyle.None;
@@ -290,7 +292,10 @@ namespace PSC09
         }
 
         // Misma fórmula que frmFactura.txtCantidad_Leave: si el precio ya incluye el
-        // impuesto, se extrae en vez de sumarlo de nuevo.
+        // impuesto, se extrae en vez de sumarlo de nuevo. Siempre recalcula desde cero
+        // (Precio × Cantidad), así que aplicar o cambiar el DescuentoLinea no acumula:
+        // MontoLinea/Impuesto quedan con el descuento de línea ya aplicado;
+        // MontoLineaBruto/ImpuestoBruto guardan los mismos valores SIN ese descuento.
         private void RecalcularLinea(LineaCarrito linea)
         {
             decimal subtotal, impuesto;
@@ -307,8 +312,15 @@ namespace PSC09
                 impuesto = linea.TasaImpuesto * subtotal;
             }
 
-            linea.MontoLinea = Math.Round(subtotal, 2);
-            linea.Impuesto = Math.Round(impuesto, 2);
+            linea.MontoLineaBruto = Math.Round(subtotal, 2);
+            linea.ImpuestoBruto = Math.Round(impuesto, 2);
+
+            decimal totalBruto = linea.MontoLineaBruto + linea.ImpuestoBruto;
+            if (linea.DescuentoLinea > totalBruto) linea.DescuentoLinea = totalBruto;
+            decimal factorLinea = totalBruto > 0 ? linea.DescuentoLinea / totalBruto : 0;
+
+            linea.MontoLinea = Math.Round(linea.MontoLineaBruto * (1 - factorLinea), 2);
+            linea.Impuesto = Math.Round(linea.ImpuestoBruto * (1 - factorLinea), 2);
         }
 
         private void ActualizarCeldas(DataGridViewRow fila, LineaCarrito linea)
@@ -318,6 +330,7 @@ namespace PSC09
             fila.Cells["colCantidad"].Value = linea.Cantidad;
             fila.Cells["colPrecio"].Value = linea.PrecioVenta.ToString("0.00");
             fila.Cells["colImpuesto"].Value = linea.Impuesto.ToString("0.00");
+            fila.Cells["colDescuento"].Value = linea.DescuentoLinea.ToString("0.00");
             fila.Cells["colSubtotal"].Value = linea.MontoLinea.ToString("0.00");
         }
 
@@ -335,18 +348,146 @@ namespace PSC09
 
             zTotal = zSubtotal + zImpuesto;
 
-            lblSubtotalValor.Text = zSubtotal.ToString("0.00");
-            lblImpuestoValor.Text = zImpuesto.ToString("0.00");
-            lblTotalValor.Text = zTotal.ToString("0.00");
+            // El descuento (Porcentaje o Monto fijo) siempre se calcula sobre el TOTAL,
+            // no sobre el subtotal: así "Descuento Aplicado" es siempre exactamente lo
+            // que baja el Total (Precio - Descuento Aplicado = Total), sea el artículo
+            // con ITBIS incluido o no. zSubtotal/zImpuesto/zTotal quedan con el monto
+            // bruto (se siguen usando para validar el descuento); lo que se muestra en
+            // pantalla, se guarda y se cobra es el monto ya descontado (lblXxxValor).
+            zDescuento = CalcularDescuento(zSubtotal, zTotal);
+            decimal factor = zTotal > 0 ? zDescuento / zTotal : 0;
+            decimal subtotalConDescuento = Math.Round(zSubtotal * (1 - factor), 2);
+            decimal impuestoConDescuento = Math.Round(zImpuesto * (1 - factor), 2);
+
+            lblSubtotalValor.Text = subtotalConDescuento.ToString("0.00");
+            lblImpuestoValor.Text = impuestoConDescuento.ToString("0.00");
+            lblDescuentoValor.Text = zDescuento.ToString("0.00");
+            lblTotalValor.Text = Math.Round(subtotalConDescuento + impuestoConDescuento, 2).ToString("0.00");
 
             ActualizarCambio();
         }
 
+        // Calcula el monto de descuento a partir de lo escrito en txtDescuento y el
+        // modo elegido (Porcentaje/Monto), topado contra los máximos de
+        // Configuración → Datos de la Empresa (independientes entre sí) y, según el
+        // modo, contra el subtotal (Porcentaje) o el total (Monto fijo — ver
+        // TotalizarCarrito). Igual que frmFactura.CalcularDescuento: no muestra
+        // mensajes de error aquí, sólo se usa para el cálculo en caliente.
+        private decimal CalcularDescuento(decimal baseSubtotal, decimal baseTotal)
+        {
+            decimal valor;
+            if (!decimal.TryParse(txtDescuento.Text, out valor) || valor <= 0 || baseSubtotal <= 0) return 0;
+
+            DatosEmpresa empresa = Empresa.ObtenerDatos();
+
+            if (rbDescuentoPorcentaje.Checked)
+            {
+                if (valor > 100) valor = 100;
+                if (empresa.DescuentoMaxPorcentaje.HasValue && valor > empresa.DescuentoMaxPorcentaje.Value)
+                {
+                    valor = empresa.DescuentoMaxPorcentaje.Value;
+                }
+                // Sobre el TOTAL (no el subtotal): así "Descuento Aplicado" siempre
+                // coincide con lo que realmente baja el Total (Precio - Descuento
+                // Aplicado = Total), sea el artículo con ITBIS incluido o no.
+                return Math.Round(baseTotal * valor / 100m, 2);
+            }
+
+            if (empresa.DescuentoMaxMonto.HasValue && valor > empresa.DescuentoMaxMonto.Value)
+            {
+                valor = empresa.DescuentoMaxMonto.Value;
+            }
+            if (valor > baseTotal) valor = baseTotal;
+            return Math.Round(valor, 2);
+        }
+
+        // Valida lo escrito en txtDescuento (sin topar/clamp): si no es válido,
+        // devuelve el mensaje exacto para mostrarle al usuario. Vacío se considera
+        // válido (sin descuento). Igual que frmFactura.ValidarDescuento.
+        private bool ValidarDescuento(out string error)
+        {
+            error = null;
+            if (string.IsNullOrWhiteSpace(txtDescuento.Text)) return true;
+
+            decimal valor;
+            if (!decimal.TryParse(txtDescuento.Text, out valor) || valor < 0)
+            {
+                error = "El descuento debe ser un número mayor o igual a 0.";
+                return false;
+            }
+
+            DatosEmpresa empresa = Empresa.ObtenerDatos();
+
+            if (rbDescuentoPorcentaje.Checked)
+            {
+                if (valor > 100)
+                {
+                    error = "El descuento por porcentaje no puede ser mayor a 100%.";
+                    return false;
+                }
+                if (empresa.DescuentoMaxPorcentaje.HasValue && valor > empresa.DescuentoMaxPorcentaje.Value)
+                {
+                    error = "El descuento no puede superar el " + empresa.DescuentoMaxPorcentaje.Value.ToString("0.####") + "% máximo configurado en Datos de la Empresa.";
+                    return false;
+                }
+            }
+            else
+            {
+                if (valor > zTotal)
+                {
+                    error = "El descuento no puede ser mayor al Total de la factura.";
+                    return false;
+                }
+                if (empresa.DescuentoMaxMonto.HasValue && valor > empresa.DescuentoMaxMonto.Value)
+                {
+                    error = "El descuento no puede superar RD$" + empresa.DescuentoMaxMonto.Value.ToString("0.00") + " máximo configurado en Datos de la Empresa.";
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // El valor tal cual lo escribió el usuario (10 si eligió 10%, o 100.00 si
+        // eligió monto fijo) se guarda aparte de zDescuento (el monto ya calculado)
+        // sólo para poder reimprimir/mostrar la factura tal como se aplicó. Igual
+        // que frmFactura.ObtenerDescuentoParaGuardar.
+        private void ObtenerDescuentoParaGuardar(out decimal? descuentoValor, out bool? descuentoEsPorcentaje)
+        {
+            descuentoValor = null;
+            descuentoEsPorcentaje = null;
+
+            decimal valor;
+            if (decimal.TryParse(txtDescuento.Text, out valor) && valor > 0)
+            {
+                descuentoValor = valor;
+                descuentoEsPorcentaje = rbDescuentoPorcentaje.Checked;
+            }
+        }
+
+        private void txtDescuento_Leave(object sender, EventArgs e)
+        {
+            string error;
+            if (!ValidarDescuento(out error))
+            {
+                MessageBox.Show(error, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtDescuento.Clear();
+            }
+            TotalizarCarrito();
+        }
+
+        private void rbDescuento_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!((RadioButton)sender).Checked) return;
+            txtDescuento.Clear();
+            TotalizarCarrito();
+        }
+
         private void ActualizarCambio()
         {
-            decimal recibido;
-            lblCambio.Text = decimal.TryParse(txtRecibido.Text, out recibido)
-                ? (recibido - zTotal).ToString("0.00")
+            decimal recibido, total;
+            lblCambio.Text = decimal.TryParse(txtRecibido.Text, out recibido) && decimal.TryParse(lblTotalValor.Text, out total)
+                ? (recibido - total).ToString("0.00")
                 : "";
         }
 
@@ -356,9 +497,14 @@ namespace PSC09
             zSubtotal = 0;
             zImpuesto = 0;
             zTotal = 0;
+            zDescuento = 0;
             lblSubtotalValor.Text = "";
             lblImpuestoValor.Text = "";
+            lblDescuentoValor.Text = "";
             lblTotalValor.Text = "";
+            txtDescuento.Clear();
+            rbDescuentoPorcentaje.Checked = true;
+            txtDescuentoRapido.Clear();
             txtRecibido.Clear();
             lblCambio.Text = "";
             txtCodigo.Clear();
@@ -397,23 +543,97 @@ namespace PSC09
 
         private void dgv_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0 || dgv.Columns[e.ColumnIndex].Name != "colCantidad") return;
+            if (e.RowIndex < 0) return;
+
+            string nombreColumna = dgv.Columns[e.ColumnIndex].Name;
+            if (nombreColumna != "colCantidad" && nombreColumna != "colDescuento") return;
 
             DataGridViewRow fila = dgv.Rows[e.RowIndex];
             LineaCarrito linea = (LineaCarrito)fila.Tag;
 
-            decimal nuevaCantidad;
-            if (!decimal.TryParse(Convert.ToString(fila.Cells["colCantidad"].Value), out nuevaCantidad) || nuevaCantidad <= 0)
+            if (nombreColumna == "colCantidad")
             {
-                MessageBox.Show("La cantidad debe ser un número mayor a cero.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                fila.Cells["colCantidad"].Value = linea.Cantidad;
-                return;
+                decimal nuevaCantidad;
+                if (!decimal.TryParse(Convert.ToString(fila.Cells["colCantidad"].Value), out nuevaCantidad) || nuevaCantidad <= 0)
+                {
+                    MessageBox.Show("La cantidad debe ser un número mayor a cero.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    fila.Cells["colCantidad"].Value = linea.Cantidad;
+                    return;
+                }
+
+                linea.Cantidad = nuevaCantidad;
+            }
+            else
+            {
+                decimal nuevoDescuento;
+                string texto = Convert.ToString(fila.Cells["colDescuento"].Value);
+                if (string.IsNullOrWhiteSpace(texto))
+                {
+                    nuevoDescuento = 0;
+                }
+                else if (!decimal.TryParse(texto, out nuevoDescuento) || nuevoDescuento < 0)
+                {
+                    MessageBox.Show("El descuento de la línea debe ser un número mayor o igual a 0.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    fila.Cells["colDescuento"].Value = linea.DescuentoLinea.ToString("0.00");
+                    return;
+                }
+
+                linea.DescuentoLinea = nuevoDescuento;
             }
 
-            linea.Cantidad = nuevaCantidad;
             RecalcularLinea(linea);
             ActualizarCeldas(fila, linea);
             TotalizarCarrito();
+        }
+
+        // Botón de acceso rápido: toma lo escrito en txtDescuentoRapido y lo aplica como
+        // descuento de línea (RD$) sólo a la fila actualmente seleccionada del carrito.
+        private void btnDescuentoLineaSeleccionada_Click(object sender, EventArgs e)
+        {
+            if (dgv.CurrentRow == null)
+            {
+                MessageBox.Show("Selecciona primero la línea a descontar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            decimal valor;
+            if (!decimal.TryParse(txtDescuentoRapido.Text, out valor) || valor < 0)
+            {
+                MessageBox.Show("El descuento debe ser un número mayor o igual a 0.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            AplicarDescuentoLinea(dgv.CurrentRow, valor);
+            TotalizarCarrito();
+        }
+
+        // Botón de acceso rápido: aplica lo escrito en txtDescuentoRapido a TODAS las
+        // líneas del carrito de una vez (cada una se topa a su propio total, así que un
+        // artículo más barato que el descuento simplemente queda descontado al 100%).
+        private void btnDescuentoLineaTodas_Click(object sender, EventArgs e)
+        {
+            if (dgv.Rows.Count == 0) return;
+
+            decimal valor;
+            if (!decimal.TryParse(txtDescuentoRapido.Text, out valor) || valor < 0)
+            {
+                MessageBox.Show("El descuento debe ser un número mayor o igual a 0.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            foreach (DataGridViewRow fila in dgv.Rows)
+            {
+                AplicarDescuentoLinea(fila, valor);
+            }
+            TotalizarCarrito();
+        }
+
+        private void AplicarDescuentoLinea(DataGridViewRow fila, decimal valor)
+        {
+            LineaCarrito linea = (LineaCarrito)fila.Tag;
+            linea.DescuentoLinea = valor;
+            RecalcularLinea(linea);
+            ActualizarCeldas(fila, linea);
         }
 
         private void txtRecibido_TextChanged(object sender, EventArgs e)
@@ -524,9 +744,22 @@ namespace PSC09
                 return;
             }
 
+            // Revalida por si la configuración de Datos de la Empresa cambió entre que
+            // se escribió el descuento y se dio click en Cobrar.
+            string errorDescuento;
+            if (!ValidarDescuento(out errorDescuento))
+            {
+                MessageBox.Show(errorDescuento, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            decimal subtotal = Convert.ToDecimal(lblSubtotalValor.Text);
+            decimal impuesto = Convert.ToDecimal(lblImpuestoValor.Text);
+            decimal total = Convert.ToDecimal(lblTotalValor.Text);
+
             decimal recibido;
             bool hayRecibido = decimal.TryParse(txtRecibido.Text, out recibido);
-            if (hayRecibido && recibido < zTotal)
+            if (hayRecibido && recibido < total)
             {
                 MessageBox.Show("El efectivo recibido es menor al total de la venta.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
@@ -556,6 +789,10 @@ namespace PSC09
             {
                 List<LineaFactura> lineas = dgv.Rows.Cast<DataGridViewRow>().Select(f => (LineaFactura)f.Tag).ToList();
 
+                decimal? descuentoValor;
+                bool? descuentoEsPorcentaje;
+                ObtenerDescuentoParaGuardar(out descuentoValor, out descuentoEsPorcentaje);
+
                 string numeroFactura = FacturaService.GuardarFactura(
                     null,
                     clienteIdActual.Value.ToString(),
@@ -563,9 +800,12 @@ namespace PSC09
                     TipoComprobanteSeleccionado,
                     txtComprobante.Text,
                     lineas,
-                    zSubtotal,
-                    zImpuesto,
-                    zTotal);
+                    subtotal,
+                    impuesto,
+                    total,
+                    zDescuento,
+                    descuentoValor,
+                    descuentoEsPorcentaje);
 
                 string archivo = FacturaService.GenerarPdf(
                     numeroFactura,
@@ -574,12 +814,13 @@ namespace PSC09
                     clienteIdActual.Value.ToString(),
                     txtNombreCliente.Text,
                     lineas,
-                    zSubtotal,
-                    zImpuesto,
-                    zTotal);
+                    subtotal,
+                    impuesto,
+                    total,
+                    zDescuento);
 
-                string mensaje = "Factura " + numeroFactura + " guardada. Total: " + zTotal.ToString("0.00");
-                if (hayRecibido) mensaje += "\nCambio: " + (recibido - zTotal).ToString("0.00");
+                string mensaje = "Factura " + numeroFactura + " guardada. Total: " + total.ToString("0.00");
+                if (hayRecibido) mensaje += "\nCambio: " + (recibido - total).ToString("0.00");
 
                 if (esCredito)
                 {
@@ -596,7 +837,7 @@ namespace PSC09
                     // Venta de contado: primero se cobra con una o varias formas de pago
                     // (frmCobro, que genera e imprime su propio recibo); la factura sólo
                     // se manda a imprimir después de que el cobro se confirma, no antes.
-                    using (frmCobro frmCobrar = new frmCobro(clienteIdActual.Value, txtNombreCliente.Text, numeroFactura, zTotal))
+                    using (frmCobro frmCobrar = new frmCobro(clienteIdActual.Value, txtNombreCliente.Text, numeroFactura, total))
                     {
                         if (frmCobrar.ShowDialog(this) == DialogResult.OK)
                         {

@@ -19,6 +19,15 @@ namespace PSC09
         public decimal PrecioVenta;
         public decimal Impuesto;
         public decimal MontoLinea;
+
+        // Descuento por línea (solo monto fijo RD$, ver CalcularDescuentoLinea en
+        // frmFactura/frmPuntoVenta): Impuesto/MontoLinea de arriba YA están calculados
+        // con este descuento aplicado; ImpuestoBruto/MontoLineaBruto son los mismos
+        // valores SIN el descuento de línea, para poder reconstruir la línea (editarla,
+        // quitarle el descuento) sin volver a consultar el artículo.
+        public decimal DescuentoLinea;
+        public decimal ImpuestoBruto;
+        public decimal MontoLineaBruto;
     }
 
     // Lógica de guardado, impresión y anulación de facturas, compartida entre
@@ -35,8 +44,13 @@ namespace PSC09
         // valor (el que frmFactura ya mostró en pantalla como "próximo número"), se usa
         // ese mismo para no generar uno distinto al que el usuario vio. Devuelve el
         // número de factura realmente usado.
+        // descuento: monto ya restado (calculado antes del ITBIS, ver frmFactura.TotalizarFactura y
+        // frmPuntoVenta.TotalizarCarrito) que subtotal/impuesto/total ya reflejan. descuentoValor y
+        // descuentoEsPorcentaje son solo para poder reimprimir/mostrar la factura tal como se aplicó
+        // (10 + true = "10%", 100.00 + false = "RD$100.00"); no participan en el cálculo aquí.
         public static string GuardarFactura(string numeroFactura, string cliente, DateTime fecha, TipoComprobante tipo, string comprobante,
-            List<LineaFactura> lineas, decimal subtotal, decimal impuesto, decimal total)
+            List<LineaFactura> lineas, decimal subtotal, decimal impuesto, decimal total,
+            decimal descuento, decimal? descuentoValor, bool? descuentoEsPorcentaje)
         {
             if (lineas == null || lineas.Count == 0)
             {
@@ -67,8 +81,8 @@ namespace PSC09
                 {
                     try
                     {
-                        string stQuery = " INSERT INTO HFACTURA (FACTURA, CLIENTE, FECHA, SUBTOTAL, IMPUESTO, MONTOFACTURADO, ACTIVO, IDTIPOCOMPROBANTE, COMPROBANTEFISCAL) " +
-                                         " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8); ";
+                        string stQuery = " INSERT INTO HFACTURA (FACTURA, CLIENTE, FECHA, SUBTOTAL, IMPUESTO, MONTOFACTURADO, ACTIVO, IDTIPOCOMPROBANTE, COMPROBANTEFISCAL, DESCUENTO, DESCUENTOVALOR, DESCUENTOESPORCENTAJE) " +
+                                         " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8, @A9, @A10, @A11); ";
 
                         SqlCommand cmd = new SqlCommand(stQuery, cnx, tx);
                         cmd.Parameters.AddWithValue("@A0", numeroFactura);
@@ -80,6 +94,9 @@ namespace PSC09
                         cmd.Parameters.AddWithValue("@A6", "1");
                         cmd.Parameters.AddWithValue("@A7", tipo.Id);
                         cmd.Parameters.AddWithValue("@A8", comprobante);
+                        cmd.Parameters.AddWithValue("@A9", descuento);
+                        cmd.Parameters.AddWithValue("@A10", (object)descuentoValor ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@A11", (object)descuentoEsPorcentaje ?? DBNull.Value);
                         cmd.ExecuteNonQuery();
 
                         SqlCommand cmdSecFactura = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 2", cnx, tx);
@@ -88,8 +105,8 @@ namespace PSC09
 
                         ComprobanteFiscal.ActualizaSecuencia(cnx, tx, tipo, comprobante);
 
-                        string stQueryLinea = " INSERT INTO DFACTURA (FACTURA, ARTICULO, CANTIDAD, PRECIOVENTA, IMPUESTO, MONTOLINEA, ACTIVO) " +
-                                              " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6) ";
+                        string stQueryLinea = " INSERT INTO DFACTURA (FACTURA, ARTICULO, CANTIDAD, PRECIOVENTA, IMPUESTO, MONTOLINEA, ACTIVO, DESCUENTOLINEA, IMPUESTOBRUTO, MONTOLINEABRUTO) " +
+                                              " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8, @A9) ";
 
                         foreach (LineaFactura linea in lineas)
                         {
@@ -101,6 +118,9 @@ namespace PSC09
                             cmm.Parameters.AddWithValue("@A4", linea.Impuesto);
                             cmm.Parameters.AddWithValue("@A5", linea.MontoLinea);
                             cmm.Parameters.AddWithValue("@A6", "1");
+                            cmm.Parameters.AddWithValue("@A7", linea.DescuentoLinea);
+                            cmm.Parameters.AddWithValue("@A8", linea.ImpuestoBruto);
+                            cmm.Parameters.AddWithValue("@A9", linea.MontoLineaBruto);
                             cmm.ExecuteNonQuery();
 
                             SqlCommand cmdStock = new SqlCommand("UPDATE PRODUCTOS SET CANTIDAD = CANTIDAD - @cant WHERE ITEM = @item", cnx, tx);
@@ -129,7 +149,7 @@ namespace PSC09
         // diseño (encabezado con logo/datos de la empresa, tabla de líneas, totales)
         // vive en Clases/DocumentoPdf.cs, compartido con CuentaCliente.GenerarReciboPdf.
         public static string GenerarPdf(string numeroFactura, string comprobante, DateTime fecha, string clienteId, string clienteNombre,
-            List<LineaFactura> lineas, decimal subtotal, decimal impuesto, decimal total)
+            List<LineaFactura> lineas, decimal subtotal, decimal impuesto, decimal total, decimal descuento)
         {
             string clienteIdentificacion = "";
             string clienteDireccion = "";
@@ -187,16 +207,27 @@ namespace PSC09
                 doc.Add(pDireccion);
             }
 
-            PdfPTable tablaLineas = new PdfPTable(6);
+            // La columna "Desc." (descuento por línea) sólo se agrega si al menos una
+            // línea la usó, para no cambiarle el aspecto a las facturas normales sin
+            // descuento de línea.
+            bool hayDescuentoLinea = lineas.Exists(l => l.DescuentoLinea > 0);
+
+            PdfPTable tablaLineas = new PdfPTable(hayDescuentoLinea ? 7 : 6);
             tablaLineas.WidthPercentage = 100;
             tablaLineas.SpacingBefore = 10;
-            tablaLineas.SetWidths(new float[] { 1.2f, 3.2f, 0.9f, 1.3f, 1.1f, 1.4f });
+            tablaLineas.SetWidths(hayDescuentoLinea
+                ? new float[] { 1.1f, 2.8f, 0.8f, 1.2f, 1f, 1f, 1.3f }
+                : new float[] { 1.2f, 3.2f, 0.9f, 1.3f, 1.1f, 1.4f });
 
             tablaLineas.AddCell(DocumentoPdf.CeldaEncabezadoTabla("Código"));
             tablaLineas.AddCell(DocumentoPdf.CeldaEncabezadoTabla("Descripción"));
             tablaLineas.AddCell(DocumentoPdf.CeldaEncabezadoTabla("Cant."));
             tablaLineas.AddCell(DocumentoPdf.CeldaEncabezadoTabla("Precio"));
             tablaLineas.AddCell(DocumentoPdf.CeldaEncabezadoTabla("ITBIS"));
+            if (hayDescuentoLinea)
+            {
+                tablaLineas.AddCell(DocumentoPdf.CeldaEncabezadoTabla("Desc."));
+            }
             tablaLineas.AddCell(DocumentoPdf.CeldaEncabezadoTabla("Subtotal"));
 
             bool alterna = false;
@@ -207,6 +238,10 @@ namespace PSC09
                 tablaLineas.AddCell(DocumentoPdf.CeldaTabla(linea.Cantidad.ToString("0.##", CultureInfo.InvariantCulture), Element.ALIGN_CENTER, alterna));
                 tablaLineas.AddCell(DocumentoPdf.CeldaTabla(DocumentoPdf.FormatoNumero(linea.PrecioVenta), Element.ALIGN_RIGHT, alterna));
                 tablaLineas.AddCell(DocumentoPdf.CeldaTabla(DocumentoPdf.FormatoNumero(linea.Impuesto), Element.ALIGN_RIGHT, alterna));
+                if (hayDescuentoLinea)
+                {
+                    tablaLineas.AddCell(DocumentoPdf.CeldaTabla(linea.DescuentoLinea > 0 ? "-" + DocumentoPdf.FormatoNumero(linea.DescuentoLinea) : "", Element.ALIGN_RIGHT, alterna));
+                }
                 tablaLineas.AddCell(DocumentoPdf.CeldaTabla(DocumentoPdf.FormatoNumero(linea.MontoLinea), Element.ALIGN_RIGHT, alterna));
                 alterna = !alterna;
             }
@@ -216,6 +251,10 @@ namespace PSC09
             tablaTotales.SpacingBefore = 12;
             DocumentoPdf.AgregarTotal(tablaTotales, "Subtotal:", DocumentoPdf.FormatoMoneda(subtotal), false);
             DocumentoPdf.AgregarTotal(tablaTotales, "ITBIS:", DocumentoPdf.FormatoMoneda(impuesto), false);
+            if (descuento > 0)
+            {
+                DocumentoPdf.AgregarTotal(tablaTotales, "Descuento:", "-" + DocumentoPdf.FormatoMoneda(descuento), false);
+            }
             DocumentoPdf.AgregarTotal(tablaTotales, "TOTAL A PAGAR:", DocumentoPdf.FormatoMoneda(total), true);
             doc.Add(tablaTotales);
 

@@ -18,9 +18,15 @@ namespace PSC09
 
         decimal lnImpuesto;
         bool lbImpuestoIncluido;
+        // Impuesto/Subtotal SIN el descuento de línea (ver ActualizarPreviewLinea),
+        // recalculados en cada txtCantidad_Leave; lblImpuestoLn/lblTotalLn muestran la
+        // versión YA con el descuento de línea aplicado.
+        decimal lnImpuestoBruto;
+        decimal lnSubtotalBruto;
         decimal zImpuesto;
         decimal zTotal;
         decimal zSubtotal;
+        decimal zDescuento;
         decimal nmCant;
         decimal nmPrec;
         string archivo = "";
@@ -136,12 +142,18 @@ namespace PSC09
             dgv.Rows.Add();
             int xRows = dgv.Rows.Count - 1;
 
+            decimal descuentoLn;
+            if (!decimal.TryParse(txtDescuentoLn.Text, out descuentoLn) || descuentoLn < 0) descuentoLn = 0;
+
             dgv[00, xRows].Value = txtArticulo.Text;
             dgv[01, xRows].Value = lblArticulo.Text;
             dgv[02, xRows].Value = txtCantidad.Text;
             dgv[03, xRows].Value = lblPrecio.Text;
             dgv[04, xRows].Value = lblImpuestoLn.Text;
             dgv[05, xRows].Value = lblTotalLn.Text;
+            dgv[06, xRows].Value = descuentoLn.ToString("0.00");
+            dgv[07, xRows].Value = lnImpuestoBruto.ToString();
+            dgv[08, xRows].Value = lnSubtotalBruto.ToString();
         }
 
         private void LimpiarDetalle()
@@ -152,6 +164,9 @@ namespace PSC09
             lblPrecio.Text = "";
             lblImpuestoLn.Text = "";
             lblTotalLn.Text = "";
+            txtDescuentoLn.Clear();
+            lnSubtotalBruto = 0;
+            lnImpuestoBruto = 0;
         }
 
         private void LimpiarFormulario()
@@ -167,7 +182,11 @@ namespace PSC09
             txtNombre.ReadOnly = true;
             lblSubtotal.Text = "";
             lblImpuesto.Text = "";
+            lblDescuento.Text = "";
             lblTotal.Text = "";
+            txtDescuento.Clear();
+            rbDescuentoPorcentaje.Checked = true;
+            zDescuento = 0;
 
             lblFactura.Text = Busco.BuscaUltimoNumero("2");
             dtpFechaFactura.Value = DateTime.Now;
@@ -210,8 +229,10 @@ namespace PSC09
             zImpuesto = 0;
             zSubtotal = 0;
             zTotal = 0;
+            zDescuento = 0;
             lblSubtotal.Text = "";
             lblImpuesto.Text = "";
+            lblDescuento.Text = "";
             lblTotal.Text = "";
 
             foreach (DataGridViewRow row in dgv.Rows)
@@ -225,9 +246,102 @@ namespace PSC09
                 zTotal = zTotal + nTotal;
             }
 
-            lblSubtotal.Text = Math.Round(zSubtotal, 2).ToString();
-            lblImpuesto.Text = Math.Round(zImpuesto, 2).ToString();
-            lblTotal.Text = Math.Round(zTotal, 2).ToString();
+            // El descuento (Porcentaje o Monto fijo) siempre se calcula sobre el TOTAL
+            // facturado, no sobre el subtotal: así "Descuento Aplicado" es siempre
+            // exactamente lo que baja el Total (Precio - Descuento Aplicado = Total),
+            // sea el artículo con ITBIS incluido o no. Subtotal e impuesto se escalan
+            // por el mismo factor, equivalente a recalcular tasa × base descontada por
+            // línea, sin tener que guardar la tasa de cada línea por separado.
+            zDescuento = CalcularDescuento(zSubtotal, zTotal);
+            decimal factor = zTotal > 0 ? zDescuento / zTotal : 0;
+            decimal subtotalConDescuento = Math.Round(zSubtotal * (1 - factor), 2);
+            decimal impuestoConDescuento = Math.Round(zImpuesto * (1 - factor), 2);
+
+            lblSubtotal.Text = subtotalConDescuento.ToString();
+            lblImpuesto.Text = impuestoConDescuento.ToString();
+            lblDescuento.Text = zDescuento.ToString();
+            lblTotal.Text = Math.Round(subtotalConDescuento + impuestoConDescuento, 2).ToString();
+        }
+
+        // Calcula el monto de descuento a partir de lo escrito en txtDescuento y el modo
+        // elegido (Porcentaje/Monto), topado contra los máximos de Configuración → Datos
+        // de la Empresa (independientes entre sí) y, según el modo, contra el subtotal
+        // (Porcentaje) o el total (Monto fijo — ver TotalizarFactura). No muestra
+        // mensajes de error aquí (eso lo hace ValidarDescuento en txtDescuento_Leave y
+        // btnGuardar_Click) — esta función solo se usa para el cálculo en caliente
+        // mientras se arma la factura.
+        private decimal CalcularDescuento(decimal baseSubtotal, decimal baseTotal)
+        {
+            decimal valor;
+            if (!decimal.TryParse(txtDescuento.Text, out valor) || valor <= 0 || baseSubtotal <= 0) return 0;
+
+            DatosEmpresa empresa = Empresa.ObtenerDatos();
+
+            if (rbDescuentoPorcentaje.Checked)
+            {
+                if (valor > 100) valor = 100;
+                if (empresa.DescuentoMaxPorcentaje.HasValue && valor > empresa.DescuentoMaxPorcentaje.Value)
+                {
+                    valor = empresa.DescuentoMaxPorcentaje.Value;
+                }
+                // Sobre el TOTAL (no el subtotal): así "Descuento Aplicado" siempre
+                // coincide con lo que realmente baja el Total (Precio - Descuento
+                // Aplicado = Total), sea el artículo con ITBIS incluido o no.
+                return Math.Round(baseTotal * valor / 100m, 2);
+            }
+
+            if (empresa.DescuentoMaxMonto.HasValue && valor > empresa.DescuentoMaxMonto.Value)
+            {
+                valor = empresa.DescuentoMaxMonto.Value;
+            }
+            if (valor > baseTotal) valor = baseTotal;
+            return Math.Round(valor, 2);
+        }
+
+        // Valida lo escrito en txtDescuento (sin topar/clamp): si no es válido, devuelve el
+        // mensaje exacto para mostrarle al usuario. Vacío se considera válido (sin descuento).
+        private bool ValidarDescuento(out string error)
+        {
+            error = null;
+            if (string.IsNullOrWhiteSpace(txtDescuento.Text)) return true;
+
+            decimal valor;
+            if (!decimal.TryParse(txtDescuento.Text, out valor) || valor < 0)
+            {
+                error = "El descuento debe ser un número mayor o igual a 0.";
+                return false;
+            }
+
+            DatosEmpresa empresa = Empresa.ObtenerDatos();
+
+            if (rbDescuentoPorcentaje.Checked)
+            {
+                if (valor > 100)
+                {
+                    error = "El descuento por porcentaje no puede ser mayor a 100%.";
+                    return false;
+                }
+                if (empresa.DescuentoMaxPorcentaje.HasValue && valor > empresa.DescuentoMaxPorcentaje.Value)
+                {
+                    error = "El descuento no puede superar el " + empresa.DescuentoMaxPorcentaje.Value.ToString("0.####") + "% máximo configurado en Datos de la Empresa.";
+                    return false;
+                }
+            }
+            else
+            {
+                if (valor > zTotal)
+                {
+                    error = "El descuento no puede ser mayor al Total de la factura.";
+                    return false;
+                }
+                if (empresa.DescuentoMaxMonto.HasValue && valor > empresa.DescuentoMaxMonto.Value)
+                {
+                    error = "El descuento no puede superar RD$" + empresa.DescuentoMaxMonto.Value.ToString("0.00") + " máximo configurado en Datos de la Empresa.";
+                    return false;
+                }
+            }
+
+            return true;
         }
 
 
@@ -269,7 +383,7 @@ namespace PSC09
                 // LEFT JOIN (no INNER): si el codigo de cliente de la factura no
                 // encuentra pareja exacta en CLIENTES, la factura debe cargar igual
                 // (solo el nombre queda vacio), en vez de desaparecer de la busqueda.
-                string tsQuery = " SELECT A.FACTURA, A.CLIENTE, B.NOMBRE, A.FECHA, A.SUBTOTAL, A.IMPUESTO, A.MONTOFACTURADO, A.IDTIPOCOMPROBANTE, A.COMPROBANTEFISCAL " +
+                string tsQuery = " SELECT A.FACTURA, A.CLIENTE, B.NOMBRE, A.FECHA, A.SUBTOTAL, A.IMPUESTO, A.MONTOFACTURADO, A.IDTIPOCOMPROBANTE, A.COMPROBANTEFISCAL, A.DESCUENTO " +
                                  " FROM HFACTURA A LEFT JOIN CLIENTES B ON A.CLIENTE = B.IDCLIENTE " +
                                  " WHERE A.FACTURA = @factura AND A.ACTIVO = '1' ";
 
@@ -293,6 +407,7 @@ namespace PSC09
                         lblSubtotal.Text = Convert.ToString(rdr["SUBTOTAL"]);
                         lblImpuesto.Text = Convert.ToString(rdr["IMPUESTO"]);
                         lblTotal.Text = Convert.ToString(rdr["MONTOFACTURADO"]);
+                        lblDescuento.Text = rdr["DESCUENTO"] == DBNull.Value ? "0" : Convert.ToString(rdr["DESCUENTO"]);
 
                         if (rdr["IDTIPOCOMPROBANTE"] != DBNull.Value)
                         {
@@ -328,7 +443,8 @@ namespace PSC09
             using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
                 cnx.Open();
-                string tsQuery = " SELECT A.FACTURA, A.SECUENCIA, A.ARTICULO, B.DESCRIPCION, A.CANTIDAD, A.PRECIOVENTA, A.IMPUESTO, A.MONTOLINEA " +
+                string tsQuery = " SELECT A.FACTURA, A.SECUENCIA, A.ARTICULO, B.DESCRIPCION, A.CANTIDAD, A.PRECIOVENTA, A.IMPUESTO, A.MONTOLINEA, " +
+                                 " A.DESCUENTOLINEA, A.IMPUESTOBRUTO, A.MONTOLINEABRUTO " +
                                  " FROM DFACTURA A INNER JOIN PRODUCTOS B ON A.ARTICULO = B.ITEM " +
                                  " WHERE A.FACTURA = @factura AND A.ACTIVO = '1' ";
 
@@ -339,14 +455,22 @@ namespace PSC09
                 {
                     while (rdr.Read())
                     {
+                        decimal impuesto = Convert.ToDecimal(rdr["IMPUESTO"]);
+                        decimal montoLinea = Convert.ToDecimal(rdr["MONTOLINEA"]);
+
                         dgv.Rows.Add();
                         int xRows = dgv.Rows.Count - 1;
                         dgv[0, xRows].Value = Convert.ToString(rdr["ARTICULO"]);
                         dgv[1, xRows].Value = Convert.ToString(rdr["DESCRIPCION"]);
                         dgv[2, xRows].Value = Convert.ToString(rdr["CANTIDAD"]);
                         dgv[3, xRows].Value = Convert.ToString(rdr["PRECIOVENTA"]);
-                        dgv[4, xRows].Value = Convert.ToString(rdr["IMPUESTO"]);
-                        dgv[5, xRows].Value = Convert.ToString(rdr["MONTOLINEA"]);
+                        dgv[4, xRows].Value = impuesto.ToString();
+                        dgv[5, xRows].Value = montoLinea.ToString();
+                        // Facturas guardadas antes de agregar el descuento por línea no tienen
+                        // estas columnas: se asume sin descuento (bruto = lo ya facturado).
+                        dgv[6, xRows].Value = rdr["DESCUENTOLINEA"] == DBNull.Value ? "0.00" : Convert.ToDecimal(rdr["DESCUENTOLINEA"]).ToString("0.00");
+                        dgv[7, xRows].Value = rdr["IMPUESTOBRUTO"] == DBNull.Value ? impuesto.ToString() : Convert.ToDecimal(rdr["IMPUESTOBRUTO"]).ToString();
+                        dgv[8, xRows].Value = rdr["MONTOLINEABRUTO"] == DBNull.Value ? montoLinea.ToString() : Convert.ToDecimal(rdr["MONTOLINEABRUTO"]).ToString();
                     }
                 }
             }
@@ -366,14 +490,23 @@ namespace PSC09
             this.dgv.Columns.Add("Col03", "");
             this.dgv.Columns.Add("Col04", "");
             this.dgv.Columns.Add("Col05", "");
+            this.dgv.Columns.Add("Col06", "");
+            this.dgv.Columns.Add("Col07", "");
+            this.dgv.Columns.Add("Col08", "");
 
             DataGridViewColumn
             column = dgv.Columns[00]; column.Width = 187;
-            column = dgv.Columns[01]; column.Width = 419; column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            column = dgv.Columns[01]; column.Width = 340; column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             column = dgv.Columns[02]; column.Width = 138;
             column = dgv.Columns[03]; column.Width = 135;
             column = dgv.Columns[04]; column.Width = 135;
             column = dgv.Columns[05]; column.Width = 135;
+            column = dgv.Columns[06]; column.Width = 100;
+            // Col07/Col08 guardan el impuesto/subtotal SIN descuento de línea (para poder
+            // recalcular al aplicar/cambiar el descuento sin volver a consultar el
+            // artículo); no se muestran, son sólo estado interno de la grilla.
+            column = dgv.Columns[07]; column.Visible = false;
+            column = dgv.Columns[08]; column.Visible = false;
 
             this.dgv.BorderStyle = BorderStyle.None;
             this.dgv.AlternatingRowsDefaultCellStyle.BackColor = Tema.LavandaSuave;
@@ -405,7 +538,10 @@ namespace PSC09
                     Cantidad = Convert.ToDecimal(dgv.Rows[xrow].Cells[2].Value),
                     PrecioVenta = Convert.ToDecimal(dgv.Rows[xrow].Cells[3].Value),
                     Impuesto = Convert.ToDecimal(dgv.Rows[xrow].Cells[4].Value),
-                    MontoLinea = Convert.ToDecimal(dgv.Rows[xrow].Cells[5].Value)
+                    MontoLinea = Convert.ToDecimal(dgv.Rows[xrow].Cells[5].Value),
+                    DescuentoLinea = Convert.ToDecimal(dgv.Rows[xrow].Cells[6].Value),
+                    ImpuestoBruto = Convert.ToDecimal(dgv.Rows[xrow].Cells[7].Value),
+                    MontoLineaBruto = Convert.ToDecimal(dgv.Rows[xrow].Cells[8].Value)
                 });
             }
 
@@ -420,6 +556,10 @@ namespace PSC09
         {
             if (dgv.RowCount == 0 || lblTotal.Text == string.Empty) return;
 
+            decimal? descuentoValor;
+            bool? descuentoEsPorcentaje;
+            ObtenerDescuentoParaGuardar(out descuentoValor, out descuentoEsPorcentaje);
+
             FacturaService.GuardarFactura(
                 lblFactura.Text,
                 txtCliente.Text,
@@ -429,7 +569,26 @@ namespace PSC09
                 ArmarLineas(),
                 Convert.ToDecimal(lblSubtotal.Text),
                 Convert.ToDecimal(lblImpuesto.Text),
-                Convert.ToDecimal(lblTotal.Text));
+                Convert.ToDecimal(lblTotal.Text),
+                zDescuento,
+                descuentoValor,
+                descuentoEsPorcentaje);
+        }
+
+        // El valor tal cual lo escribió el usuario (10 si eligió 10%, o 100.00 si eligió
+        // monto fijo) se guarda aparte de zDescuento (el monto ya calculado) solo para
+        // poder reimprimir/mostrar la factura tal como se aplicó.
+        private void ObtenerDescuentoParaGuardar(out decimal? descuentoValor, out bool? descuentoEsPorcentaje)
+        {
+            descuentoValor = null;
+            descuentoEsPorcentaje = null;
+
+            decimal valor;
+            if (decimal.TryParse(txtDescuento.Text, out valor) && valor > 0)
+            {
+                descuentoValor = valor;
+                descuentoEsPorcentaje = rbDescuentoPorcentaje.Checked;
+            }
         }
 
         // Eventos
@@ -556,18 +715,61 @@ namespace PSC09
                         totalImp = lnImpuesto * subtotal;
                     }
 
-                    subtotal = Math.Round(subtotal, 2);
-                    totalImp = Math.Round(totalImp, 2);
+                    lnSubtotalBruto = Math.Round(subtotal, 2);
+                    lnImpuestoBruto = Math.Round(totalImp, 2);
 
-                    lblImpuestoLn.Text = totalImp.ToString();
-                    lblTotalLn.Text = subtotal.ToString();
+                    ActualizarPreviewLinea();
                 }
             }
+        }
+
+        private void txtDescuentoLn_Leave(object sender, EventArgs e)
+        {
+            ActualizarPreviewLinea();
+        }
+
+        // Aplica lo escrito en txtDescuentoLn (RD$, topado al total de la línea) sobre
+        // lnSubtotalBruto/lnImpuestoBruto (calculados en txtCantidad_Leave) para mostrar
+        // en lblImpuestoLn/lblTotalLn la línea YA con su propio descuento aplicado.
+        private void ActualizarPreviewLinea()
+        {
+            if (lnSubtotalBruto <= 0 && lnImpuestoBruto <= 0) return;
+
+            decimal totalBruto = lnSubtotalBruto + lnImpuestoBruto;
+            decimal descuentoLn;
+            if (!decimal.TryParse(txtDescuentoLn.Text, out descuentoLn) || descuentoLn < 0) descuentoLn = 0;
+            if (descuentoLn > totalBruto)
+            {
+                descuentoLn = totalBruto;
+                txtDescuentoLn.Text = descuentoLn.ToString("0.00");
+            }
+
+            decimal factorLn = totalBruto > 0 ? descuentoLn / totalBruto : 0;
+            lblImpuestoLn.Text = Math.Round(lnImpuestoBruto * (1 - factorLn), 2).ToString();
+            lblTotalLn.Text = Math.Round(lnSubtotalBruto * (1 - factorLn), 2).ToString();
         }
 
         private void cboTipoComprobante_SelectedIndexChanged(object sender, EventArgs e)
         {
             ActualizarComprobantePreview();
+        }
+
+        private void txtDescuento_Leave(object sender, EventArgs e)
+        {
+            string error;
+            if (!ValidarDescuento(out error))
+            {
+                MessageBox.Show(error, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtDescuento.Clear();
+            }
+            TotalizarFactura();
+        }
+
+        private void rbDescuento_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!((RadioButton)sender).Checked) return;
+            txtDescuento.Clear();
+            TotalizarFactura();
         }
 
         private void cmsComprobante_Opening(object sender, System.ComponentModel.CancelEventArgs e)
@@ -658,6 +860,9 @@ namespace PSC09
                 lblPrecio.Text = dgv.CurrentRow.Cells[03].Value.ToString();
                 lblImpuestoLn.Text = dgv.CurrentRow.Cells[04].Value.ToString();
                 lblTotalLn.Text = dgv.CurrentRow.Cells[05].Value.ToString();
+                txtDescuentoLn.Text = dgv.CurrentRow.Cells[06].Value.ToString();
+                lnImpuestoBruto = Convert.ToDecimal(dgv.CurrentRow.Cells[07].Value);
+                lnSubtotalBruto = Convert.ToDecimal(dgv.CurrentRow.Cells[08].Value);
 
                 BorraLineaDelDGV();
                 TotalizarFactura();
@@ -673,6 +878,39 @@ namespace PSC09
                 BorraLineaDelDGV();
                 txtArticulo.Focus();
             }
+        }
+
+        // Aplica lo escrito en txtDescuentoLn (RD$) a TODAS las líneas ya agregadas al
+        // dgv de una vez, recalculando cada una desde su propio Impuesto/Subtotal bruto
+        // (Col07/Col08) para que no se acumule si se aplica más de una vez. Cada línea
+        // se topa a su propio total, así que un artículo más barato que el descuento
+        // simplemente queda descontado al 100%.
+        private void btnDescuentoLineaTodas_Click(object sender, EventArgs e)
+        {
+            if (dgv.RowCount == 0) return;
+
+            decimal descuentoLn;
+            if (!decimal.TryParse(txtDescuentoLn.Text, out descuentoLn) || descuentoLn < 0)
+            {
+                MessageBox.Show("El descuento debe ser un número mayor o igual a 0.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            foreach (DataGridViewRow fila in dgv.Rows)
+            {
+                decimal impuestoBruto = Convert.ToDecimal(fila.Cells[7].Value);
+                decimal subtotalBruto = Convert.ToDecimal(fila.Cells[8].Value);
+                decimal totalBruto = impuestoBruto + subtotalBruto;
+
+                decimal valor = descuentoLn > totalBruto ? totalBruto : descuentoLn;
+                decimal factorLn = totalBruto > 0 ? valor / totalBruto : 0;
+
+                fila.Cells[4].Value = Math.Round(impuestoBruto * (1 - factorLn), 2).ToString();
+                fila.Cells[5].Value = Math.Round(subtotalBruto * (1 - factorLn), 2).ToString();
+                fila.Cells[6].Value = valor.ToString("0.00");
+            }
+
+            TotalizarFactura();
         }
 
         private void btnLimpiarDgv_Click(object sender, EventArgs e)
@@ -721,6 +959,15 @@ namespace PSC09
             if (dgv.RowCount == 0)
             {
                 MessageBox.Show("Agrega al menos un artículo antes de guardar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // Revalida por si la configuración de Datos de la Empresa cambió entre que se
+            // escribió el descuento y se dio click en Guardar.
+            string errorDescuento;
+            if (!ValidarDescuento(out errorDescuento))
+            {
+                MessageBox.Show(errorDescuento, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -851,7 +1098,8 @@ namespace PSC09
                 ArmarLineas(),
                 Convert.ToDecimal(lblSubtotal.Text),
                 Convert.ToDecimal(lblImpuesto.Text),
-                Convert.ToDecimal(lblTotal.Text));
+                Convert.ToDecimal(lblTotal.Text),
+                zDescuento);
         }
     }
 }

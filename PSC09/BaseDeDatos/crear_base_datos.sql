@@ -61,6 +61,17 @@ IF NOT EXISTS (SELECT * FROM EMPRESA WHERE id = 1)
     INSERT INTO EMPRESA (id, nombreComercial) VALUES (1, 'Andrómeda');
 GO
 
+-- Topes de descuento configurables desde Configuración → Datos de la Empresa
+-- (frmDatosEmpresa). Son independientes entre sí a propósito: un descuento por
+-- porcentaje solo se topa con descuentoMaxPorcentaje, uno por monto fijo solo
+-- con descuentoMaxMonto; ninguno se deriva del otro. NULL = sin límite para ese modo.
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('EMPRESA') AND name = 'descuentoMaxPorcentaje')
+    ALTER TABLE EMPRESA ADD descuentoMaxPorcentaje DECIMAL(9,4) NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('EMPRESA') AND name = 'descuentoMaxMonto')
+    ALTER TABLE EMPRESA ADD descuentoMaxMonto DECIMAL(18,2) NULL;
+GO
+
 -- Normalizadas a 3FN: País y Ciudad viven en sus propias tablas para que
 -- "país" no dependa transitivamente de "ciudad" dentro de CLIENTES.
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PAISES')
@@ -383,6 +394,37 @@ IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HFACTURA')
 GO
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HFACTURA') AND name = 'comprobanteFiscal')
     ALTER TABLE HFACTURA ADD comprobanteFiscal NVARCHAR(13) NULL;
+GO
+
+-- Descuento aplicado a la venta completa (% o monto fijo, sobre el Total; ver
+-- Clases/FacturaService.cs GuardarFactura). Se suma al descuento por línea de
+-- DFACTURA (descuentoLinea, más abajo) si el cajero usó ambos a la vez.
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HFACTURA') AND name = 'descuento')
+    ALTER TABLE HFACTURA ADD descuento DECIMAL(18,2) NULL;
+GO
+-- descuentoValor guarda el valor tal cual lo escribió el usuario (10 si eligió 10%,
+-- o 100.00 si eligió monto fijo), solo para reimprimir/mostrar la factura tal como
+-- se aplicó; descuento ya es el monto resultante, listo para el cálculo.
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HFACTURA') AND name = 'descuentoValor')
+    ALTER TABLE HFACTURA ADD descuentoValor DECIMAL(9,4) NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HFACTURA') AND name = 'descuentoEsPorcentaje')
+    ALTER TABLE HFACTURA ADD descuentoEsPorcentaje BIT NULL;
+GO
+
+-- Descuento por línea (solo monto fijo RD$, aplicado sobre el total de esa línea —
+-- ver frmFactura/frmPuntoVenta CalcularDescuentoLinea): IMPUESTO/MONTOLINEA en esta
+-- misma fila ya salen calculados sobre el monto descontado; impuestoBruto y
+-- montoLineaBruto guardan los valores SIN descuento de línea, para poder
+-- reconstruir/editar la línea después sin tener que volver a consultar el artículo.
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('DFACTURA') AND name = 'descuentoLinea')
+    ALTER TABLE DFACTURA ADD descuentoLinea DECIMAL(18,2) NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('DFACTURA') AND name = 'impuestoBruto')
+    ALTER TABLE DFACTURA ADD impuestoBruto DECIMAL(18,2) NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('DFACTURA') AND name = 'montoLineaBruto')
+    ALTER TABLE DFACTURA ADD montoLineaBruto DECIMAL(18,2) NULL;
 GO
 
 -- Semillas de País / Ciudad (ajusta o agrega las que necesites).

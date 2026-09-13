@@ -50,6 +50,16 @@ namespace PSC09
             this.txtRecibido = new System.Windows.Forms.TextBox();
             this.lblCambioTitulo = new System.Windows.Forms.Label();
             this.lblCambio = new System.Windows.Forms.Label();
+            this.lblDescuentoTitulo = new System.Windows.Forms.Label();
+            this.rbDescuentoPorcentaje = new System.Windows.Forms.RadioButton();
+            this.rbDescuentoMonto = new System.Windows.Forms.RadioButton();
+            this.txtDescuento = new System.Windows.Forms.TextBox();
+            this.lblDescuentoAplicadoTitulo = new System.Windows.Forms.Label();
+            this.lblDescuentoValor = new System.Windows.Forms.Label();
+            this.lblDescuentoRapidoTitulo = new System.Windows.Forms.Label();
+            this.txtDescuentoRapido = new System.Windows.Forms.TextBox();
+            this.btnDescuentoLineaSeleccionada = new System.Windows.Forms.Button();
+            this.btnDescuentoLineaTodas = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgv)).BeginInit();
             this.cmsComprobante.SuspendLayout();
             this.SuspendLayout();
@@ -302,6 +312,52 @@ namespace PSC09
             PSC09.Tema.EstilizarBotonSecundario(this.btnCancelarVenta);
             this.btnCancelarVenta.Click += new System.EventHandler(this.btnCancelarVenta_Click);
             //
+            // lblDescuentoRapidoTitulo
+            //
+            this.lblDescuentoRapidoTitulo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblDescuentoRapidoTitulo.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.lblDescuentoRapidoTitulo.Location = new System.Drawing.Point(320, 546);
+            this.lblDescuentoRapidoTitulo.Name = "lblDescuentoRapidoTitulo";
+            this.lblDescuentoRapidoTitulo.Size = new System.Drawing.Size(120, 20);
+            this.lblDescuentoRapidoTitulo.TabIndex = 32;
+            this.lblDescuentoRapidoTitulo.Text = "Desc. Línea RD$";
+            //
+            // txtDescuentoRapido
+            //
+            this.txtDescuentoRapido.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.txtDescuentoRapido.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtDescuentoRapido.Location = new System.Drawing.Point(320, 570);
+            this.txtDescuentoRapido.Name = "txtDescuentoRapido";
+            this.txtDescuentoRapido.Size = new System.Drawing.Size(90, 26);
+            this.txtDescuentoRapido.TabIndex = 33;
+            this.txtDescuentoRapido.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            //
+            // btnDescuentoLineaSeleccionada
+            //
+            this.btnDescuentoLineaSeleccionada.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnDescuentoLineaSeleccionada.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.btnDescuentoLineaSeleccionada.Location = new System.Drawing.Point(420, 569);
+            this.btnDescuentoLineaSeleccionada.Name = "btnDescuentoLineaSeleccionada";
+            this.btnDescuentoLineaSeleccionada.Size = new System.Drawing.Size(130, 27);
+            this.btnDescuentoLineaSeleccionada.TabIndex = 34;
+            this.btnDescuentoLineaSeleccionada.Text = "Aplicar a línea";
+            this.btnDescuentoLineaSeleccionada.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnDescuentoLineaSeleccionada);
+            this.btnDescuentoLineaSeleccionada.Click += new System.EventHandler(this.btnDescuentoLineaSeleccionada_Click);
+            //
+            // btnDescuentoLineaTodas
+            //
+            this.btnDescuentoLineaTodas.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnDescuentoLineaTodas.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.btnDescuentoLineaTodas.Location = new System.Drawing.Point(556, 569);
+            this.btnDescuentoLineaTodas.Name = "btnDescuentoLineaTodas";
+            this.btnDescuentoLineaTodas.Size = new System.Drawing.Size(130, 27);
+            this.btnDescuentoLineaTodas.TabIndex = 35;
+            this.btnDescuentoLineaTodas.Text = "Aplicar a todas";
+            this.btnDescuentoLineaTodas.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnDescuentoLineaTodas);
+            this.btnDescuentoLineaTodas.Click += new System.EventHandler(this.btnDescuentoLineaTodas_Click);
+            //
             // lblSubtotalTitulo
             //
             this.lblSubtotalTitulo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -348,15 +404,87 @@ namespace PSC09
             this.lblImpuestoValor.TabIndex = 19;
             this.lblImpuestoValor.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             //
+            // lblDescuentoTitulo
+            //
+            this.lblDescuentoTitulo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblDescuentoTitulo.BackColor = PSC09.Tema.LavandaSuave;
+            this.lblDescuentoTitulo.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDescuentoTitulo.Location = new System.Drawing.Point(850, 594);
+            this.lblDescuentoTitulo.Name = "lblDescuentoTitulo";
+            this.lblDescuentoTitulo.Size = new System.Drawing.Size(100, 23);
+            this.lblDescuentoTitulo.TabIndex = 20;
+            this.lblDescuentoTitulo.Text = "Descuento";
+            this.lblDescuentoTitulo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // rbDescuentoPorcentaje
+            //
+            this.rbDescuentoPorcentaje.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.rbDescuentoPorcentaje.Checked = true;
+            this.rbDescuentoPorcentaje.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.rbDescuentoPorcentaje.Location = new System.Drawing.Point(956, 594);
+            this.rbDescuentoPorcentaje.Name = "rbDescuentoPorcentaje";
+            this.rbDescuentoPorcentaje.Size = new System.Drawing.Size(48, 23);
+            this.rbDescuentoPorcentaje.TabIndex = 21;
+            this.rbDescuentoPorcentaje.TabStop = true;
+            this.rbDescuentoPorcentaje.Text = "%";
+            this.rbDescuentoPorcentaje.UseVisualStyleBackColor = true;
+            this.rbDescuentoPorcentaje.CheckedChanged += new System.EventHandler(this.rbDescuento_CheckedChanged);
+            //
+            // rbDescuentoMonto
+            //
+            this.rbDescuentoMonto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.rbDescuentoMonto.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.rbDescuentoMonto.Location = new System.Drawing.Point(1006, 594);
+            this.rbDescuentoMonto.Name = "rbDescuentoMonto";
+            this.rbDescuentoMonto.Size = new System.Drawing.Size(48, 23);
+            this.rbDescuentoMonto.TabIndex = 22;
+            this.rbDescuentoMonto.Text = "RD$";
+            this.rbDescuentoMonto.UseVisualStyleBackColor = true;
+            this.rbDescuentoMonto.CheckedChanged += new System.EventHandler(this.rbDescuento_CheckedChanged);
+            //
+            // txtDescuento
+            //
+            this.txtDescuento.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtDescuento.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtDescuento.Location = new System.Drawing.Point(1058, 592);
+            this.txtDescuento.Name = "txtDescuento";
+            this.txtDescuento.Size = new System.Drawing.Size(78, 26);
+            this.txtDescuento.TabIndex = 23;
+            this.txtDescuento.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtDescuento.Leave += new System.EventHandler(this.txtDescuento_Leave);
+            //
+            // lblDescuentoAplicadoTitulo
+            //
+            this.lblDescuentoAplicadoTitulo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblDescuentoAplicadoTitulo.BackColor = PSC09.Tema.LavandaSuave;
+            this.lblDescuentoAplicadoTitulo.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDescuentoAplicadoTitulo.Location = new System.Drawing.Point(850, 620);
+            this.lblDescuentoAplicadoTitulo.Name = "lblDescuentoAplicadoTitulo";
+            this.lblDescuentoAplicadoTitulo.Size = new System.Drawing.Size(100, 23);
+            this.lblDescuentoAplicadoTitulo.TabIndex = 24;
+            this.lblDescuentoAplicadoTitulo.Text = "Descuento Aplic.";
+            this.lblDescuentoAplicadoTitulo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // lblDescuentoValor
+            //
+            this.lblDescuentoValor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblDescuentoValor.BackColor = System.Drawing.Color.White;
+            this.lblDescuentoValor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lblDescuentoValor.Location = new System.Drawing.Point(956, 620);
+            this.lblDescuentoValor.Name = "lblDescuentoValor";
+            this.lblDescuentoValor.Size = new System.Drawing.Size(180, 23);
+            this.lblDescuentoValor.TabIndex = 25;
+            this.lblDescuentoValor.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            //
             // lblTotalTitulo
             //
             this.lblTotalTitulo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.lblTotalTitulo.BackColor = PSC09.Tema.LavandaSuave;
             this.lblTotalTitulo.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTotalTitulo.Location = new System.Drawing.Point(850, 595);
+            this.lblTotalTitulo.Location = new System.Drawing.Point(850, 651);
             this.lblTotalTitulo.Name = "lblTotalTitulo";
             this.lblTotalTitulo.Size = new System.Drawing.Size(100, 36);
-            this.lblTotalTitulo.TabIndex = 20;
+            this.lblTotalTitulo.TabIndex = 26;
             this.lblTotalTitulo.Text = "TOTAL";
             this.lblTotalTitulo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
@@ -366,10 +494,10 @@ namespace PSC09
             this.lblTotalValor.BackColor = System.Drawing.Color.White;
             this.lblTotalValor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lblTotalValor.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTotalValor.Location = new System.Drawing.Point(956, 595);
+            this.lblTotalValor.Location = new System.Drawing.Point(956, 651);
             this.lblTotalValor.Name = "lblTotalValor";
             this.lblTotalValor.Size = new System.Drawing.Size(180, 36);
-            this.lblTotalValor.TabIndex = 21;
+            this.lblTotalValor.TabIndex = 27;
             this.lblTotalValor.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             //
             // lblRecibidoTitulo
@@ -377,10 +505,10 @@ namespace PSC09
             this.lblRecibidoTitulo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.lblRecibidoTitulo.BackColor = PSC09.Tema.LavandaSuave;
             this.lblRecibidoTitulo.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblRecibidoTitulo.Location = new System.Drawing.Point(850, 642);
+            this.lblRecibidoTitulo.Location = new System.Drawing.Point(850, 698);
             this.lblRecibidoTitulo.Name = "lblRecibidoTitulo";
             this.lblRecibidoTitulo.Size = new System.Drawing.Size(100, 23);
-            this.lblRecibidoTitulo.TabIndex = 22;
+            this.lblRecibidoTitulo.TabIndex = 28;
             this.lblRecibidoTitulo.Text = "Recibido";
             this.lblRecibidoTitulo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
@@ -388,10 +516,10 @@ namespace PSC09
             //
             this.txtRecibido.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtRecibido.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtRecibido.Location = new System.Drawing.Point(956, 640);
+            this.txtRecibido.Location = new System.Drawing.Point(956, 696);
             this.txtRecibido.Name = "txtRecibido";
             this.txtRecibido.Size = new System.Drawing.Size(180, 26);
-            this.txtRecibido.TabIndex = 23;
+            this.txtRecibido.TabIndex = 29;
             this.txtRecibido.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtRecibido.TextChanged += new System.EventHandler(this.txtRecibido_TextChanged);
             //
@@ -400,10 +528,10 @@ namespace PSC09
             this.lblCambioTitulo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.lblCambioTitulo.BackColor = PSC09.Tema.LavandaSuave;
             this.lblCambioTitulo.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblCambioTitulo.Location = new System.Drawing.Point(850, 672);
+            this.lblCambioTitulo.Location = new System.Drawing.Point(850, 728);
             this.lblCambioTitulo.Name = "lblCambioTitulo";
             this.lblCambioTitulo.Size = new System.Drawing.Size(100, 23);
-            this.lblCambioTitulo.TabIndex = 24;
+            this.lblCambioTitulo.TabIndex = 30;
             this.lblCambioTitulo.Text = "Cambio";
             this.lblCambioTitulo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
@@ -413,10 +541,10 @@ namespace PSC09
             this.lblCambio.BackColor = System.Drawing.Color.White;
             this.lblCambio.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lblCambio.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblCambio.Location = new System.Drawing.Point(956, 672);
+            this.lblCambio.Location = new System.Drawing.Point(956, 728);
             this.lblCambio.Name = "lblCambio";
             this.lblCambio.Size = new System.Drawing.Size(180, 23);
-            this.lblCambio.TabIndex = 25;
+            this.lblCambio.TabIndex = 31;
             this.lblCambio.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             //
             // frmPuntoVenta
@@ -424,17 +552,27 @@ namespace PSC09
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = PSC09.Tema.FondoClaro;
-            this.ClientSize = new System.Drawing.Size(1166, 721);
+            this.ClientSize = new System.Drawing.Size(1166, 777);
             this.Controls.Add(this.lblCambio);
             this.Controls.Add(this.lblCambioTitulo);
             this.Controls.Add(this.txtRecibido);
             this.Controls.Add(this.lblRecibidoTitulo);
             this.Controls.Add(this.lblTotalValor);
             this.Controls.Add(this.lblTotalTitulo);
+            this.Controls.Add(this.lblDescuentoValor);
+            this.Controls.Add(this.lblDescuentoAplicadoTitulo);
+            this.Controls.Add(this.txtDescuento);
+            this.Controls.Add(this.rbDescuentoMonto);
+            this.Controls.Add(this.rbDescuentoPorcentaje);
+            this.Controls.Add(this.lblDescuentoTitulo);
             this.Controls.Add(this.lblImpuestoValor);
             this.Controls.Add(this.lblImpuestoTitulo);
             this.Controls.Add(this.lblSubtotalValor);
             this.Controls.Add(this.lblSubtotalTitulo);
+            this.Controls.Add(this.btnDescuentoLineaTodas);
+            this.Controls.Add(this.btnDescuentoLineaSeleccionada);
+            this.Controls.Add(this.txtDescuentoRapido);
+            this.Controls.Add(this.lblDescuentoRapidoTitulo);
             this.Controls.Add(this.btnCancelarVenta);
             this.Controls.Add(this.btnQuitarLinea);
             this.Controls.Add(this.dgv);
@@ -455,7 +593,7 @@ namespace PSC09
             this.Controls.Add(this.btnCobrar);
             this.Controls.Add(this.btnCerrar);
             this.Controls.Add(this.label1);
-            this.MinimumSize = new System.Drawing.Size(1182, 760);
+            this.MinimumSize = new System.Drawing.Size(1182, 816);
             this.Name = "frmPuntoVenta";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "frmPuntoVenta";
@@ -496,6 +634,16 @@ namespace PSC09
         private System.Windows.Forms.Label lblSubtotalValor;
         private System.Windows.Forms.Label lblImpuestoTitulo;
         private System.Windows.Forms.Label lblImpuestoValor;
+        private System.Windows.Forms.Label lblDescuentoTitulo;
+        private System.Windows.Forms.RadioButton rbDescuentoPorcentaje;
+        private System.Windows.Forms.RadioButton rbDescuentoMonto;
+        private System.Windows.Forms.TextBox txtDescuento;
+        private System.Windows.Forms.Label lblDescuentoAplicadoTitulo;
+        private System.Windows.Forms.Label lblDescuentoValor;
+        private System.Windows.Forms.Label lblDescuentoRapidoTitulo;
+        private System.Windows.Forms.TextBox txtDescuentoRapido;
+        private System.Windows.Forms.Button btnDescuentoLineaSeleccionada;
+        private System.Windows.Forms.Button btnDescuentoLineaTodas;
         private System.Windows.Forms.Label lblTotalTitulo;
         private System.Windows.Forms.Label lblTotalValor;
         private System.Windows.Forms.Label lblRecibidoTitulo;

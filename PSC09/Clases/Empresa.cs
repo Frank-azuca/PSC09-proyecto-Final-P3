@@ -12,6 +12,11 @@ namespace PSC09
         public string Telefono;
         public string Correo;
         public byte[] Logo;
+
+        // Topes de descuento (Configuración → Datos de la Empresa). Independientes
+        // entre sí: NULL en cualquiera de los dos significa "sin límite" para ese modo.
+        public decimal? DescuentoMaxPorcentaje;
+        public decimal? DescuentoMaxMonto;
     }
 
     // Datos de la empresa (fila única, EMPRESA.id = 1), configurables desde
@@ -26,7 +31,7 @@ namespace PSC09
             {
                 cnx.Open();
                 SqlCommand cmd = new SqlCommand(
-                    "SELECT NOMBRECOMERCIAL, RAZONSOCIAL, RNC, DIRECCION, TELEFONO, CORREO, LOGO FROM EMPRESA WHERE ID = 1", cnx);
+                    "SELECT NOMBRECOMERCIAL, RAZONSOCIAL, RNC, DIRECCION, TELEFONO, CORREO, LOGO, DESCUENTOMAXPORCENTAJE, DESCUENTOMAXMONTO FROM EMPRESA WHERE ID = 1", cnx);
 
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
@@ -40,7 +45,9 @@ namespace PSC09
                             Direccion = rdr["DIRECCION"] == DBNull.Value ? "" : Convert.ToString(rdr["DIRECCION"]),
                             Telefono = rdr["TELEFONO"] == DBNull.Value ? "" : Convert.ToString(rdr["TELEFONO"]),
                             Correo = rdr["CORREO"] == DBNull.Value ? "" : Convert.ToString(rdr["CORREO"]),
-                            Logo = rdr["LOGO"] == DBNull.Value ? null : (byte[])rdr["LOGO"]
+                            Logo = rdr["LOGO"] == DBNull.Value ? null : (byte[])rdr["LOGO"],
+                            DescuentoMaxPorcentaje = rdr["DESCUENTOMAXPORCENTAJE"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(rdr["DESCUENTOMAXPORCENTAJE"]),
+                            DescuentoMaxMonto = rdr["DESCUENTOMAXMONTO"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(rdr["DESCUENTOMAXMONTO"])
                         };
                     }
                 }
@@ -56,7 +63,8 @@ namespace PSC09
                 cnx.Open();
                 SqlCommand cmd = new SqlCommand(
                     " UPDATE EMPRESA SET NOMBRECOMERCIAL = @nombre, RAZONSOCIAL = @razon, RNC = @rnc, " +
-                    " DIRECCION = @dir, TELEFONO = @tel, CORREO = @correo, LOGO = @logo WHERE ID = 1 ", cnx);
+                    " DIRECCION = @dir, TELEFONO = @tel, CORREO = @correo, LOGO = @logo, " +
+                    " DESCUENTOMAXPORCENTAJE = @descMaxPct, DESCUENTOMAXMONTO = @descMaxMonto WHERE ID = 1 ", cnx);
                 cmd.Parameters.AddWithValue("@nombre", (object)datos.NombreComercial ?? "");
                 cmd.Parameters.AddWithValue("@razon", (object)datos.RazonSocial ?? "");
                 cmd.Parameters.AddWithValue("@rnc", (object)datos.Rnc ?? "");
@@ -64,6 +72,8 @@ namespace PSC09
                 cmd.Parameters.AddWithValue("@tel", (object)datos.Telefono ?? "");
                 cmd.Parameters.AddWithValue("@correo", (object)datos.Correo ?? "");
                 cmd.Parameters.AddWithValue("@logo", (object)datos.Logo ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@descMaxPct", (object)datos.DescuentoMaxPorcentaje ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@descMaxMonto", (object)datos.DescuentoMaxMonto ?? DBNull.Value);
                 cmd.ExecuteNonQuery();
             }
         }

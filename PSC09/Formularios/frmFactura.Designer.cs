@@ -43,11 +43,14 @@
             this.lblPrecio = new System.Windows.Forms.Label();
             this.lblImpuestoLn = new System.Windows.Forms.Label();
             this.lblTotalLn = new System.Windows.Forms.Label();
+            this.txtDescuentoLn = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
             this.label13 = new System.Windows.Forms.Label();
             this.label14 = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
+            this.lblDescuentoLnTitulo = new System.Windows.Forms.Label();
+            this.btnDescuentoLineaTodas = new System.Windows.Forms.Button();
             this.dgv = new System.Windows.Forms.DataGridView();
             this.lblTotal = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
@@ -76,6 +79,12 @@
             this.lblEstadoPago = new System.Windows.Forms.Label();
             this.lblTipoVenta = new System.Windows.Forms.Label();
             this.cboTipoVenta = new System.Windows.Forms.ComboBox();
+            this.lblDescuentoTitulo = new System.Windows.Forms.Label();
+            this.rbDescuentoPorcentaje = new System.Windows.Forms.RadioButton();
+            this.rbDescuentoMonto = new System.Windows.Forms.RadioButton();
+            this.txtDescuento = new System.Windows.Forms.TextBox();
+            this.lblDescuentoAplicadoTitulo = new System.Windows.Forms.Label();
+            this.lblDescuento = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgv)).BeginInit();
             this.cmsComprobante.SuspendLayout();
             this.SuspendLayout();
@@ -202,7 +211,7 @@
             // txtCantidad
             // 
             this.txtCantidad.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCantidad.Location = new System.Drawing.Point(615, 264);
+            this.txtCantidad.Location = new System.Drawing.Point(515, 264);
             this.txtCantidad.Margin = new System.Windows.Forms.Padding(2);
             this.txtCantidad.Name = "txtCantidad";
             this.txtCantidad.Size = new System.Drawing.Size(137, 26);
@@ -214,7 +223,7 @@
             // 
             this.lblPrecio.BackColor = System.Drawing.Color.White;
             this.lblPrecio.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lblPrecio.Location = new System.Drawing.Point(751, 264);
+            this.lblPrecio.Location = new System.Drawing.Point(651, 264);
             this.lblPrecio.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblPrecio.Name = "lblPrecio";
             this.lblPrecio.Size = new System.Drawing.Size(137, 27);
@@ -224,7 +233,7 @@
             // 
             this.lblImpuestoLn.BackColor = System.Drawing.Color.White;
             this.lblImpuestoLn.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lblImpuestoLn.Location = new System.Drawing.Point(885, 264);
+            this.lblImpuestoLn.Location = new System.Drawing.Point(785, 264);
             this.lblImpuestoLn.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblImpuestoLn.Name = "lblImpuestoLn";
             this.lblImpuestoLn.Size = new System.Drawing.Size(137, 27);
@@ -234,11 +243,22 @@
             // 
             this.lblTotalLn.BackColor = System.Drawing.Color.White;
             this.lblTotalLn.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lblTotalLn.Location = new System.Drawing.Point(1020, 264);
+            this.lblTotalLn.Location = new System.Drawing.Point(920, 264);
             this.lblTotalLn.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblTotalLn.Name = "lblTotalLn";
             this.lblTotalLn.Size = new System.Drawing.Size(137, 27);
             this.lblTotalLn.TabIndex = 27;
+            //
+            // txtDescuentoLn
+            //
+            this.txtDescuentoLn.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtDescuentoLn.Location = new System.Drawing.Point(1058, 264);
+            this.txtDescuentoLn.Margin = new System.Windows.Forms.Padding(2);
+            this.txtDescuentoLn.Name = "txtDescuentoLn";
+            this.txtDescuentoLn.Size = new System.Drawing.Size(96, 26);
+            this.txtDescuentoLn.TabIndex = 28;
+            this.txtDescuentoLn.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtDescuentoLn.Leave += new System.EventHandler(this.txtDescuentoLn_Leave);
             // 
             // label11
             // 
@@ -256,7 +276,7 @@
             // 
             this.label12.BackColor = PSC09.Tema.LavandaSuave;
             this.label12.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.Location = new System.Drawing.Point(611, 240);
+            this.label12.Location = new System.Drawing.Point(511, 240);
             this.label12.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(139, 23);
@@ -268,7 +288,7 @@
             // 
             this.label13.BackColor = PSC09.Tema.LavandaSuave;
             this.label13.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label13.Location = new System.Drawing.Point(749, 240);
+            this.label13.Location = new System.Drawing.Point(649, 240);
             this.label13.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(138, 23);
@@ -280,7 +300,7 @@
             // 
             this.label14.BackColor = PSC09.Tema.LavandaSuave;
             this.label14.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label14.Location = new System.Drawing.Point(883, 240);
+            this.label14.Location = new System.Drawing.Point(783, 240);
             this.label14.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(138, 23);
@@ -292,13 +312,25 @@
             // 
             this.label15.BackColor = PSC09.Tema.LavandaSuave;
             this.label15.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label15.Location = new System.Drawing.Point(1019, 240);
+            this.label15.Location = new System.Drawing.Point(919, 240);
             this.label15.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(138, 23);
             this.label15.TabIndex = 32;
             this.label15.Text = "Total Ln";
             this.label15.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            //
+            // lblDescuentoLnTitulo
+            //
+            this.lblDescuentoLnTitulo.BackColor = PSC09.Tema.LavandaSuave;
+            this.lblDescuentoLnTitulo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDescuentoLnTitulo.Location = new System.Drawing.Point(1058, 240);
+            this.lblDescuentoLnTitulo.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.lblDescuentoLnTitulo.Name = "lblDescuentoLnTitulo";
+            this.lblDescuentoLnTitulo.Size = new System.Drawing.Size(96, 23);
+            this.lblDescuentoLnTitulo.TabIndex = 36;
+            this.lblDescuentoLnTitulo.Text = "Desc. RD$";
+            this.lblDescuentoLnTitulo.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             //
             // lblComprobante
             //
@@ -398,26 +430,97 @@
             this.dgv.TabIndex = 38;
             // 
             // lblTotal
-            // 
+            //
             this.lblTotal.BackColor = System.Drawing.Color.White;
             this.lblTotal.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lblTotal.Location = new System.Drawing.Point(932, 655);
+            this.lblTotal.Location = new System.Drawing.Point(932, 719);
             this.lblTotal.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblTotal.Name = "lblTotal";
             this.lblTotal.Size = new System.Drawing.Size(183, 23);
             this.lblTotal.TabIndex = 44;
-            // 
+            //
             // label7
-            // 
+            //
             this.label7.BackColor = PSC09.Tema.LavandaSuave;
             this.label7.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.Location = new System.Drawing.Point(735, 655);
+            this.label7.Location = new System.Drawing.Point(735, 719);
             this.label7.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(193, 23);
             this.label7.TabIndex = 41;
             this.label7.Text = "Total";
             this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // lblDescuentoTitulo
+            //
+            this.lblDescuentoTitulo.BackColor = PSC09.Tema.LavandaSuave;
+            this.lblDescuentoTitulo.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDescuentoTitulo.Location = new System.Drawing.Point(735, 655);
+            this.lblDescuentoTitulo.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.lblDescuentoTitulo.Name = "lblDescuentoTitulo";
+            this.lblDescuentoTitulo.Size = new System.Drawing.Size(193, 23);
+            this.lblDescuentoTitulo.TabIndex = 90;
+            this.lblDescuentoTitulo.Text = "Descuento";
+            this.lblDescuentoTitulo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // rbDescuentoPorcentaje
+            //
+            this.rbDescuentoPorcentaje.Checked = true;
+            this.rbDescuentoPorcentaje.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.rbDescuentoPorcentaje.Location = new System.Drawing.Point(932, 655);
+            this.rbDescuentoPorcentaje.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.rbDescuentoPorcentaje.Name = "rbDescuentoPorcentaje";
+            this.rbDescuentoPorcentaje.Size = new System.Drawing.Size(48, 23);
+            this.rbDescuentoPorcentaje.TabIndex = 91;
+            this.rbDescuentoPorcentaje.TabStop = true;
+            this.rbDescuentoPorcentaje.Text = "%";
+            this.rbDescuentoPorcentaje.UseVisualStyleBackColor = true;
+            this.rbDescuentoPorcentaje.CheckedChanged += new System.EventHandler(this.rbDescuento_CheckedChanged);
+            //
+            // rbDescuentoMonto
+            //
+            this.rbDescuentoMonto.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.rbDescuentoMonto.Location = new System.Drawing.Point(982, 655);
+            this.rbDescuentoMonto.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.rbDescuentoMonto.Name = "rbDescuentoMonto";
+            this.rbDescuentoMonto.Size = new System.Drawing.Size(48, 23);
+            this.rbDescuentoMonto.TabIndex = 92;
+            this.rbDescuentoMonto.Text = "RD$";
+            this.rbDescuentoMonto.UseVisualStyleBackColor = true;
+            this.rbDescuentoMonto.CheckedChanged += new System.EventHandler(this.rbDescuento_CheckedChanged);
+            //
+            // txtDescuento
+            //
+            this.txtDescuento.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtDescuento.Location = new System.Drawing.Point(1034, 653);
+            this.txtDescuento.Margin = new System.Windows.Forms.Padding(2);
+            this.txtDescuento.Name = "txtDescuento";
+            this.txtDescuento.Size = new System.Drawing.Size(81, 26);
+            this.txtDescuento.TabIndex = 93;
+            this.txtDescuento.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtDescuento.Leave += new System.EventHandler(this.txtDescuento_Leave);
+            //
+            // lblDescuentoAplicadoTitulo
+            //
+            this.lblDescuentoAplicadoTitulo.BackColor = PSC09.Tema.LavandaSuave;
+            this.lblDescuentoAplicadoTitulo.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDescuentoAplicadoTitulo.Location = new System.Drawing.Point(735, 687);
+            this.lblDescuentoAplicadoTitulo.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.lblDescuentoAplicadoTitulo.Name = "lblDescuentoAplicadoTitulo";
+            this.lblDescuentoAplicadoTitulo.Size = new System.Drawing.Size(193, 23);
+            this.lblDescuentoAplicadoTitulo.TabIndex = 94;
+            this.lblDescuentoAplicadoTitulo.Text = "Descuento Aplicado";
+            this.lblDescuentoAplicadoTitulo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // lblDescuento
+            //
+            this.lblDescuento.BackColor = System.Drawing.Color.White;
+            this.lblDescuento.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lblDescuento.Location = new System.Drawing.Point(932, 687);
+            this.lblDescuento.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.lblDescuento.Name = "lblDescuento";
+            this.lblDescuento.Size = new System.Drawing.Size(183, 23);
+            this.lblDescuento.TabIndex = 95;
             // 
             // label8
             // 
@@ -485,6 +588,12 @@
             this.label9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.lblSubtotal.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.lblImpuesto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblDescuentoTitulo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.rbDescuentoPorcentaje.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.rbDescuentoMonto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtDescuento.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblDescuentoAplicadoTitulo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblDescuento.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCONFACT.Image = global::PSC09.Properties.Resources.filefind;
             this.btnCONFACT.Location = new System.Drawing.Point(398, 90);
             this.btnCONFACT.Margin = new System.Windows.Forms.Padding(2);
@@ -537,7 +646,20 @@
             this.btnLimpiarDgv.UseVisualStyleBackColor = false;
             PSC09.Tema.EstilizarBotonSecundario(this.btnLimpiarDgv);
             this.btnLimpiarDgv.Click += new System.EventHandler(this.btnLimpiarDgv_Click);
-            // 
+            //
+            // btnDescuentoLineaTodas
+            //
+            this.btnDescuentoLineaTodas.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.btnDescuentoLineaTodas.Location = new System.Drawing.Point(660, 624);
+            this.btnDescuentoLineaTodas.Margin = new System.Windows.Forms.Padding(2);
+            this.btnDescuentoLineaTodas.Name = "btnDescuentoLineaTodas";
+            this.btnDescuentoLineaTodas.Size = new System.Drawing.Size(190, 35);
+            this.btnDescuentoLineaTodas.TabIndex = 37;
+            this.btnDescuentoLineaTodas.Text = "Aplicar Desc. a Todas";
+            this.btnDescuentoLineaTodas.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnDescuentoLineaTodas);
+            this.btnDescuentoLineaTodas.Click += new System.EventHandler(this.btnDescuentoLineaTodas_Click);
+            //
             // btnInsertarLn
             // 
             this.btnInsertarLn.Image = global::PSC09.Properties.Resources.insert_table_row;
@@ -658,7 +780,13 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = PSC09.Tema.FondoClaro;
-            this.ClientSize = new System.Drawing.Size(1166, 721);
+            this.ClientSize = new System.Drawing.Size(1166, 785);
+            this.Controls.Add(this.lblDescuento);
+            this.Controls.Add(this.lblDescuentoAplicadoTitulo);
+            this.Controls.Add(this.txtDescuento);
+            this.Controls.Add(this.rbDescuentoMonto);
+            this.Controls.Add(this.rbDescuentoPorcentaje);
+            this.Controls.Add(this.lblDescuentoTitulo);
             this.Controls.Add(this.cboTipoVenta);
             this.Controls.Add(this.lblTipoVenta);
             this.Controls.Add(this.lblEstadoPago);
@@ -677,7 +805,10 @@
             this.Controls.Add(this.btnBorrrarLn);
             this.Controls.Add(this.btnEditar);
             this.Controls.Add(this.btnLimpiarDgv);
+            this.Controls.Add(this.btnDescuentoLineaTodas);
             this.Controls.Add(this.btnInsertarLn);
+            this.Controls.Add(this.lblDescuentoLnTitulo);
+            this.Controls.Add(this.txtDescuentoLn);
             this.Controls.Add(this.label15);
             this.Controls.Add(this.label14);
             this.Controls.Add(this.label13);
@@ -705,7 +836,7 @@
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.label1);
             this.Margin = new System.Windows.Forms.Padding(2);
-            this.MinimumSize = new System.Drawing.Size(1182, 760);
+            this.MinimumSize = new System.Drawing.Size(1182, 824);
             this.Name = "frmFactura";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "frmFactura";
@@ -741,6 +872,8 @@
         private System.Windows.Forms.Label lblPrecio;
         private System.Windows.Forms.Label lblImpuestoLn;
         private System.Windows.Forms.Label lblTotalLn;
+        private System.Windows.Forms.TextBox txtDescuentoLn;
+        private System.Windows.Forms.Label lblDescuentoLnTitulo;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.Label label13;
@@ -749,6 +882,7 @@
         private System.Windows.Forms.Button btnBorrrarLn;
         private System.Windows.Forms.Button btnEditar;
         private System.Windows.Forms.Button btnLimpiarDgv;
+        private System.Windows.Forms.Button btnDescuentoLineaTodas;
         private System.Windows.Forms.Button btnInsertarLn;
         private System.Windows.Forms.Button btnCONFACT;
         private System.Windows.Forms.DataGridView dgv;
@@ -767,5 +901,11 @@
         private System.Windows.Forms.Label lblEstadoPago;
         private System.Windows.Forms.Label lblTipoVenta;
         private System.Windows.Forms.ComboBox cboTipoVenta;
+        private System.Windows.Forms.Label lblDescuentoTitulo;
+        private System.Windows.Forms.RadioButton rbDescuentoPorcentaje;
+        private System.Windows.Forms.RadioButton rbDescuentoMonto;
+        private System.Windows.Forms.TextBox txtDescuento;
+        private System.Windows.Forms.Label lblDescuentoAplicadoTitulo;
+        private System.Windows.Forms.Label lblDescuento;
     }
 }
