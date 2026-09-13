@@ -37,6 +37,7 @@
             this.productosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.clienteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.facturaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.gastosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.salirToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.consultaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.estadoDeCuentaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -88,6 +89,7 @@
             this.productosToolStripMenuItem,
             this.clienteToolStripMenuItem,
             this.facturaToolStripMenuItem,
+            this.gastosToolStripMenuItem,
             this.salirToolStripMenuItem});
             this.registroToolStripMenuItem.Name = "registroToolStripMenuItem";
             this.registroToolStripMenuItem.Size = new System.Drawing.Size(62, 22);
@@ -139,7 +141,14 @@
             this.facturaToolStripMenuItem.Size = new System.Drawing.Size(167, 22);
             this.facturaToolStripMenuItem.Text = "Factura";
             this.facturaToolStripMenuItem.Click += new System.EventHandler(this.facturaToolStripMenuItem_Click);
-            // 
+            //
+            // gastosToolStripMenuItem
+            //
+            this.gastosToolStripMenuItem.Name = "gastosToolStripMenuItem";
+            this.gastosToolStripMenuItem.Size = new System.Drawing.Size(167, 22);
+            this.gastosToolStripMenuItem.Text = "Gastos";
+            this.gastosToolStripMenuItem.Click += new System.EventHandler(this.gastosToolStripMenuItem_Click);
+            //
             // salirToolStripMenuItem
             // 
             this.salirToolStripMenuItem.Name = "salirToolStripMenuItem";
@@ -311,6 +320,7 @@
         private System.Windows.Forms.ToolStripMenuItem productosToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem clienteToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem facturaToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem gastosToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem salirToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem configuraciónToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem estadoDeCuentaToolStripMenuItem;

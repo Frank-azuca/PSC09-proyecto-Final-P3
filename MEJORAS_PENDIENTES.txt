@@ -56,14 +56,18 @@ de facturacion excelente, de mas a menos urgente.
 
 2) FUNCIONALIDAD DE NEGOCIO QUE FALTA
 ---------------------------------------------------
-- Reportes reales de ventas: el menu "Reporte" existe en la pantalla
-  pero no hace nada todavia.
+- Reporte de Factura ya lista facturas por rango de fechas con su total
+  (frmReporteFactura), y Reporte de Inventario muestra existencia y valor
+  actual (frmReporteInventario). Sigue faltando un reporte que cruce
+  ventas + cuentas por cobrar + gastos en un solo resumen (ver punto 4).
 
 - Formatos 606/607 que pide la DGII (reportes fiscales de compras y
   ventas).
 
-- Estado de cuenta de cliente: la tabla MUTOCTE ya guarda los
-  movimientos de cuenta, pero no hay ninguna pantalla para verlos.
+- Estado de cuenta de cliente: RESUELTO. frmEstadoCuenta ya muestra el
+  historial de MUTOCTE y cuanto debe cada cliente en vivo, y
+  frmReciboIngreso registra los cobros (uno o varios, repartidos entre
+  formas de pago). Esta nota estaba desactualizada.
 
 - Permisos por rol: el menu "Permiso a Usuario" esta ahi pero no filtra
   nada; hoy cualquier usuario que entra ve y puede hacer todo.
@@ -77,6 +81,40 @@ de facturacion excelente, de mas a menos urgente.
 
 - Impresion en impresora termica para el recibo, en vez de solo el PDF
   completo que genera hoy.
+
+
+4) REEMPLAZAR EL CONTROL MANUAL EN EXCEL (revisado 2026-09-13, hoja de Kelvin)
+---------------------------------------------------
+Se reviso el archivo personal "KELVIN P FORMULARIO DE INGRESO Y GASTOS.xlsx"
+(control manual del negocio, fuera del repo) para ver si Andromeda ya cubre
+todo lo que se lleva ahi. Ventas, cliente, cuentas por cobrar, descuento de
+inventario al vender y valor de inventario actual ya estan cubiertos o mejor
+resueltos en el sistema (por ejemplo, la linea de factura exacta reemplaza
+los checkboxes de producto de la hoja). Faltan estas tres cosas:
+
+- Modulo de Gastos/Egresos: RESUELTO (2026-09-13). Registro -> Gastos
+  (frmGastos, tabla GASTOS) permite registrar fecha, concepto, categoria
+  y monto de cualquier gasto (operativo o retiro de utilidades de un
+  socio), filtrar por rango de fechas y estado, editar/guardar en lote
+  igual que Tipos de Pago, anular (baja logica, no fisica) y exportar a
+  CSV. Sigue pendiente: que el reporte financiero consolidado (siguiente
+  punto) lo incluya.
+
+- Reporte financiero mensual/anual consolidado: la hoja "PRINCIPAL" cruza
+  Venta Neta, Cuenta por Cobrar, Gastos y Balance por mes y en total del
+  ano. El Reporte de Factura de Andromeda solo lista facturas de un rango
+  de fechas con su total, sin cruzar con gastos ni cuentas por cobrar.
+
+- Historial de inventario (entradas/salidas por fecha, saldo corriente
+  por producto): la hoja "INVENTARIO" lleva un libro de movimientos por
+  producto. Andromeda solo guarda una existencia actual editable a mano
+  en Productos, sin trazabilidad de compras/reabastecimiento ni de cuando
+  salio cada unidad.
+
+NOTA: el bloque de capital invertido, tasa de interes y ganancia sobre un
+prestamo (hoja "PRINCIPAL") es la contabilidad personal del financiamiento
+del negocio, fuera del alcance de un sistema de facturacion; no se agrega
+aqui como pendiente.
 
 
 NOTA: esta lista es una guia de prioridades, no un plan cerrado. Antes

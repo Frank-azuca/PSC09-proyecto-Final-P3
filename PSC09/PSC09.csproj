@@ -85,6 +85,12 @@
     <Compile Include="Formularios\frmTiposPago.Designer.cs">
       <DependentUpon>frmTiposPago.cs</DependentUpon>
     </Compile>
+    <Compile Include="Formularios\frmGastos.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmGastos.Designer.cs">
+      <DependentUpon>frmGastos.cs</DependentUpon>
+    </Compile>
     <Compile Include="Formularios\frmReporteFactura.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -212,6 +218,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmTiposPago.resx">
       <DependentUpon>frmTiposPago.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmGastos.resx">
+      <DependentUpon>frmGastos.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmReporteFactura.resx">
       <DependentUpon>frmReporteFactura.cs</DependentUpon>

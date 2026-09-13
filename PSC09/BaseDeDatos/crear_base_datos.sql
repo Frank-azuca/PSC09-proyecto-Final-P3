@@ -427,6 +427,21 @@ IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('DFACTURA')
     ALTER TABLE DFACTURA ADD montoLineaBruto DECIMAL(18,2) NULL;
 GO
 
+-- Gastos/egresos del negocio (Registro → Gastos, frmGastos): operativos o
+-- retiros de utilidades de los socios, para dejar de llevarlos aparte en una
+-- hoja de Excel. fecha se guarda como texto (dd/MM/yyyy), igual que
+-- HFACTURA.fecha y RECIBO.fecha, por consistencia con el resto del sistema.
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'GASTOS')
+CREATE TABLE GASTOS (
+    id         INT IDENTITY(1,1) PRIMARY KEY,
+    fecha      NVARCHAR(12) NULL,
+    concepto   NVARCHAR(200) NULL,
+    categoria  NVARCHAR(50) NULL,
+    monto      DECIMAL(18,2) NULL,
+    activo     INT NULL
+);
+GO
+
 -- Semillas de País / Ciudad (ajusta o agrega las que necesites).
 IF NOT EXISTS (SELECT * FROM PAISES WHERE nombre = 'República Dominicana')
     INSERT INTO PAISES (nombre) VALUES ('República Dominicana');

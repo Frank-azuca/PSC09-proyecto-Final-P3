@@ -109,6 +109,14 @@ namespace PSC09
             factura.Show();
         }
 
+        private void gastosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmGastos frm = new frmGastos();
+            frm.Show();
+        }
+
         private void puntoVentaToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Close();
