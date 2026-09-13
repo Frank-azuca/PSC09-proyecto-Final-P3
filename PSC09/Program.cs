@@ -16,6 +16,20 @@ namespace PSC09
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            // El flujo de pantallas navega con Hide()/Show() (splash -> login -> menú -> ...)
+            // en vez de Close(), así que ninguna de ellas termina realmente el proceso al
+            // cerrarse con la X de la ventana. Sin esto, la app queda corriendo en segundo
+            // plano sin ninguna ventana visible en cuanto se cierra una pantalla que no sea
+            // la que se pasó a Application.Run.
+            Application.Idle += (s, e) =>
+            {
+                if (!Application.OpenForms.Cast<Form>().Any(f => f.Visible))
+                {
+                    Application.Exit();
+                }
+            };
+
             Application.Run(new frmSplashScreen());
         }
     }

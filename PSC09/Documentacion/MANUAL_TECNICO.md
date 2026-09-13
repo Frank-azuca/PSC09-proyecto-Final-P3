@@ -86,6 +86,8 @@ USUARIO (independiente, solo login)
 
 Patrón repetido en casi todos: `BuscarData()`, `InsertarData()`/`ActualizaData()`, `BorrarData()` (baja lógica, no física), `LimpiarFormulario()`.
 
+**Navegación entre pantallas**: se hace con `this.Hide()` + `nuevoForm.Show()` (splash→login→menú→pantallas de trabajo), no con `ShowDialog()` ni cerrando formularios. Como ninguna pantalla sobreescribe `FormClosing`, cerrar una ventana con la X no termina la aplicación por sí solo — **corregido**: `Program.cs` engancha `Application.Idle` para detectar cuando ya no queda ninguna ventana visible (aunque queden formularios ocultos, como el splash) y llama a `Application.Exit()`. Antes de este arreglo, cerrar cualquier pantalla que no fuera la última con "Cerrar Programa" o Escape dejaba el proceso corriendo en segundo plano sin ninguna ventana visible.
+
 ## 6. Tema visual (`Clases/Tema.cs`)
 
 Paleta y tipografía centralizadas, inspiradas en el logo de la galaxia:
