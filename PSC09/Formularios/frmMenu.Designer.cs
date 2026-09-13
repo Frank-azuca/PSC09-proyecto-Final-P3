@@ -41,6 +41,8 @@
             this.movimientosInventarioToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ventasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.puntoVentaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.notaCreditoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.notaDebitoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.cuentasPorCobrarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.estadoDeCuentaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.alfabeticoDelClienteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -51,6 +53,7 @@
             this.facturaToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.inventarioToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.consolidadoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.ordenesCompraReporteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.configuraciónToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.opcionesDelMenuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.permisoAUsuarioToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -106,10 +109,26 @@
             this.ventasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.facturaToolStripMenuItem,
             this.puntoVentaToolStripMenuItem,
+            this.notaCreditoToolStripMenuItem,
+            this.notaDebitoToolStripMenuItem,
             this.facturaToolStripMenuItem1});
             this.ventasToolStripMenuItem.Name = "ventasToolStripMenuItem";
             this.ventasToolStripMenuItem.Size = new System.Drawing.Size(60, 22);
             this.ventasToolStripMenuItem.Text = "Ventas";
+            //
+            // notaCreditoToolStripMenuItem
+            //
+            this.notaCreditoToolStripMenuItem.Name = "notaCreditoToolStripMenuItem";
+            this.notaCreditoToolStripMenuItem.Size = new System.Drawing.Size(167, 22);
+            this.notaCreditoToolStripMenuItem.Text = "Nota de Crédito";
+            this.notaCreditoToolStripMenuItem.Click += new System.EventHandler(this.notaCreditoToolStripMenuItem_Click);
+            //
+            // notaDebitoToolStripMenuItem
+            //
+            this.notaDebitoToolStripMenuItem.Name = "notaDebitoToolStripMenuItem";
+            this.notaDebitoToolStripMenuItem.Size = new System.Drawing.Size(167, 22);
+            this.notaDebitoToolStripMenuItem.Text = "Nota de Débito";
+            this.notaDebitoToolStripMenuItem.Click += new System.EventHandler(this.notaDebitoToolStripMenuItem_Click);
             //
             // puntoVentaToolStripMenuItem
             //
@@ -230,7 +249,8 @@
             // 
             this.reporteToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.inventarioToolStripMenuItem,
-            this.consolidadoToolStripMenuItem});
+            this.consolidadoToolStripMenuItem,
+            this.ordenesCompraReporteToolStripMenuItem});
             this.reporteToolStripMenuItem.Name = "reporteToolStripMenuItem";
             this.reporteToolStripMenuItem.Size = new System.Drawing.Size(60, 22);
             this.reporteToolStripMenuItem.Text = "Reporte";
@@ -255,6 +275,13 @@
             this.consolidadoToolStripMenuItem.Size = new System.Drawing.Size(113, 22);
             this.consolidadoToolStripMenuItem.Text = "Consolidado";
             this.consolidadoToolStripMenuItem.Click += new System.EventHandler(this.consolidadoToolStripMenuItem_Click);
+            //
+            // ordenesCompraReporteToolStripMenuItem
+            //
+            this.ordenesCompraReporteToolStripMenuItem.Name = "ordenesCompraReporteToolStripMenuItem";
+            this.ordenesCompraReporteToolStripMenuItem.Size = new System.Drawing.Size(113, 22);
+            this.ordenesCompraReporteToolStripMenuItem.Text = "Órdenes de Compra";
+            this.ordenesCompraReporteToolStripMenuItem.Click += new System.EventHandler(this.ordenesCompraReporteToolStripMenuItem_Click);
             //
             // configuraciónToolStripMenuItem
             // 
@@ -367,6 +394,8 @@
         private System.Windows.Forms.ToolStripMenuItem registroToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem ventasToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem puntoVentaToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem notaCreditoToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem notaDebitoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem cuentasPorCobrarToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem reporteToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem usuarioToolStripMenuItem;
@@ -392,6 +421,7 @@
         private System.Windows.Forms.ToolStripMenuItem facturaToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem inventarioToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem consolidadoToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem ordenesCompraReporteToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem salirToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem cerrarProgramaToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem cerrarSesionToolStripMenuItem;

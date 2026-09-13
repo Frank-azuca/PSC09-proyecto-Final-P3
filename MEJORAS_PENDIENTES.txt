@@ -73,7 +73,8 @@ de facturacion excelente, de mas a menos urgente.
 - Permisos por rol: el menu "Permiso a Usuario" esta ahi pero no filtra
   nada; hoy cualquier usuario que entra ve y puede hacer todo.
 
-- Notas de credito / devoluciones de productos.
+- Notas de credito / devoluciones de productos: RESUELTO (2026-09-13, ver
+  seccion 6).
 
 
 3) CALIDAD OPERATIVA
@@ -146,13 +147,53 @@ aqui como pendiente.
   catalogo TIPOPAGO que ya usan los cobros a clientes) aplicados o no a
   una orden de compra especifica.
 
-Pendiente real que queda de esta ronda: no hay reporte de "ordenes de
-compra pendientes de recibir" ni de "compras por proveedor en un rango de
-fechas" (solo el saldo total actual en Cuenta por Pagar); si hace falta,
-seria un reporte nuevo, no una correccion de lo ya hecho.
+Pendiente de esta ronda (2026-09-13): RESUELTO. Reporte -> Ordenes de
+Compra (frmReporteOrdenesCompra) lista las ordenes con filtro por
+proveedor, estado (Todas/Pendiente/Recibida/Anulada) y rango de fechas, con
+su total (sin contar las anuladas) -- cubre tanto "pendientes de recibir"
+(filtrar Estado = Pendiente) como "compras por proveedor en un rango"
+(filtrar Proveedor + fechas), sin necesidad de dos pantallas separadas.
 
 
-NOTA: esta lista es una guia de prioridades, no un plan cerrado. Antes
-de implementar cualquier punto, conviene decidir juntos el alcance
-exacto (por ejemplo, que tan a fondo debe llegar el reporte 606/607, o
-si las notas de credito tambien deben imprimir un NCF nuevo tipo E34/B04).
+6) NOTAS DE CREDITO / DEVOLUCION DE PRODUCTOS (agregado 2026-09-13)
+---------------------------------------------------
+Ventas -> Nota de Credito (frmNotaCredito, tablas NOTACREDITO/DNOTACREDITO,
+Clases/NotaCreditoService.cs): se carga una factura ya guardada y activa
+(frmVENFACT o numero directo), se escribe cuanto de cada linea se quiere
+devolver (topado a lo que todavia no se haya acreditado antes, para no
+devolver dos veces lo mismo), y Guardar:
+- Devuelve la mercancia al inventario (InventarioService, origen
+  "NotaCredito"), prorrateando el subtotal/impuesto acreditado segun la
+  cantidad devuelta sobre la linea original (respeta descuentos que tenia
+  esa factura).
+- Reduce lo que debe el cliente (CuentaCliente.RegistrarAbonoDirecto), y
+  ObtenerMontoPagadoDeFactura ya suma las notas de credito activas de esa
+  factura, asi que Estado de Cuenta la sigue mostrando SALDADA/PENDIENTE
+  correctamente.
+- Usa su propio NCF (Clases/ComprobanteFiscal.cs), reutilizando el tipo
+  E34 "Nota de Credito Electronica" que ya trae sembrado el catalogo
+  TIPOCOMPROBANTE (o cualquier otro tipo que se agregue, por ejemplo un
+  B04 fisico si el negocio lo necesita -- no viene sembrado por defecto).
+- Una nota ya guardada no se puede editar (mismo criterio que Ordenes de
+  Compra): solo Anular (revierte inventario y abono) o Imprimir.
+
+
+7) NOTAS DE DEBITO (agregado 2026-09-13)
+---------------------------------------------------
+Ventas -> Nota de Debito (frmNotaDebito, tabla NOTADEBITO,
+Clases/NotaDebitoService.cs): carga adicional a una factura ya guardada y
+activa (flete, correccion de precio hacia arriba, interes por mora, etc.).
+A diferencia de la Nota de Credito no hay lineas de articulo ni devolucion
+de inventario -- es un solo monto (Subtotal + ITBIS) con su concepto.
+- Aumenta lo que debe el cliente (reutiliza
+  CuentaCliente.RegistrarCargo/AnularCargosDeFactura tal cual, sin agregar
+  metodos nuevos), y Estado de Cuenta lo muestra como "Cargo (Nota de
+  Debito)" para diferenciarlo de una factura.
+- Usa su propio NCF, con dos tipos nuevos sembrados en TIPOCOMPROBANTE:
+  B03 "Nota de Debito" (fisico) y E33 "Nota de Debito Electronica".
+- Numeracion interna propia con prefijo "ND" (igual que "NC" en Nota de
+  Credito), independiente del NCF real.
+- Una nota ya guardada no se puede editar (mismo criterio que Nota de
+  Credito/Ordenes de Compra): solo Anular o Imprimir.
+
+NOTA: esta lista es una guia de prioridades, no un plan cerrado.

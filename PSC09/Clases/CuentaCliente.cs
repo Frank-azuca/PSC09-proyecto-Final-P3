@@ -18,8 +18,20 @@ namespace PSC09
         public decimal SaldoDespues;
         public bool EsAbono;
 
-        // Sólo para abonos: a qué factura se aplicó este recibo (RECIBO.factura), o ""
-        // si fue un abono general sin factura específica.
+        // Sólo para abonos: true si el documento es una Nota de Crédito
+        // (NOTACREDITO.numero) en vez de un RECIBO — cambia cómo se etiqueta el
+        // movimiento en frmEstadoCuenta.
+        public bool EsNotaCredito;
+
+        // Sólo para cargos: true si el documento es una Nota de Débito
+        // (NOTADEBITO.numero) en vez de una factura real — cambia cómo se etiqueta
+        // el movimiento en frmEstadoCuenta.
+        public bool EsNotaDebito;
+
+        // Para abonos: a qué factura se aplicó este recibo/nota de crédito
+        // (RECIBO.factura o NOTACREDITO.factura), o "" si fue un abono general sin
+        // factura específica. Para cargos de Nota de Débito: la factura de
+        // referencia de esa nota (NOTADEBITO.factura).
         public string FacturaAplicada;
 
         // Sólo para cargos: cuánto queda pendiente de ESA factura en particular (no el
@@ -100,6 +112,26 @@ namespace PSC09
                 "UPDATE MUTOCTE SET ACTIVO = 0 WHERE DOCUMENTO = @doc AND ORIGEN = @origen AND ACTIVO = 1", cnx, tx);
             cmd.Parameters.AddWithValue("@doc", numeroFactura);
             cmd.Parameters.AddWithValue("@origen", OrigenCargo);
+            cmd.ExecuteNonQuery();
+        }
+
+        // Se llama dentro de la misma transacción de NotaCreditoService.GuardarNotaCredito():
+        // reduce lo que debe el cliente por el monto de la nota, sin pasar por un
+        // RECIBO/forma de pago (no es un cobro, es un ajuste). monto se pasa en
+        // positivo; aquí se resta del saldo igual que cualquier abono.
+        public static void RegistrarAbonoDirecto(SqlConnection cnx, SqlTransaction tx, string idClienteTexto, DateTime fecha, string documento, decimal monto)
+        {
+            RegistrarMovimiento(cnx, tx, idClienteTexto, fecha, OrigenAbono, documento, -monto);
+        }
+
+        // Se llama dentro de la misma transacción de NotaCreditoService.AnularNotaCredito():
+        // revierte el abono de esa nota (no lo borra), igual que AnularCargosDeFactura.
+        public static void AnularAbono(SqlConnection cnx, SqlTransaction tx, string documento)
+        {
+            SqlCommand cmd = new SqlCommand(
+                "UPDATE MUTOCTE SET ACTIVO = 0 WHERE DOCUMENTO = @doc AND ORIGEN = @origen AND ACTIVO = 1", cnx, tx);
+            cmd.Parameters.AddWithValue("@doc", documento);
+            cmd.Parameters.AddWithValue("@origen", OrigenAbono);
             cmd.ExecuteNonQuery();
         }
 
@@ -315,21 +347,35 @@ namespace PSC09
             using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
                 cnx.Open();
-                // LEFT JOIN RECIBO sólo aplica a los abonos (M.ORIGEN = OrigenAbono, donde
-                // M.DOCUMENTO es un número de recibo); en los cargos R.FACTURA sale NULL
-                // porque M.DOCUMENTO ahí es un número de factura, no de recibo.
+                // LEFT JOIN RECIBO/NOTACREDITO sólo aplican a los abonos y NOTADEBITO
+                // sólo a los cargos (M.ORIGEN correspondiente); en el otro caso siempre
+                // sale NULL porque M.DOCUMENTO ahí es otro tipo de número. Los números de
+                // nota de crédito/débito llevan prefijo "NC"/"ND" (ver NotaCreditoService/
+                // NotaDebitoService) así que nunca chocan con un número de recibo o de
+                // factura real (siempre numéricos).
                 SqlCommand cmd = new SqlCommand(
-                    " SELECT M.FECHA, M.ORIGEN, M.DOCUMENTO, M.MONTO, M.BCPENDIENTE, R.FACTURA AS FACTURAAPLICADA " +
+                    " SELECT M.FECHA, M.ORIGEN, M.DOCUMENTO, M.MONTO, M.BCPENDIENTE, " +
+                    " R.FACTURA AS FACTURAAPLICADA, NC.FACTURA AS FACTURANOTACREDITO, ND.FACTURA AS FACTURANOTADEBITO " +
                     " FROM MUTOCTE M " +
                     " LEFT JOIN RECIBO R ON M.ORIGEN = @origenAbono AND M.DOCUMENTO = R.RECIBO " +
+                    " LEFT JOIN NOTACREDITO NC ON M.ORIGEN = @origenAbono AND M.DOCUMENTO = NC.NUMERO " +
+                    " LEFT JOIN NOTADEBITO ND ON M.ORIGEN = @origenCargo AND M.DOCUMENTO = ND.NUMERO " +
                     " WHERE M.IDCLIENTE = @id AND M.ACTIVO = 1 ORDER BY M.ID ", cnx);
                 cmd.Parameters.AddWithValue("@id", idCliente);
                 cmd.Parameters.AddWithValue("@origenAbono", OrigenAbono);
+                cmd.Parameters.AddWithValue("@origenCargo", OrigenCargo);
 
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
                     while (rdr.Read())
                     {
+                        bool esNotaCredito = rdr["FACTURANOTACREDITO"] != DBNull.Value;
+                        bool esNotaDebito = rdr["FACTURANOTADEBITO"] != DBNull.Value;
+                        string facturaAplicada;
+                        if (esNotaCredito) facturaAplicada = Convert.ToString(rdr["FACTURANOTACREDITO"]);
+                        else if (esNotaDebito) facturaAplicada = Convert.ToString(rdr["FACTURANOTADEBITO"]);
+                        else facturaAplicada = rdr["FACTURAAPLICADA"] == DBNull.Value ? "" : Convert.ToString(rdr["FACTURAAPLICADA"]);
+
                         lista.Add(new MovimientoCuenta
                         {
                             Fecha = Convert.ToString(rdr["FECHA"]),
@@ -337,7 +383,9 @@ namespace PSC09
                             Monto = Convert.ToDecimal(rdr["MONTO"]),
                             SaldoDespues = rdr["BCPENDIENTE"] == DBNull.Value ? 0 : Convert.ToDecimal(rdr["BCPENDIENTE"]),
                             EsAbono = Convert.ToInt32(rdr["ORIGEN"]) == OrigenAbono,
-                            FacturaAplicada = rdr["FACTURAAPLICADA"] == DBNull.Value ? "" : Convert.ToString(rdr["FACTURAAPLICADA"])
+                            EsNotaCredito = esNotaCredito,
+                            EsNotaDebito = esNotaDebito,
+                            FacturaAplicada = facturaAplicada
                         });
                     }
                 }
@@ -358,8 +406,10 @@ namespace PSC09
             return lista;
         }
 
-        // Cuánto se ha pagado en total contra una factura específica (suma de las
-        // líneas de todos los recibos activos que quedaron ligados a ella).
+        // Cuánto se ha cubierto en total contra una factura específica: pagos (suma
+        // de las líneas de todos los recibos activos ligados a ella) más notas de
+        // crédito activas emitidas contra ella (una devolución reduce lo pendiente
+        // igual que un pago).
         public static decimal ObtenerMontoPagadoDeFactura(string numeroFactura)
         {
             using (SqlConnection cnx = new SqlConnection(cnn.db))
@@ -370,7 +420,14 @@ namespace PSC09
                     " INNER JOIN RECIBO R ON D.RECIBO = R.RECIBO " +
                     " WHERE R.FACTURA = @factura AND R.ACTIVO = 1 ", cnx);
                 cmd.Parameters.AddWithValue("@factura", numeroFactura);
-                return Convert.ToDecimal(cmd.ExecuteScalar());
+                decimal pagado = Convert.ToDecimal(cmd.ExecuteScalar());
+
+                SqlCommand cmdNc = new SqlCommand(
+                    "SELECT ISNULL(SUM(MONTO), 0) FROM NOTACREDITO WHERE FACTURA = @factura AND ACTIVO = 1", cnx);
+                cmdNc.Parameters.AddWithValue("@factura", numeroFactura);
+                decimal acreditado = Convert.ToDecimal(cmdNc.ExecuteScalar());
+
+                return pagado + acreditado;
             }
         }
 

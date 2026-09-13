@@ -564,6 +564,106 @@ CREATE TABLE MOVIMIENTOINVENTARIO (
 );
 GO
 
+-- Secuencia de numeracion interna de Nota de Credito (6), mismo mecanismo que
+-- Factura (2)/Recibo (3)/OrdenCompra (4)/PagoProveedor (5). El numero interno
+-- se guarda con prefijo "NC" (ver NotaCreditoService) para no chocar con los
+-- numeros de RECIBO cuando ambos aparecen como MUTOCTE.documento de un abono.
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
+    SET IDENTITY_INSERT SECUENCIA ON;
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 6)
+    INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (6, 'NotaCredito', 0);
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
+    SET IDENTITY_INSERT SECUENCIA OFF;
+GO
+
+-- Notas de Credito (Ventas -> Nota de Credito, frmNotaCredito): devolucion de
+-- productos de una factura ya guardada. Usa el mismo catalogo TIPOCOMPROBANTE
+-- (ya trae sembrado E34 "Nota de Credito Electronica") y Clases/
+-- ComprobanteFiscal.cs para su propio NCF, independiente del comprobante de
+-- la factura original. numero es el consecutivo interno ("NC1", "NC2", ...);
+-- comprobanteFiscal es el NCF real que exige la DGII.
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'NOTACREDITO')
+CREATE TABLE NOTACREDITO (
+    numero              NVARCHAR(10) PRIMARY KEY,
+    fecha               NVARCHAR(12) NULL,
+    factura             NVARCHAR(10) NULL FOREIGN KEY REFERENCES HFACTURA(factura),
+    cliente             NVARCHAR(20) NULL,
+    idTipoComprobante   INT NULL FOREIGN KEY REFERENCES TIPOCOMPROBANTE(id),
+    comprobanteFiscal   NVARCHAR(13) NULL,
+    motivo              NVARCHAR(200) NULL,
+    subtotal            DECIMAL(18,2) NULL,
+    impuesto            DECIMAL(18,2) NULL,
+    monto               DECIMAL(18,2) NULL,
+    activo              INT NULL
+);
+GO
+
+-- montoLinea/impuesto aqui son el monto acreditado de esa linea (proporcional
+-- a la cantidad devuelta sobre la linea original de DFACTURA), no el precio de
+-- catalogo completo.
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DNOTACREDITO')
+CREATE TABLE DNOTACREDITO (
+    id             INT IDENTITY(1,1) PRIMARY KEY,
+    notaCredito    NVARCHAR(10) NULL FOREIGN KEY REFERENCES NOTACREDITO(numero),
+    articulo       NVARCHAR(10) NULL FOREIGN KEY REFERENCES PRODUCTOS(item),
+    cantidad       DECIMAL(18,2) NULL,
+    montoLinea     DECIMAL(18,2) NULL,
+    impuesto       DECIMAL(18,2) NULL,
+    activo         INT NULL
+);
+GO
+
+-- Tipos de comprobante para Nota de Débito (no venían sembrados: sólo se
+-- había agregado E34 "Nota de Crédito Electrónica" al implementar esa
+-- funcionalidad). B03 físico y E33 electrónico son los códigos que usa la
+-- DGII para Nota de Débito.
+IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 110)
+    INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (110, 'B03', 'Nota de Débito', 11, 0);
+IF NOT EXISTS (SELECT * FROM TIPOCOMPROBANTE WHERE id = 111)
+    INSERT INTO TIPOCOMPROBANTE (id, prefijo, nombre, longitudTotal, esElectronico) VALUES (111, 'E33', 'Nota de Débito Electrónica', 13, 1);
+GO
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
+    SET IDENTITY_INSERT SECUENCIA ON;
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 110) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (110, 'Comprobante B03', 0);
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 111) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (111, 'Comprobante E33', 0);
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
+    SET IDENTITY_INSERT SECUENCIA OFF;
+GO
+
+-- Secuencia de numeracion interna de Nota de Debito (7), mismo mecanismo que
+-- Nota de Credito (6) — ver Clases/clsBusco.cs. El numero interno lleva
+-- prefijo "ND" (ver NotaDebitoService), independiente del NCF real.
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
+    SET IDENTITY_INSERT SECUENCIA ON;
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 7)
+    INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (7, 'NotaDebito', 0);
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
+    SET IDENTITY_INSERT SECUENCIA OFF;
+GO
+
+-- Notas de Debito (Ventas -> Nota de Debito, frmNotaDebito): cargo adicional
+-- a una factura ya guardada (flete, correccion de precio hacia arriba,
+-- interes por mora, etc.), a diferencia de la Nota de Credito no devuelve
+-- inventario ni tiene lineas de articulo -- es un solo monto con su
+-- concepto. Reutiliza CuentaCliente.RegistrarCargo/AnularCargosDeFactura tal
+-- cual (ya son genericos: no validan que el documento sea una HFACTURA de
+-- verdad), asi que no hizo falta agregar metodos nuevos a CuentaCliente.cs.
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'NOTADEBITO')
+CREATE TABLE NOTADEBITO (
+    numero              NVARCHAR(10) PRIMARY KEY,
+    fecha               NVARCHAR(12) NULL,
+    factura             NVARCHAR(10) NULL FOREIGN KEY REFERENCES HFACTURA(factura),
+    cliente             NVARCHAR(20) NULL,
+    idTipoComprobante   INT NULL FOREIGN KEY REFERENCES TIPOCOMPROBANTE(id),
+    comprobanteFiscal   NVARCHAR(13) NULL,
+    concepto            NVARCHAR(200) NULL,
+    subtotal            DECIMAL(18,2) NULL,
+    impuesto            DECIMAL(18,2) NULL,
+    monto               DECIMAL(18,2) NULL,
+    activo              INT NULL
+);
+GO
+
 -- Semillas de País / Ciudad (ajusta o agrega las que necesites).
 IF NOT EXISTS (SELECT * FROM PAISES WHERE nombre = 'República Dominicana')
     INSERT INTO PAISES (nombre) VALUES ('República Dominicana');

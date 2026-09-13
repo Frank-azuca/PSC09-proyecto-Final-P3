@@ -61,6 +61,8 @@
     <Compile Include="Clases\ExportadorCsv.cs" />
     <Compile Include="Clases\FacturaService.cs" />
     <Compile Include="Clases\InventarioService.cs" />
+    <Compile Include="Clases\NotaCreditoService.cs" />
+    <Compile Include="Clases\NotaDebitoService.cs" />
     <Compile Include="Clases\OrdenCompraService.cs" />
     <Compile Include="Clases\Seguridad.cs" />
     <Compile Include="Clases\Tema.cs" />
@@ -123,6 +125,24 @@
     </Compile>
     <Compile Include="Formularios\frmOrdenCompra.Designer.cs">
       <DependentUpon>frmOrdenCompra.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmReporteOrdenesCompra.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmReporteOrdenesCompra.Designer.cs">
+      <DependentUpon>frmReporteOrdenesCompra.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmNotaCredito.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmNotaCredito.Designer.cs">
+      <DependentUpon>frmNotaCredito.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmNotaDebito.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmNotaDebito.Designer.cs">
+      <DependentUpon>frmNotaDebito.cs</DependentUpon>
     </Compile>
     <Compile Include="Formularios\frmMovimientosInventario.cs">
       <SubType>Form</SubType>
@@ -281,6 +301,15 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmOrdenCompra.resx">
       <DependentUpon>frmOrdenCompra.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmReporteOrdenesCompra.resx">
+      <DependentUpon>frmReporteOrdenesCompra.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmNotaCredito.resx">
+      <DependentUpon>frmNotaCredito.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmNotaDebito.resx">
+      <DependentUpon>frmNotaDebito.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmMovimientosInventario.resx">
       <DependentUpon>frmMovimientosInventario.cs</DependentUpon>

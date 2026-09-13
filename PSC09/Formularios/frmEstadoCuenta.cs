@@ -95,7 +95,13 @@ namespace PSC09
                 fila.Cells["colMonto"].Value = mov.Monto.ToString("0.00");
                 fila.Cells["colSaldo"].Value = mov.SaldoDespues.ToString("0.00");
 
-                if (mov.EsAbono)
+                if (mov.EsAbono && mov.EsNotaCredito)
+                {
+                    fila.Cells["colTipo"].Value = "Nota de Crédito";
+                    fila.Cells["colEstado"].Value = "Devolución de factura " + mov.FacturaAplicada;
+                    fila.DefaultCellStyle.ForeColor = Color.SeaGreen;
+                }
+                else if (mov.EsAbono)
                 {
                     string formasPago = CuentaCliente.ObtenerFormasPagoDeRecibo(mov.Documento);
                     fila.Cells["colTipo"].Value = string.IsNullOrEmpty(formasPago) ? "Abono" : "Abono (" + formasPago + ")";
@@ -106,7 +112,7 @@ namespace PSC09
                 }
                 else
                 {
-                    fila.Cells["colTipo"].Value = "Cargo";
+                    fila.Cells["colTipo"].Value = mov.EsNotaDebito ? "Cargo (Nota de Débito)" : "Cargo";
 
                     if (mov.SaldoDocumento <= 0)
                     {

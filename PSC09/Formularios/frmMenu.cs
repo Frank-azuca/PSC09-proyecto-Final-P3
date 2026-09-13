@@ -150,6 +150,30 @@ namespace PSC09
             frm.Show();
         }
 
+        private void ordenesCompraReporteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmReporteOrdenesCompra frm = new frmReporteOrdenesCompra();
+            frm.Show();
+        }
+
+        private void notaCreditoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmNotaCredito frm = new frmNotaCredito();
+            frm.Show();
+        }
+
+        private void notaDebitoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmNotaDebito frm = new frmNotaDebito();
+            frm.Show();
+        }
+
         private void puntoVentaToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Close();
