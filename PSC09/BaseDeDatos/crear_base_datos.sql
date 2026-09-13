@@ -442,6 +442,128 @@ CREATE TABLE GASTOS (
 );
 GO
 
+-- Proveedores y Cuentas por Pagar (mismo diseño que CLIENTES/MUTOCTE/RECIBO/
+-- DETALLERECIBO para Cuentas por Cobrar, ver Clases/CuentaCliente.cs, pero del
+-- lado de lo que el negocio le debe a sus proveedores en vez de lo que le
+-- deben los clientes).
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PROVEEDORES')
+CREATE TABLE PROVEEDORES (
+    idProveedor  INT IDENTITY(1,1) PRIMARY KEY,
+    nombre       NVARCHAR(150) NULL,
+    contacto     NVARCHAR(100) NULL,
+    telefono     NVARCHAR(30) NULL,
+    direccion    NVARCHAR(200) NULL,
+    correo       NVARCHAR(100) NULL,
+    activo       INT NULL
+);
+GO
+
+-- Movimientos de cuenta por proveedor (cargo = se recibió una orden de compra;
+-- abono = se le pagó). bcPendiente es una fotografía del saldo justo después
+-- de ese movimiento (igual patrón que MUTOCTE.bcPendiente): el saldo que se
+-- muestra en pantalla siempre se recalcula en vivo con un SUM, nunca confía en
+-- esta columna — ver CuentaProveedor.ObtenerSaldoPendiente().
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'MUTOPROV')
+CREATE TABLE MUTOPROV (
+    id            INT IDENTITY(1,1) PRIMARY KEY,
+    idProveedor   INT NULL FOREIGN KEY REFERENCES PROVEEDORES(idProveedor),
+    fecha         NVARCHAR(12) NULL,
+    origen        INT NULL,
+    documento     NVARCHAR(10) NULL,
+    monto         DECIMAL(18,2) NULL,
+    bcPendiente   DECIMAL(18,2) NULL,
+    activo        INT NULL
+);
+GO
+
+-- Un pago a proveedor puede repartirse entre varias formas de pago, igual que
+-- un RECIBO de cliente (reutiliza el mismo catálogo TIPOPAGO).
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PAGOPROVEEDOR')
+CREATE TABLE PAGOPROVEEDOR (
+    pago          NVARCHAR(10) PRIMARY KEY,
+    idProveedor   INT NULL FOREIGN KEY REFERENCES PROVEEDORES(idProveedor),
+    fecha         NVARCHAR(12) NULL,
+    ordenCompra   NVARCHAR(10) NULL,
+    nota          NVARCHAR(100) NULL,
+    activo        INT NULL
+);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DETALLEPAGOPROVEEDOR')
+CREATE TABLE DETALLEPAGOPROVEEDOR (
+    secuencia    INT IDENTITY(1,1) PRIMARY KEY,
+    pago         NVARCHAR(10) NULL FOREIGN KEY REFERENCES PAGOPROVEEDOR(pago),
+    idTipoPago   INT NULL FOREIGN KEY REFERENCES TIPOPAGO(id),
+    monto        DECIMAL(18,2) NULL
+);
+GO
+
+-- Secuencia de numeración de Orden de Compra (4) y Pago a Proveedor (5), mismo
+-- mecanismo que Factura (2) y Recibo (3) — ver Clases/clsBusco.cs.
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
+    SET IDENTITY_INSERT SECUENCIA ON;
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 4)
+    INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (4, 'OrdenCompra', 0);
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 5)
+    INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (5, 'PagoProveedor', 0);
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
+    SET IDENTITY_INSERT SECUENCIA OFF;
+GO
+
+-- Ordenes de Compra (Registro → Órdenes de Compra, frmOrdenCompra): al
+-- marcarla "Recibida" (OrdenCompraService.RecibirOrden) genera la entrada de
+-- inventario de cada línea (ver MOVIMIENTOINVENTARIO) y un cargo en Cuentas
+-- por Pagar por el total de la orden. metodoCosteo guarda cuál de los métodos
+-- se aplicó al recibir (Ninguno/UltimoCosto/PromedioPonderado), sólo para
+-- referencia/reimpresión.
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ORDENCOMPRA')
+CREATE TABLE ORDENCOMPRA (
+    numero        NVARCHAR(10) PRIMARY KEY,
+    fecha         NVARCHAR(12) NULL,
+    idProveedor   INT NULL FOREIGN KEY REFERENCES PROVEEDORES(idProveedor),
+    estado        NVARCHAR(20) NULL,
+    metodoCosteo  NVARCHAR(20) NULL,
+    nota          NVARCHAR(200) NULL,
+    activo        INT NULL
+);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DORDENCOMPRA')
+CREATE TABLE DORDENCOMPRA (
+    id              INT IDENTITY(1,1) PRIMARY KEY,
+    ordenCompra     NVARCHAR(10) NULL FOREIGN KEY REFERENCES ORDENCOMPRA(numero),
+    articulo        NVARCHAR(10) NULL FOREIGN KEY REFERENCES PRODUCTOS(item),
+    cantidad        DECIMAL(18,2) NULL,
+    costoUnitario   DECIMAL(18,2) NULL,
+    activo          INT NULL
+);
+GO
+
+-- Historial de entradas/salidas de inventario (Registro → Movimientos de
+-- Inventario, frmMovimientosInventario): reemplaza la hoja "INVENTARIO" que
+-- se llevaba en Excel. Cada venta y cada anulación de factura generan su
+-- propio movimiento automáticamente (ver FacturaService.GuardarFactura/
+-- AnularFactura), además de los manuales (ajustes, mermas, conteo físico) y
+-- los de una Orden de Compra recibida. saldoResultante es una fotografía de
+-- la existencia justo después de ese movimiento (igual patrón que
+-- MUTOCTE/MUTOPROV.bcPendiente): sólo para mostrar el historial, la
+-- existencia ACTUAL que se muestra en pantalla siempre es PRODUCTOS.cantidad,
+-- nunca esta columna.
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'MOVIMIENTOINVENTARIO')
+CREATE TABLE MOVIMIENTOINVENTARIO (
+    id               INT IDENTITY(1,1) PRIMARY KEY,
+    fecha            NVARCHAR(12) NULL,
+    articulo         NVARCHAR(10) NULL FOREIGN KEY REFERENCES PRODUCTOS(item),
+    tipo             NVARCHAR(10) NULL,
+    cantidad         DECIMAL(18,2) NULL,
+    origen           NVARCHAR(20) NULL,
+    referencia       NVARCHAR(10) NULL,
+    nota             NVARCHAR(200) NULL,
+    saldoResultante  DECIMAL(18,2) NULL,
+    activo           INT NULL
+);
+GO
+
 -- Semillas de País / Ciudad (ajusta o agrega las que necesites).
 IF NOT EXISTS (SELECT * FROM PAISES WHERE nombre = 'República Dominicana')
     INSERT INTO PAISES (nombre) VALUES ('República Dominicana');

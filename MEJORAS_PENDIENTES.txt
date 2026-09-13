@@ -57,9 +57,10 @@ de facturacion excelente, de mas a menos urgente.
 2) FUNCIONALIDAD DE NEGOCIO QUE FALTA
 ---------------------------------------------------
 - Reporte de Factura ya lista facturas por rango de fechas con su total
-  (frmReporteFactura), y Reporte de Inventario muestra existencia y valor
-  actual (frmReporteInventario). Sigue faltando un reporte que cruce
-  ventas + cuentas por cobrar + gastos en un solo resumen (ver punto 4).
+  (frmReporteFactura), Reporte de Inventario muestra existencia y valor
+  actual (frmReporteInventario), y Reporte Consolidado (RESUELTO, ver
+  punto 4) cruza Venta Neta + Gastos + Balance del rango elegido, mas el
+  saldo total de Cuentas por Cobrar/Pagar al dia de hoy.
 
 - Formatos 606/607 que pide la DGII (reportes fiscales de compras y
   ventas).
@@ -100,21 +101,55 @@ los checkboxes de producto de la hoja). Faltan estas tres cosas:
   CSV. Sigue pendiente: que el reporte financiero consolidado (siguiente
   punto) lo incluya.
 
-- Reporte financiero mensual/anual consolidado: la hoja "PRINCIPAL" cruza
-  Venta Neta, Cuenta por Cobrar, Gastos y Balance por mes y en total del
-  ano. El Reporte de Factura de Andromeda solo lista facturas de un rango
-  de fechas con su total, sin cruzar con gastos ni cuentas por cobrar.
+- Reporte financiero mensual/anual consolidado: RESUELTO (2026-09-13).
+  Reporte -> Consolidado (frmReporteConsolidado) cruza Venta Neta, Gastos
+  y Balance de un rango de fechas elegido, mas el saldo total de Cuentas
+  por Cobrar y Cuentas por Pagar al dia de hoy (equivalente a la hoja
+  "PRINCIPAL", sin el bloque de prestamo, ver nota mas abajo).
 
-- Historial de inventario (entradas/salidas por fecha, saldo corriente
-  por producto): la hoja "INVENTARIO" lleva un libro de movimientos por
-  producto. Andromeda solo guarda una existencia actual editable a mano
-  en Productos, sin trazabilidad de compras/reabastecimiento ni de cuando
-  salio cada unidad.
+- Historial de inventario: RESUELTO (2026-09-13), junto con Ordenes de
+  Compra y Cuentas por Pagar (ver mas abajo).
 
 NOTA: el bloque de capital invertido, tasa de interes y ganancia sobre un
 prestamo (hoja "PRINCIPAL") es la contabilidad personal del financiamiento
 del negocio, fuera del alcance de un sistema de facturacion; no se agrega
 aqui como pendiente.
+
+
+5) MOVIMIENTOS DE INVENTARIO, ORDENES DE COMPRA Y CUENTAS POR PAGAR
+   (agregado 2026-09-13)
+---------------------------------------------------
+- Movimientos de Inventario (Registro -> Movimientos de Inventario,
+  frmMovimientosInventario, tabla MOVIMIENTOINVENTARIO): historial de
+  entradas/salidas por articulo, reemplaza la hoja "INVENTARIO" de Excel.
+  Cada venta y cada anulacion de factura generan su propio movimiento
+  automaticamente (InventarioService, ya integrado en
+  FacturaService.GuardarFactura/AnularFactura); tambien se pueden
+  registrar movimientos manuales (ajustes, mermas, conteo fisico). La
+  existencia que se muestra siempre es PRODUCTOS.cantidad en vivo, nunca
+  una foto guardada en el historial.
+
+- Ordenes de Compra (Registro -> Ordenes de Compra, frmOrdenCompra,
+  tablas ORDENCOMPRA/DORDENCOMPRA): se arma con proveedor + lineas de
+  articulo/cantidad/costo y se guarda en estado Pendiente; al "Recibir
+  Orden" genera la entrada de inventario de cada linea y el cargo en
+  Cuentas por Pagar por el total. Al recibir se elige como actualizar el
+  costo del articulo: no actualizar, ultimo costo, o promedio ponderado.
+  Una orden ya guardada no se puede editar (solo Recibir o Anular);
+  anularla revierte inventario y cargo si ya estaba Recibida.
+
+- Cuentas por Pagar (menu nuevo "Cuentas por Pagar" -> Proveedores /
+  Cuenta por Pagar): mismo diseño que Cuentas por Cobrar mas Estado de
+  Cuenta cliente, pero para lo que el negocio le debe a sus proveedores
+  (Clases/CuentaProveedor.cs, tablas PROVEEDORES/MUTOPROV/PAGOPROVEEDOR/
+  DETALLEPAGOPROVEEDOR). frmPagoProveedor registra pagos (reutiliza el
+  catalogo TIPOPAGO que ya usan los cobros a clientes) aplicados o no a
+  una orden de compra especifica.
+
+Pendiente real que queda de esta ronda: no hay reporte de "ordenes de
+compra pendientes de recibir" ni de "compras por proveedor en un rango de
+fechas" (solo el saldo total actual en Cuenta por Pagar); si hace falta,
+seria un reporte nuevo, no una correccion de lo ya hecho.
 
 
 NOTA: esta lista es una guia de prioridades, no un plan cerrado. Antes

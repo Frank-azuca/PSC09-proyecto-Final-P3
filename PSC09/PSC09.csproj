@@ -56,9 +56,12 @@
     <Compile Include="Clases\ConvertImage.cs" />
     <Compile Include="Clases\DocumentoPdf.cs" />
     <Compile Include="Clases\CuentaCliente.cs" />
+    <Compile Include="Clases\CuentaProveedor.cs" />
     <Compile Include="Clases\Empresa.cs" />
     <Compile Include="Clases\ExportadorCsv.cs" />
     <Compile Include="Clases\FacturaService.cs" />
+    <Compile Include="Clases\InventarioService.cs" />
+    <Compile Include="Clases\OrdenCompraService.cs" />
     <Compile Include="Clases\Seguridad.cs" />
     <Compile Include="Clases\Tema.cs" />
     <Compile Include="Formularios\frmCambiarComprobante.cs">
@@ -90,6 +93,48 @@
     </Compile>
     <Compile Include="Formularios\frmGastos.Designer.cs">
       <DependentUpon>frmGastos.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmProveedor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmProveedor.Designer.cs">
+      <DependentUpon>frmProveedor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmVENPROV.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmVENPROV.Designer.cs">
+      <DependentUpon>frmVENPROV.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmEstadoCuentaProveedor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmEstadoCuentaProveedor.Designer.cs">
+      <DependentUpon>frmEstadoCuentaProveedor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmPagoProveedor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmPagoProveedor.Designer.cs">
+      <DependentUpon>frmPagoProveedor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmOrdenCompra.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmOrdenCompra.Designer.cs">
+      <DependentUpon>frmOrdenCompra.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmMovimientosInventario.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmMovimientosInventario.Designer.cs">
+      <DependentUpon>frmMovimientosInventario.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmReporteConsolidado.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmReporteConsolidado.Designer.cs">
+      <DependentUpon>frmReporteConsolidado.cs</DependentUpon>
     </Compile>
     <Compile Include="Formularios\frmReporteFactura.cs">
       <SubType>Form</SubType>
@@ -221,6 +266,27 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmGastos.resx">
       <DependentUpon>frmGastos.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmProveedor.resx">
+      <DependentUpon>frmProveedor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmVENPROV.resx">
+      <DependentUpon>frmVENPROV.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmEstadoCuentaProveedor.resx">
+      <DependentUpon>frmEstadoCuentaProveedor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmPagoProveedor.resx">
+      <DependentUpon>frmPagoProveedor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmOrdenCompra.resx">
+      <DependentUpon>frmOrdenCompra.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmMovimientosInventario.resx">
+      <DependentUpon>frmMovimientosInventario.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmReporteConsolidado.resx">
+      <DependentUpon>frmReporteConsolidado.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmReporteFactura.resx">
       <DependentUpon>frmReporteFactura.cs</DependentUpon>

@@ -123,10 +123,7 @@ namespace PSC09
                             cmm.Parameters.AddWithValue("@A9", linea.MontoLineaBruto);
                             cmm.ExecuteNonQuery();
 
-                            SqlCommand cmdStock = new SqlCommand("UPDATE PRODUCTOS SET CANTIDAD = CANTIDAD - @cant WHERE ITEM = @item", cnx, tx);
-                            cmdStock.Parameters.AddWithValue("@cant", linea.Cantidad);
-                            cmdStock.Parameters.AddWithValue("@item", linea.Articulo);
-                            cmdStock.ExecuteNonQuery();
+                            InventarioService.RegistrarMovimiento(cnx, tx, linea.Articulo, fecha, InventarioService.Salida, linea.Cantidad, "Factura", numeroFactura, null);
                         }
 
                         CuentaCliente.RegistrarCargo(cnx, tx, cliente, fecha, numeroFactura, total);
@@ -317,10 +314,7 @@ namespace PSC09
 
                         foreach (Tuple<string, int> linea in lineas)
                         {
-                            SqlCommand cmdStock = new SqlCommand("UPDATE PRODUCTOS SET CANTIDAD = CANTIDAD + @cant WHERE ITEM = @item", cnx, tx);
-                            cmdStock.Parameters.AddWithValue("@cant", linea.Item2);
-                            cmdStock.Parameters.AddWithValue("@item", linea.Item1);
-                            cmdStock.ExecuteNonQuery();
+                            InventarioService.RegistrarMovimiento(cnx, tx, linea.Item1, DateTime.Now, InventarioService.Entrada, linea.Item2, "Anulacion", numFactura, null);
                         }
 
                         SqlCommand cmdDet = new SqlCommand("UPDATE DFACTURA SET ACTIVO = '0' WHERE FACTURA = @factura", cnx, tx);

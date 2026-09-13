@@ -95,13 +95,6 @@ namespace PSC09
             frm.Show();
         }
 
-        private void salirToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            this.Close();
-            frmLogin login = new frmLogin();
-            login.Show();
-        }
-
         private void facturaToolStripMenuItem_Click(object sender, EventArgs e)
         {
             frmFactura factura = new frmFactura();
@@ -114,6 +107,46 @@ namespace PSC09
             this.Close();
 
             frmGastos frm = new frmGastos();
+            frm.Show();
+        }
+
+        private void ordenesCompraToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmOrdenCompra frm = new frmOrdenCompra();
+            frm.Show();
+        }
+
+        private void movimientosInventarioToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmMovimientosInventario frm = new frmMovimientosInventario();
+            frm.Show();
+        }
+
+        private void proveedoresToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmProveedor frm = new frmProveedor();
+            frm.Show();
+        }
+
+        private void cuentaPorPagarToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmEstadoCuentaProveedor frm = new frmEstadoCuentaProveedor();
+            frm.Show();
+        }
+
+        private void consolidadoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmReporteConsolidado frm = new frmReporteConsolidado();
             frm.Show();
         }
 
