@@ -111,11 +111,19 @@ Los formularios de trabajo (todos menos Login/Splash) usan `Anchor` para adaptar
 
 La columna de texto más larga de cada grilla (Descripción, Nombre) usa `AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill` para aprovechar el espacio extra en pantallas grandes.
 
-## 8. Seguridad — deuda técnica conocida
+## 8. Seguridad — estado y deuda técnica
 
-- **Inyección SQL**: la mayoría de las consultas de búsqueda (`BuscarCliente`, `BuscarArticulo`, login, etc.) concatenan strings en vez de usar parámetros. Los `INSERT`/`UPDATE` principales sí usan parámetros (`AddWithValue`). Si se expone esta app a más usuarios o a internet, esto debe corregirse primero.
-- **Contraseñas en texto plano**: se guardan y comparan tal cual en `USUARIO.clave`, sin hash. Aceptable para un sistema interno de un solo local, pero no debe reutilizarse ese patrón si el sistema crece.
-- **Sin `try/catch` en la mayoría de los accesos a datos**: solo el login y el guardado de cliente/factura tienen manejo de errores de conexión. El resto puede lanzar excepciones no controladas si la base de datos no responde.
+Ya resuelto:
+- **Inyección SQL**: se parametrizaron todas las consultas que quedaban concatenadas (`BuscarCliente`/`BuscarArticulo`/`BuscarFactura`/`BuscarDetalle`/`BorrarData` de `frmFactura.cs`; equivalentes en `frmProductos.cs`; las tres pantallas de búsqueda `frmVENCTE`/`frmVENPRO`/`frmVENFACT`; y `Busco.BuscaUltimoNumero()` en `clsBusco.cs`). No queda inyección SQL conocida.
+- **Contraseñas**: `USUARIO.clave` (ahora `NVARCHAR(200)`) guarda un hash PBKDF2 + sal por usuario (`Clases/Seguridad.cs`), no texto plano. Las cuentas con clave vieja se migran solas al hash la primera vez que inician sesión con éxito.
+- **Bug de login corregido**: antes la contraseña se guardaba en una variable de instancia que no se limpiaba entre intentos, permitiendo colarse con la clave de un usuario anterior. Ahora `ValidarCredenciales()` valida usuario y contraseña juntos en un solo paso.
+
+Pendiente:
+- **Sin `try/catch` en la mayoría de los accesos a datos**: solo login, guardado de cliente/factura, anulación de factura y guardado de Comprobantes Fiscales tienen manejo de errores de conexión. El resto (Cliente, Productos, Usuario) puede lanzar excepciones no controladas si la base de datos no responde.
+- **Sin permisos por rol**: cualquier usuario que entra ve y puede hacer todo.
+- **Sin protección contra fuerza bruta**: `Seguridad.VerificarPassword()` compara el hash en tiempo constante, pero no hay bloqueo ni aviso tras varios intentos de login fallidos seguidos.
+
+(Detalle completo del historial de cada corrección en `MANUAL_TECNICO.docx`, sección 9.)
 
 ## 9. Cómo compilar
 
@@ -130,6 +138,9 @@ El ejecutable queda en `PSC09/PSC09/bin/Debug/Andromeda.exe`.
 ## 10. Pendientes / ideas para continuar
 
 - Pantallas de "Puesto de Trabajo" y "Departamento" existen en el menú pero no están conectadas a ningún formulario.
-- La función de "Recibo" (existe una secuencia reservada para ella en `SECUENCIA`, id=3) no está implementada en el proyecto real.
-- Las consultas de "Estado de Cuenta" y "Alfabético de Clientes" (menú Consulta) no tienen formulario asociado todavía.
-- Migrar las consultas concatenadas a parámetros (ver punto 8) cuando haya tiempo.
+- Notas de crédito con su propio comprobante fiscal (no solo anular la factura y devolver el inventario).
+- Formatos 606/607 que pide la DGII, y envío electrónico de comprobantes fiscales.
+- Reportes reales de ventas (el menú "Reporte" existe pero exporta a .csv, no genera reportes).
+- Permisos por rol: el menú existe pero no filtra nada todavía.
+
+(Lista completa y priorizada en `MEJORAS_PENDIENTES.txt` y en `MANUAL_TECNICO.docx`, sección 13.)
