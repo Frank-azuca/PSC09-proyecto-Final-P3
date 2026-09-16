@@ -39,7 +39,10 @@ namespace PSC09
 
         private void GenerarReporte()
         {
-            decimal ventaNeta = SumarEnRango("SELECT FECHA, MONTOFACTURADO FROM HFACTURA WHERE ACTIVO = 1");
+            // MONTOFACTURADOBASE (no MONTOFACTURADO): una factura puede estar en
+            // cualquier moneda, pero el consolidado siempre suma su equivalente en
+            // moneda base, ya calculado al momento de guardarla (ver FacturaService).
+            decimal ventaNeta = SumarEnRango("SELECT FECHA, MONTOFACTURADOBASE FROM HFACTURA WHERE ACTIVO = 1");
             decimal gastos = SumarEnRango("SELECT FECHA, MONTO FROM GASTOS WHERE ACTIVO = 1");
             decimal balance = ventaNeta - gastos;
 
@@ -52,12 +55,16 @@ namespace PSC09
             {
                 cnx.Open();
 
-                SqlCommand cmdCxC = new SqlCommand("SELECT ISNULL(SUM(MONTO), 0) FROM MUTOCTE WHERE ACTIVO = 1", cnx);
+                // MONTOBASE (no MONTO): cuentas por cobrar/pagar pueden tener movimientos
+                // en varias monedas (ver CuentaCliente/CuentaProveedor.ObtenerSaldosPorMoneda
+                // para el desglose por moneda en Estado de Cuenta); aquí el consolidado
+                // siempre es el equivalente total en moneda base.
+                SqlCommand cmdCxC = new SqlCommand("SELECT ISNULL(SUM(MONTOBASE), 0) FROM MUTOCTE WHERE ACTIVO = 1", cnx);
                 decimal cxc = Convert.ToDecimal(cmdCxC.ExecuteScalar());
                 lblCxCValor.Text = DocumentoPdf.FormatoMoneda(cxc);
                 lblCxCValor.ForeColor = cxc > 0 ? Color.Firebrick : Color.SeaGreen;
 
-                SqlCommand cmdCxP = new SqlCommand("SELECT ISNULL(SUM(MONTO), 0) FROM MUTOPROV WHERE ACTIVO = 1", cnx);
+                SqlCommand cmdCxP = new SqlCommand("SELECT ISNULL(SUM(MONTOBASE), 0) FROM MUTOPROV WHERE ACTIVO = 1", cnx);
                 decimal cxp = Convert.ToDecimal(cmdCxP.ExecuteScalar());
                 lblCxPValor.Text = DocumentoPdf.FormatoMoneda(cxp);
                 lblCxPValor.ForeColor = cxp > 0 ? Color.Firebrick : Color.SeaGreen;

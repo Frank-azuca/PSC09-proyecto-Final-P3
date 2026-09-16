@@ -60,6 +60,8 @@
             this.comprobantesFiscalesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.datosEmpresaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tiposPagoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.monedasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.tasasCambioToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.salirToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.cerrarProgramaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -290,7 +292,9 @@
             this.permisoAUsuarioToolStripMenuItem,
             this.comprobantesFiscalesToolStripMenuItem,
             this.datosEmpresaToolStripMenuItem,
-            this.tiposPagoToolStripMenuItem});
+            this.tiposPagoToolStripMenuItem,
+            this.monedasToolStripMenuItem,
+            this.tasasCambioToolStripMenuItem});
             this.configuraciónToolStripMenuItem.Name = "configuraciónToolStripMenuItem";
             this.configuraciónToolStripMenuItem.Size = new System.Drawing.Size(95, 22);
             this.configuraciónToolStripMenuItem.Text = "Configuración";
@@ -327,6 +331,20 @@
             this.tiposPagoToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.tiposPagoToolStripMenuItem.Text = "Tipos de Pago";
             this.tiposPagoToolStripMenuItem.Click += new System.EventHandler(this.tiposPagoToolStripMenuItem_Click);
+            //
+            // monedasToolStripMenuItem
+            //
+            this.monedasToolStripMenuItem.Name = "monedasToolStripMenuItem";
+            this.monedasToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.monedasToolStripMenuItem.Text = "Monedas";
+            this.monedasToolStripMenuItem.Click += new System.EventHandler(this.monedasToolStripMenuItem_Click);
+            //
+            // tasasCambioToolStripMenuItem
+            //
+            this.tasasCambioToolStripMenuItem.Name = "tasasCambioToolStripMenuItem";
+            this.tasasCambioToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.tasasCambioToolStripMenuItem.Text = "Tasas de Cambio";
+            this.tasasCambioToolStripMenuItem.Click += new System.EventHandler(this.tasasCambioToolStripMenuItem_Click);
             //
             // pictureBox1
             //
@@ -417,6 +435,8 @@
         private System.Windows.Forms.ToolStripMenuItem permisoAUsuarioToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem datosEmpresaToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem tiposPagoToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem monedasToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem tasasCambioToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem comprobantesFiscalesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem facturaToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem inventarioToolStripMenuItem;

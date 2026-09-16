@@ -27,12 +27,20 @@ namespace PSC09
         public static readonly Font FuenteTotalValor = new Font(Font.FontFamily.HELVETICA, 13, Font.BOLD, ColorEncabezado);
         public static readonly Font FuentePie = new Font(Font.FontFamily.HELVETICA, 7.5f, Font.ITALIC, BaseColor.GRAY);
 
-        // RD$ 1,234.56 — moneda dominicana, siempre con el mismo formato sin importar
-        // la configuración regional del equipo (InvariantCulture usa punto decimal y
-        // coma de millares, igual que se escribe el peso dominicano).
+        // RD$ 1,234.56 — con el símbolo de la moneda base del negocio (Configuración →
+        // Monedas), siempre con el mismo formato sin importar la configuración regional
+        // del equipo (InvariantCulture usa punto decimal y coma de millares). Se usa
+        // para montos que ya están en moneda base (reportes consolidados, saldos
+        // generales); un documento en otra moneda usa el overload de abajo con su
+        // propio símbolo.
         public static string FormatoMoneda(decimal valor)
         {
-            return "RD$ " + valor.ToString("N2", CultureInfo.InvariantCulture);
+            return FormatoMoneda(valor, MonedaService.ObtenerMonedaBase().Simbolo);
+        }
+
+        public static string FormatoMoneda(decimal valor, string simbolo)
+        {
+            return simbolo + " " + valor.ToString("N2", CultureInfo.InvariantCulture);
         }
 
         // Igual que FormatoMoneda pero sin el prefijo RD$, para las columnas numéricas

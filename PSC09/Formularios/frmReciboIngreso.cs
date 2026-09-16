@@ -68,13 +68,19 @@ namespace PSC09
             FacturaPendiente facturaElegida = cboFactura.SelectedItem as FacturaPendiente;
             string numeroFactura = facturaElegida != null ? facturaElegida.Factura : null;
 
+            // Un pago contra una factura concreta debe quedar en la MISMA moneda de esa
+            // factura (no se puede convertir al cobrar); un abono general (sin factura)
+            // se cobra en la moneda base.
+            Moneda monedaRecibo = facturaElegida != null ? MonedaService.ObtenerPorId(facturaElegida.IdMoneda) : MonedaService.ObtenerMonedaBase();
+            decimal tasaRecibo = facturaElegida != null ? facturaElegida.TasaCambio : 1m;
+
             try
             {
                 LineaPago linea = new LineaPago { IdTipoPago = tipo.Id, NombreTipoPago = tipo.Nombre, Monto = monto };
                 List<LineaPago> lineas = new List<LineaPago> { linea };
 
-                string numeroRecibo = CuentaCliente.RegistrarRecibo(idCliente, DateTime.Now, numeroFactura, lineas, txtNota.Text);
-                string archivo = CuentaCliente.GenerarReciboPdf(numeroRecibo, DateTime.Now, nombreCliente, numeroFactura, lineas, monto, txtNota.Text);
+                string numeroRecibo = CuentaCliente.RegistrarRecibo(idCliente, DateTime.Now, numeroFactura, lineas, txtNota.Text, monedaRecibo.Id, tasaRecibo);
+                string archivo = CuentaCliente.GenerarReciboPdf(numeroRecibo, DateTime.Now, nombreCliente, numeroFactura, lineas, monto, txtNota.Text, monedaRecibo.Simbolo);
 
                 try { FacturaService.ImprimirPdf(archivo); }
                 catch { /* el recibo ya quedo guardado; solo no se pudo mandar a imprimir */ }
@@ -85,7 +91,7 @@ namespace PSC09
                     decimal saldoRestante = CuentaCliente.ObtenerSaldoFactura(facturaElegida.Factura, facturaElegida.Monto);
                     mensaje += saldoRestante <= 0
                         ? "\nLa factura " + facturaElegida.Factura + " quedó saldada."
-                        : "\nA la factura " + facturaElegida.Factura + " todavía le queda pendiente " + DocumentoPdf.FormatoMoneda(saldoRestante) + ".";
+                        : "\nA la factura " + facturaElegida.Factura + " todavía le queda pendiente " + DocumentoPdf.FormatoMoneda(saldoRestante, facturaElegida.SimboloMoneda) + ".";
                 }
                 MessageBox.Show(mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 

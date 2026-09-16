@@ -52,6 +52,10 @@ namespace PSC09
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnRecibirOrden = new System.Windows.Forms.Button();
             this.btnAnularOrden = new System.Windows.Forms.Button();
+            this.lblMoneda = new System.Windows.Forms.Label();
+            this.cboMoneda = new System.Windows.Forms.ComboBox();
+            this.lblTasa = new System.Windows.Forms.Label();
+            this.txtTasa = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.dgv)).BeginInit();
             this.SuspendLayout();
             //
@@ -216,6 +220,45 @@ namespace PSC09
             this.txtNota.Name = "txtNota";
             this.txtNota.Size = new System.Drawing.Size(746, 27);
             this.txtNota.TabIndex = 14;
+            //
+            // lblMoneda
+            //
+            this.lblMoneda.BackColor = PSC09.Tema.LavandaSuave;
+            this.lblMoneda.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.lblMoneda.Location = new System.Drawing.Point(780, 152);
+            this.lblMoneda.Name = "lblMoneda";
+            this.lblMoneda.Size = new System.Drawing.Size(90, 23);
+            this.lblMoneda.TabIndex = 900;
+            this.lblMoneda.Text = "Moneda";
+            //
+            // cboMoneda
+            //
+            this.cboMoneda.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboMoneda.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.cboMoneda.Location = new System.Drawing.Point(780, 176);
+            this.cboMoneda.Name = "cboMoneda";
+            this.cboMoneda.Size = new System.Drawing.Size(110, 27);
+            this.cboMoneda.TabIndex = 901;
+            this.cboMoneda.SelectedIndexChanged += new System.EventHandler(this.cboMoneda_SelectedIndexChanged);
+            //
+            // lblTasa
+            //
+            this.lblTasa.BackColor = PSC09.Tema.LavandaSuave;
+            this.lblTasa.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.lblTasa.Location = new System.Drawing.Point(900, 152);
+            this.lblTasa.Name = "lblTasa";
+            this.lblTasa.Size = new System.Drawing.Size(90, 23);
+            this.lblTasa.TabIndex = 902;
+            this.lblTasa.Text = "Tasa";
+            //
+            // txtTasa
+            //
+            this.txtTasa.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.txtTasa.Location = new System.Drawing.Point(900, 176);
+            this.txtTasa.Name = "txtTasa";
+            this.txtTasa.Size = new System.Drawing.Size(90, 27);
+            this.txtTasa.TabIndex = 903;
+            this.txtTasa.Leave += new System.EventHandler(this.txtTasa_Leave);
             //
             // lblArticuloTitulo
             //
@@ -472,6 +515,10 @@ namespace PSC09
             this.Controls.Add(this.txtArticulo);
             this.Controls.Add(this.lblArticuloTitulo);
             this.Controls.Add(this.txtNota);
+            this.Controls.Add(this.lblMoneda);
+            this.Controls.Add(this.cboMoneda);
+            this.Controls.Add(this.lblTasa);
+            this.Controls.Add(this.txtTasa);
             this.Controls.Add(this.lblNotaTitulo);
             this.Controls.Add(this.lblEstadoValor);
             this.Controls.Add(this.lblEstadoTitulo);
@@ -515,6 +562,10 @@ namespace PSC09
         private System.Windows.Forms.Label lblEstadoValor;
         private System.Windows.Forms.Label lblNotaTitulo;
         private System.Windows.Forms.TextBox txtNota;
+        private System.Windows.Forms.Label lblMoneda;
+        private System.Windows.Forms.ComboBox cboMoneda;
+        private System.Windows.Forms.Label lblTasa;
+        private System.Windows.Forms.TextBox txtTasa;
         private System.Windows.Forms.Label lblArticuloTitulo;
         private System.Windows.Forms.TextBox txtArticulo;
         private System.Windows.Forms.Button btnArticulo;

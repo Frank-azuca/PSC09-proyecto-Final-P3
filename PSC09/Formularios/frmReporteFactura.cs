@@ -51,6 +51,7 @@ namespace PSC09
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colSubtotal", HeaderText = "Subtotal", Width = 100 });
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colImpuesto", HeaderText = "Impuesto", Width = 100 });
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colTotal", HeaderText = "Total", Width = 100 });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colMoneda", HeaderText = "Moneda", Width = 70 });
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colEstado", HeaderText = "Estado", Width = 90 });
 
             dgv.BorderStyle = BorderStyle.None;
@@ -77,8 +78,9 @@ namespace PSC09
             string filtroCliente = txtCliente.Text.Trim();
             string estado = cboEstado.SelectedItem != null ? cboEstado.SelectedItem.ToString() : "Todas";
 
-            string query = " SELECT A.FACTURA, A.FECHA, A.CLIENTE, C.NOMBRE, A.COMPROBANTEFISCAL, A.SUBTOTAL, A.IMPUESTO, A.MONTOFACTURADO, A.ACTIVO " +
+            string query = " SELECT A.FACTURA, A.FECHA, A.CLIENTE, C.NOMBRE, A.COMPROBANTEFISCAL, A.SUBTOTAL, A.IMPUESTO, A.MONTOFACTURADO, A.MONTOFACTURADOBASE, A.ACTIVO, MO.CODIGO " +
                            " FROM HFACTURA A LEFT JOIN CLIENTES C ON A.CLIENTE = C.IDCLIENTE " +
+                           " INNER JOIN MONEDA MO ON A.IDMONEDA = MO.ID " +
                            " WHERE 1 = 1 ";
 
             if (filtroCliente != "") query += " AND A.CLIENTE = @cliente ";
@@ -112,7 +114,10 @@ namespace PSC09
                         }
 
                         bool activa = Convert.ToInt32(rdr["ACTIVO"]) == 1;
-                        decimal total = rdr["MONTOFACTURADO"] == DBNull.Value ? 0 : Convert.ToDecimal(rdr["MONTOFACTURADO"]);
+                        // El gran total se consolida en moneda base (MONTOFACTURADOBASE): sumar
+                        // MONTOFACTURADO directo no tendría sentido con facturas en monedas
+                        // distintas (ver colMoneda, que muestra la moneda real de cada una).
+                        decimal totalBase = rdr["MONTOFACTURADOBASE"] == DBNull.Value ? 0 : Convert.ToDecimal(rdr["MONTOFACTURADOBASE"]);
 
                         int idx = dgv.Rows.Add();
                         DataGridViewRow row = dgv.Rows[idx];
@@ -125,6 +130,7 @@ namespace PSC09
                         row.Cells["colSubtotal"].Value = Convert.ToString(rdr["SUBTOTAL"]);
                         row.Cells["colImpuesto"].Value = Convert.ToString(rdr["IMPUESTO"]);
                         row.Cells["colTotal"].Value = Convert.ToString(rdr["MONTOFACTURADO"]);
+                        row.Cells["colMoneda"].Value = Convert.ToString(rdr["CODIGO"]);
                         row.Cells["colEstado"].Value = activa ? "Activa" : "Anulada";
 
                         if (!activa)
@@ -132,13 +138,13 @@ namespace PSC09
                             row.DefaultCellStyle.ForeColor = Color.Gray;
                         }
 
-                        totalGeneral += total;
+                        totalGeneral += totalBase;
                         cantidad++;
                     }
                 }
             }
 
-            lblResumen.Text = cantidad + " factura(s) — Total: " + Math.Round(totalGeneral, 2);
+            lblResumen.Text = cantidad + " factura(s) — Total (equivalente en " + MonedaService.ObtenerMonedaBase().Codigo + "): " + Math.Round(totalGeneral, 2);
         }
 
         private void btnAnular_Click(object sender, EventArgs e)

@@ -48,6 +48,20 @@ namespace PSC09
             get { return cboTipoComprobante.SelectedItem as TipoComprobante; }
         }
 
+        private Moneda MonedaSeleccionada
+        {
+            get { return cboMoneda.SelectedItem as Moneda; }
+        }
+
+        private decimal TasaSeleccionada
+        {
+            get
+            {
+                decimal tasa;
+                return decimal.TryParse(txtTasa.Text, out tasa) && tasa > 0 ? tasa : 1m;
+            }
+        }
+
         public frmPuntoVenta()
         {
             InitializeComponent();
@@ -60,6 +74,7 @@ namespace PSC09
 
             EstiloDataGridView();
             CargarTiposComprobante();
+            CargarMonedas();
             CargarClientePorDefecto();
 
             cboTipoVenta.SelectedIndex = 0;
@@ -147,6 +162,61 @@ namespace PSC09
                 : "";
         }
 
+        private void CargarMonedas()
+        {
+            cboMoneda.DisplayMember = "ToString";
+            cboMoneda.DataSource = MonedaService.ObtenerMonedas(soloActivas: true);
+            SeleccionarMonedaBase();
+        }
+
+        private void SeleccionarMonedaBase()
+        {
+            foreach (Moneda moneda in cboMoneda.Items)
+            {
+                if (moneda.EsBase)
+                {
+                    cboMoneda.SelectedItem = moneda;
+                    return;
+                }
+            }
+        }
+
+        // Igual criterio que frmFactura.cboMoneda_SelectedIndexChanged: sugiere la tasa
+        // vigente hoy pero el cajero puede corregirla antes de cobrar.
+        private void cboMoneda_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            Moneda moneda = MonedaSeleccionada;
+            if (moneda == null) return;
+
+            if (moneda.EsBase)
+            {
+                txtTasa.Text = "1";
+                txtTasa.ReadOnly = true;
+            }
+            else
+            {
+                txtTasa.ReadOnly = false;
+                try
+                {
+                    txtTasa.Text = TasaCambioService.ObtenerTasaVigente(moneda.Id, DateTime.Now).ToString("0.####");
+                }
+                catch (Exception error)
+                {
+                    txtTasa.Clear();
+                    MessageBox.Show(error.Message, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+        }
+
+        private void txtTasa_Leave(object sender, EventArgs e)
+        {
+            decimal tasa;
+            if (!decimal.TryParse(txtTasa.Text, out tasa) || tasa <= 0)
+            {
+                MessageBox.Show("La tasa debe ser un número mayor a cero.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
         private void CargarClientePorDefecto()
         {
             using (SqlConnection cnx = new SqlConnection(cnn.db))
@@ -223,11 +293,13 @@ namespace PSC09
 
         private ProductoInfo BuscarProducto(string codigo)
         {
+            string item = null;
+
             using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
                 cnx.Open();
                 SqlCommand cmd = new SqlCommand(
-                    " SELECT ITEM, DESCRIPCION, PRECIOVENTA, IMPUESTO, TIENEIMPUESTO FROM PRODUCTOS " +
+                    " SELECT ITEM, DESCRIPCION, IMPUESTO, TIENEIMPUESTO FROM PRODUCTOS " +
                     " WHERE (BARCODE = @codigo OR ITEM = @codigo) AND ESTATUSPRODUCTO = 1 ", cnx);
                 cmd.Parameters.AddWithValue("@codigo", codigo);
 
@@ -235,11 +307,17 @@ namespace PSC09
                 {
                     if (rdr.Read())
                     {
+                        item = Convert.ToString(rdr["ITEM"]);
                         return new ProductoInfo
                         {
-                            Item = Convert.ToString(rdr["ITEM"]),
+                            Item = item,
                             Descripcion = Convert.ToString(rdr["DESCRIPCION"]),
-                            PrecioVenta = Convert.ToDecimal(rdr["PRECIOVENTA"]),
+                            // El precio se resuelve aparte (depende de la moneda elegida, ver
+                            // PrecioProductoService); el impuesto es una tasa %, igual en
+                            // cualquier moneda.
+                            PrecioVenta = MonedaSeleccionada != null
+                                ? PrecioProductoService.ResolverPrecioVenta(item, MonedaSeleccionada.Id, TasaSeleccionada)
+                                : 0,
                             TasaImpuesto = rdr["IMPUESTO"] == DBNull.Value ? 0 : Convert.ToDecimal(rdr["IMPUESTO"]),
                             ImpuestoIncluido = rdr["TIENEIMPUESTO"] != DBNull.Value && Convert.ToInt32(rdr["TIENEIMPUESTO"]) == 1
                         };
@@ -510,6 +588,7 @@ namespace PSC09
             txtCodigo.Clear();
             txtCantidadRapida.Text = "1";
             cboTipoVenta.SelectedIndex = 0;
+            SeleccionarMonedaBase();
 
             // Vuelve al cliente por defecto para la siguiente venta: no tendría sentido
             // que el próximo cliente de mostrador quedara facturado con el nombre o el
@@ -785,6 +864,12 @@ namespace PSC09
                 return;
             }
 
+            if (MonedaSeleccionada == null || TasaSeleccionada <= 0)
+            {
+                MessageBox.Show("Selecciona una moneda y una tasa válida antes de cobrar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             try
             {
                 List<LineaFactura> lineas = dgv.Rows.Cast<DataGridViewRow>().Select(f => (LineaFactura)f.Tag).ToList();
@@ -805,7 +890,9 @@ namespace PSC09
                     total,
                     zDescuento,
                     descuentoValor,
-                    descuentoEsPorcentaje);
+                    descuentoEsPorcentaje,
+                    MonedaSeleccionada.Id,
+                    TasaSeleccionada);
 
                 string archivo = FacturaService.GenerarPdf(
                     numeroFactura,
@@ -817,7 +904,8 @@ namespace PSC09
                     subtotal,
                     impuesto,
                     total,
-                    zDescuento);
+                    zDescuento,
+                    MonedaSeleccionada.Simbolo);
 
                 string mensaje = "Factura " + numeroFactura + " guardada. Total: " + total.ToString("0.00");
                 if (hayRecibido) mensaje += "\nCambio: " + (recibido - total).ToString("0.00");
@@ -837,7 +925,7 @@ namespace PSC09
                     // Venta de contado: primero se cobra con una o varias formas de pago
                     // (frmCobro, que genera e imprime su propio recibo); la factura sólo
                     // se manda a imprimir después de que el cobro se confirma, no antes.
-                    using (frmCobro frmCobrar = new frmCobro(clienteIdActual.Value, txtNombreCliente.Text, numeroFactura, total))
+                    using (frmCobro frmCobrar = new frmCobro(clienteIdActual.Value, txtNombreCliente.Text, numeroFactura, total, MonedaSeleccionada.Id, TasaSeleccionada, MonedaSeleccionada.Simbolo))
                     {
                         if (frmCobrar.ShowDialog(this) == DialogResult.OK)
                         {

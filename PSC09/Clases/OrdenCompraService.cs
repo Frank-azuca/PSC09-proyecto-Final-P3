@@ -30,8 +30,10 @@ namespace PSC09
 
         // Inserta la orden en estado Pendiente (todavía no toca inventario ni Cuentas
         // por Pagar; eso ocurre recién al RecibirOrden). Si numero viene vacío, asigna
-        // uno nuevo aquí mismo. Devuelve el número usado.
-        public static string GuardarOrden(string numero, DateTime fecha, int idProveedor, string nota, List<LineaOrdenCompra> lineas)
+        // uno nuevo aquí mismo. Devuelve el número usado. idMoneda/tasaCambio son la
+        // moneda de la orden (CostoUnitario de cada línea ya está expresado en ella) y
+        // la tasa aplicada ese día.
+        public static string GuardarOrden(string numero, DateTime fecha, int idProveedor, string nota, List<LineaOrdenCompra> lineas, int idMoneda, decimal tasaCambio)
         {
             if (lineas == null || lineas.Count == 0)
             {
@@ -52,13 +54,15 @@ namespace PSC09
                     try
                     {
                         SqlCommand cmd = new SqlCommand(
-                            " INSERT INTO ORDENCOMPRA (NUMERO, FECHA, IDPROVEEDOR, ESTADO, NOTA, ACTIVO) " +
-                            " VALUES (@numero, @fecha, @idProveedor, @estado, @nota, 1) ", cnx, tx);
+                            " INSERT INTO ORDENCOMPRA (NUMERO, FECHA, IDPROVEEDOR, ESTADO, NOTA, ACTIVO, IDMONEDA, TASACAMBIO) " +
+                            " VALUES (@numero, @fecha, @idProveedor, @estado, @nota, 1, @idMoneda, @tasaCambio) ", cnx, tx);
                         cmd.Parameters.AddWithValue("@numero", numero);
                         cmd.Parameters.AddWithValue("@fecha", fecha.ToString("dd/MM/yyyy"));
                         cmd.Parameters.AddWithValue("@idProveedor", idProveedor);
                         cmd.Parameters.AddWithValue("@estado", EstadoPendiente);
                         cmd.Parameters.AddWithValue("@nota", (object)nota ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@idMoneda", idMoneda);
+                        cmd.Parameters.AddWithValue("@tasaCambio", tasaCambio);
                         cmd.ExecuteNonQuery();
 
                         SqlCommand cmdSec = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 4", cnx, tx);
@@ -68,14 +72,25 @@ namespace PSC09
                         foreach (LineaOrdenCompra linea in lineas)
                         {
                             SqlCommand cmdDet = new SqlCommand(
-                                " INSERT INTO DORDENCOMPRA (ORDENCOMPRA, ARTICULO, CANTIDAD, COSTOUNITARIO, ACTIVO) " +
-                                " VALUES (@orden, @articulo, @cantidad, @costo, 1) ", cnx, tx);
+                                " INSERT INTO DORDENCOMPRA (ORDENCOMPRA, ARTICULO, CANTIDAD, COSTOUNITARIO, ACTIVO, IDMONEDA) " +
+                                " VALUES (@orden, @articulo, @cantidad, @costo, 1, @idMoneda) ", cnx, tx);
                             cmdDet.Parameters.AddWithValue("@orden", numero);
                             cmdDet.Parameters.AddWithValue("@articulo", linea.Articulo);
                             cmdDet.Parameters.AddWithValue("@cantidad", linea.Cantidad);
                             cmdDet.Parameters.AddWithValue("@costo", linea.CostoUnitario);
+                            cmdDet.Parameters.AddWithValue("@idMoneda", idMoneda);
                             cmdDet.ExecuteNonQuery();
                         }
+
+                        decimal totalOrdenNueva = 0;
+                        foreach (LineaOrdenCompra linea in lineas)
+                        {
+                            totalOrdenNueva += linea.Cantidad * linea.CostoUnitario;
+                        }
+                        SqlCommand cmdTotal = new SqlCommand("UPDATE ORDENCOMPRA SET TOTALBASE = @totalBase WHERE NUMERO = @numero", cnx, tx);
+                        cmdTotal.Parameters.AddWithValue("@totalBase", Math.Round(totalOrdenNueva * tasaCambio, 2));
+                        cmdTotal.Parameters.AddWithValue("@numero", numero);
+                        cmdTotal.ExecuteNonQuery();
 
                         tx.Commit();
                     }
@@ -108,9 +123,11 @@ namespace PSC09
                         int idProveedor;
                         DateTime fecha;
                         string estadoActual;
+                        int idMoneda;
+                        decimal tasaCambio;
 
                         SqlCommand cmdOrden = new SqlCommand(
-                            "SELECT IDPROVEEDOR, FECHA, ESTADO FROM ORDENCOMPRA WHERE NUMERO = @numero AND ACTIVO = 1", cnx, tx);
+                            "SELECT IDPROVEEDOR, FECHA, ESTADO, IDMONEDA, TASACAMBIO FROM ORDENCOMPRA WHERE NUMERO = @numero AND ACTIVO = 1", cnx, tx);
                         cmdOrden.Parameters.AddWithValue("@numero", numeroOrden);
                         using (SqlDataReader rdr = cmdOrden.ExecuteReader())
                         {
@@ -121,6 +138,8 @@ namespace PSC09
                             idProveedor = Convert.ToInt32(rdr["IDPROVEEDOR"]);
                             fecha = DateTime.ParseExact(Convert.ToString(rdr["FECHA"]), "dd/MM/yyyy", null);
                             estadoActual = Convert.ToString(rdr["ESTADO"]);
+                            idMoneda = Convert.ToInt32(rdr["IDMONEDA"]);
+                            tasaCambio = Convert.ToDecimal(rdr["TASACAMBIO"]);
                         }
 
                         if (estadoActual != EstadoPendiente)
@@ -166,17 +185,22 @@ namespace PSC09
 
                             InventarioService.RegistrarMovimiento(cnx, tx, linea.Articulo, fecha, InventarioService.Entrada, linea.Cantidad, "OrdenCompra", numeroOrden, null);
 
+                            // PRODUCTOS.COSTO siempre está en moneda base (igual que
+                            // PRODUCTOS.precioVenta): el costo unitario de la línea, expresado
+                            // en la moneda de la orden, se convierte antes de costear.
+                            decimal costoUnitarioBase = Math.Round(linea.CostoUnitario * tasaCambio, 2);
+
                             decimal? nuevoCosto = null;
                             if (metodoCosteo == CosteoUltimoCosto)
                             {
-                                nuevoCosto = linea.CostoUnitario;
+                                nuevoCosto = costoUnitarioBase;
                             }
                             else if (metodoCosteo == CosteoPromedioPonderado)
                             {
                                 decimal cantidadTotal = cantidadPrevia + linea.Cantidad;
                                 nuevoCosto = cantidadTotal > 0
-                                    ? Math.Round((cantidadPrevia * costoPrevio + linea.Cantidad * linea.CostoUnitario) / cantidadTotal, 2)
-                                    : linea.CostoUnitario;
+                                    ? Math.Round((cantidadPrevia * costoPrevio + linea.Cantidad * costoUnitarioBase) / cantidadTotal, 2)
+                                    : costoUnitarioBase;
                             }
 
                             if (nuevoCosto.HasValue)
@@ -195,7 +219,7 @@ namespace PSC09
                         cmdEstado.Parameters.AddWithValue("@numero", numeroOrden);
                         cmdEstado.ExecuteNonQuery();
 
-                        CuentaProveedor.RegistrarCargo(cnx, tx, idProveedor, fecha, numeroOrden, totalOrden);
+                        CuentaProveedor.RegistrarCargo(cnx, tx, idProveedor, fecha, numeroOrden, totalOrden, idMoneda, tasaCambio);
 
                         tx.Commit();
                     }

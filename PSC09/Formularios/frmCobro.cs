@@ -17,9 +17,14 @@ namespace PSC09
         private readonly string nombreCliente;
         private readonly string numeroFactura;
         private readonly decimal totalAPagar;
+        private readonly int idMoneda;
+        private readonly decimal tasaCambio;
+        private readonly string simboloMoneda;
         private readonly List<TipoPago> tiposPago;
 
-        public frmCobro(int idCliente, string nombreCliente, string numeroFactura, decimal totalAPagar)
+        // idMoneda/tasaCambio/simboloMoneda son los de la factura que se está cobrando
+        // (el cobro siempre queda en esa misma moneda, ver CuentaCliente.RegistrarRecibo).
+        public frmCobro(int idCliente, string nombreCliente, string numeroFactura, decimal totalAPagar, int idMoneda, decimal tasaCambio, string simboloMoneda)
         {
             InitializeComponent();
 
@@ -27,6 +32,9 @@ namespace PSC09
             this.nombreCliente = nombreCliente;
             this.numeroFactura = numeroFactura;
             this.totalAPagar = totalAPagar;
+            this.idMoneda = idMoneda;
+            this.tasaCambio = tasaCambio;
+            this.simboloMoneda = simboloMoneda;
             this.tiposPago = CuentaCliente.ObtenerTiposPago();
 
             lblCliente.Text = "Cliente: " + nombreCliente;
@@ -169,8 +177,8 @@ namespace PSC09
 
             try
             {
-                string numeroRecibo = CuentaCliente.RegistrarRecibo(idCliente, DateTime.Now, numeroFactura, lineas, "Venta de contado - Factura " + numeroFactura);
-                string archivo = CuentaCliente.GenerarReciboPdf(numeroRecibo, DateTime.Now, nombreCliente, numeroFactura, lineas, totalAPagar, "Venta de contado - Factura " + numeroFactura);
+                string numeroRecibo = CuentaCliente.RegistrarRecibo(idCliente, DateTime.Now, numeroFactura, lineas, "Venta de contado - Factura " + numeroFactura, idMoneda, tasaCambio);
+                string archivo = CuentaCliente.GenerarReciboPdf(numeroRecibo, DateTime.Now, nombreCliente, numeroFactura, lineas, totalAPagar, "Venta de contado - Factura " + numeroFactura, simboloMoneda);
 
                 try { FacturaService.ImprimirPdf(archivo); }
                 catch { /* la venta y el cobro ya quedaron guardados; solo no se pudo mandar a imprimir */ }

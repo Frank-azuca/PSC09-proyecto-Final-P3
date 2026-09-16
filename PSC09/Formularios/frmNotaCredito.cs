@@ -350,7 +350,7 @@ namespace PSC09
                 DateTime fecha;
                 DateTime.TryParseExact(info.Fecha, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out fecha);
 
-                string archivo = NotaCreditoService.GenerarPdf(numero, fecha, info.ComprobanteFiscal, info.Factura, info.NombreCliente, lineas, info.Subtotal, info.Impuesto, info.Monto, info.Motivo);
+                string archivo = NotaCreditoService.GenerarPdf(numero, fecha, info.ComprobanteFiscal, info.Factura, info.NombreCliente, lineas, info.Subtotal, info.Impuesto, info.Monto, info.Motivo, info.SimboloMoneda);
 
                 try { FacturaService.ImprimirPdf(archivo); }
                 catch { /* la nota ya quedó guardada; sólo no se pudo mandar a imprimir */ }

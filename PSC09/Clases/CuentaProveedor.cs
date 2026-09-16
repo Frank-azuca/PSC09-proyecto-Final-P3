@@ -25,6 +25,13 @@ namespace PSC09
         // Sólo para cargos: cuánto queda pendiente de ESA orden en particular (no el
         // saldo general del proveedor). <= 0 significa que ya quedó saldada.
         public decimal SaldoDocumento;
+
+        // Moneda en la que está expresado Monto/SaldoDespues/SaldoDocumento (un
+        // proveedor puede tener movimientos en más de una moneda, ver
+        // CuentaProveedor.ObtenerSaldosPorMoneda).
+        public int IdMoneda;
+        public string CodigoMoneda;
+        public string SimboloMoneda;
     }
 
     // Una orden de compra con saldo pendiente de un proveedor, para elegir a cuál
@@ -36,9 +43,15 @@ namespace PSC09
         public decimal Monto;
         public decimal Saldo;
 
+        // Un pago contra esta orden debe registrarse en la MISMA moneda (ver
+        // CuentaProveedor.RegistrarPago): un pago no puede convertir monedas.
+        public int IdMoneda;
+        public decimal TasaCambio;
+        public string SimboloMoneda;
+
         public override string ToString()
         {
-            return "Orden " + Orden + " (" + Fecha + ") — Pendiente: " + DocumentoPdf.FormatoMoneda(Saldo);
+            return "Orden " + Orden + " (" + Fecha + ") — Pendiente: " + DocumentoPdf.FormatoMoneda(Saldo, SimboloMoneda);
         }
     }
 
@@ -53,10 +66,11 @@ namespace PSC09
         public const int OrigenAbono = 2;
 
         // Se llama dentro de la misma transacción de OrdenCompraService.RecibirOrden():
-        // si la orden no se recibe, el cargo tampoco queda.
-        public static void RegistrarCargo(SqlConnection cnx, SqlTransaction tx, int idProveedor, DateTime fecha, string documento, decimal monto)
+        // si la orden no se recibe, el cargo tampoco queda. idMoneda/tasaCambio son la
+        // moneda de la orden (monto ya está expresado en ella) y la tasa aplicada.
+        public static void RegistrarCargo(SqlConnection cnx, SqlTransaction tx, int idProveedor, DateTime fecha, string documento, decimal monto, int idMoneda, decimal tasaCambio)
         {
-            RegistrarMovimiento(cnx, tx, idProveedor, fecha, OrigenCargo, documento, monto);
+            RegistrarMovimiento(cnx, tx, idProveedor, fecha, OrigenCargo, documento, monto, idMoneda, tasaCambio);
         }
 
         // Se llama dentro de la misma transacción de OrdenCompraService.AnularOrden():
@@ -74,7 +88,10 @@ namespace PSC09
         // forma de pago (mismo catálogo TIPOPAGO que usan los cobros a clientes).
         // ordenCompra liga el pago a una orden concreta pendiente; null = abono
         // general, sin orden específica. Devuelve el número de pago asignado.
-        public static string RegistrarPago(int idProveedor, DateTime fecha, string ordenCompra, List<LineaPago> lineas, string nota)
+        // idMoneda/tasaCambio son la moneda en la que se paga: cuando hay orden, debe
+        // ser la MISMA moneda de esa orden (un pago no puede convertir monedas); un
+        // abono general puede elegir cualquiera.
+        public static string RegistrarPago(int idProveedor, DateTime fecha, string ordenCompra, List<LineaPago> lineas, string nota, int idMoneda, decimal tasaCambio)
         {
             if (lineas == null || lineas.Count == 0)
             {
@@ -102,13 +119,15 @@ namespace PSC09
                     try
                     {
                         SqlCommand cmd = new SqlCommand(
-                            " INSERT INTO PAGOPROVEEDOR (PAGO, IDPROVEEDOR, FECHA, ORDENCOMPRA, NOTA, ACTIVO) " +
-                            " VALUES (@pago, @idProveedor, @fecha, @orden, @nota, 1) ", cnx, tx);
+                            " INSERT INTO PAGOPROVEEDOR (PAGO, IDPROVEEDOR, FECHA, ORDENCOMPRA, NOTA, ACTIVO, IDMONEDA, TASACAMBIO) " +
+                            " VALUES (@pago, @idProveedor, @fecha, @orden, @nota, 1, @idMoneda, @tasaCambio) ", cnx, tx);
                         cmd.Parameters.AddWithValue("@pago", numeroPago);
                         cmd.Parameters.AddWithValue("@idProveedor", idProveedor);
                         cmd.Parameters.AddWithValue("@fecha", fecha.ToString("dd/MM/yyyy"));
                         cmd.Parameters.AddWithValue("@orden", (object)ordenCompra ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@nota", (object)nota ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@idMoneda", idMoneda);
+                        cmd.Parameters.AddWithValue("@tasaCambio", tasaCambio);
                         cmd.ExecuteNonQuery();
 
                         SqlCommand cmdSec = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 5", cnx, tx);
@@ -125,7 +144,7 @@ namespace PSC09
                             cmdDet.ExecuteNonQuery();
                         }
 
-                        RegistrarMovimiento(cnx, tx, idProveedor, fecha, OrigenAbono, numeroPago, -total);
+                        RegistrarMovimiento(cnx, tx, idProveedor, fecha, OrigenAbono, numeroPago, -total, idMoneda, tasaCambio);
 
                         tx.Commit();
                     }
@@ -142,7 +161,7 @@ namespace PSC09
 
         // Genera el PDF del pago en Pagos\PagoProveedor_<numero>.pdf y devuelve la
         // ruta. Mismo diseño que CuentaCliente.GenerarReciboPdf.
-        public static string GenerarPagoPdf(string numeroPago, DateTime fecha, string proveedorNombre, string ordenAplicada, List<LineaPago> lineas, decimal total, string nota)
+        public static string GenerarPagoPdf(string numeroPago, DateTime fecha, string proveedorNombre, string ordenAplicada, List<LineaPago> lineas, decimal total, string nota, string simboloMoneda)
         {
             DatosEmpresa empresa = Empresa.ObtenerDatos();
 
@@ -188,7 +207,7 @@ namespace PSC09
 
             PdfPTable tablaTotales = DocumentoPdf.TablaTotales();
             tablaTotales.SpacingBefore = 12;
-            DocumentoPdf.AgregarTotal(tablaTotales, "TOTAL PAGADO:", DocumentoPdf.FormatoMoneda(total), true);
+            DocumentoPdf.AgregarTotal(tablaTotales, "TOTAL PAGADO:", DocumentoPdf.FormatoMoneda(total, simboloMoneda), true);
             doc.Add(tablaTotales);
 
             if (!string.IsNullOrWhiteSpace(nota))
@@ -207,37 +226,77 @@ namespace PSC09
             return archivo;
         }
 
-        private static void RegistrarMovimiento(SqlConnection cnx, SqlTransaction tx, int idProveedor, DateTime fecha, int origen, string documento, decimal monto)
+        // El saldo corrido (BCPENDIENTE) se lleva POR MONEDA, mismo criterio que
+        // CuentaCliente.RegistrarMovimiento.
+        private static void RegistrarMovimiento(SqlConnection cnx, SqlTransaction tx, int idProveedor, DateTime fecha, int origen, string documento, decimal monto, int idMoneda, decimal tasaCambio)
         {
             SqlCommand cmdSaldo = new SqlCommand(
-                "SELECT ISNULL(SUM(MONTO), 0) FROM MUTOPROV WHERE IDPROVEEDOR = @id AND ACTIVO = 1", cnx, tx);
+                "SELECT ISNULL(SUM(MONTO), 0) FROM MUTOPROV WHERE IDPROVEEDOR = @id AND IDMONEDA = @idMoneda AND ACTIVO = 1", cnx, tx);
             cmdSaldo.Parameters.AddWithValue("@id", idProveedor);
+            cmdSaldo.Parameters.AddWithValue("@idMoneda", idMoneda);
             decimal saldoAnterior = Convert.ToDecimal(cmdSaldo.ExecuteScalar());
             decimal saldoNuevo = saldoAnterior + monto;
 
             SqlCommand cmd = new SqlCommand(
-                " INSERT INTO MUTOPROV (IDPROVEEDOR, FECHA, ORIGEN, DOCUMENTO, MONTO, BCPENDIENTE, ACTIVO) " +
-                " VALUES (@idProveedor, @fecha, @origen, @documento, @monto, @saldo, 1) ", cnx, tx);
+                " INSERT INTO MUTOPROV (IDPROVEEDOR, FECHA, ORIGEN, DOCUMENTO, MONTO, BCPENDIENTE, ACTIVO, IDMONEDA, MONTOBASE) " +
+                " VALUES (@idProveedor, @fecha, @origen, @documento, @monto, @saldo, 1, @idMoneda, @montoBase) ", cnx, tx);
             cmd.Parameters.AddWithValue("@idProveedor", idProveedor);
             cmd.Parameters.AddWithValue("@fecha", fecha.ToString("dd/MM/yyyy"));
             cmd.Parameters.AddWithValue("@origen", origen);
             cmd.Parameters.AddWithValue("@documento", (object)documento ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@monto", monto);
             cmd.Parameters.AddWithValue("@saldo", saldoNuevo);
+            cmd.Parameters.AddWithValue("@idMoneda", idMoneda);
+            cmd.Parameters.AddWithValue("@montoBase", Math.Round(monto * tasaCambio, 2));
             cmd.ExecuteNonQuery();
         }
 
-        // Saldo pendiente real del proveedor, recalculado en vivo.
-        public static decimal ObtenerSaldoPendiente(int idProveedor)
+        // Saldo pendiente real del proveedor en UNA moneda, recalculado en vivo.
+        public static decimal ObtenerSaldoPendiente(int idProveedor, int idMoneda)
         {
             using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
                 cnx.Open();
                 SqlCommand cmd = new SqlCommand(
-                    "SELECT ISNULL(SUM(MONTO), 0) FROM MUTOPROV WHERE IDPROVEEDOR = @id AND ACTIVO = 1", cnx);
+                    "SELECT ISNULL(SUM(MONTO), 0) FROM MUTOPROV WHERE IDPROVEEDOR = @id AND IDMONEDA = @idMoneda AND ACTIVO = 1", cnx);
                 cmd.Parameters.AddWithValue("@id", idProveedor);
+                cmd.Parameters.AddWithValue("@idMoneda", idMoneda);
                 return Convert.ToDecimal(cmd.ExecuteScalar());
             }
+        }
+
+        // Saldos pendientes de un proveedor desglosados por moneda, mismo criterio que
+        // CuentaCliente.ObtenerSaldosPorMoneda.
+        public static List<SaldoPorMoneda> ObtenerSaldosPorMoneda(int idProveedor)
+        {
+            List<SaldoPorMoneda> lista = new List<SaldoPorMoneda>();
+
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand(
+                    " SELECT M.IDMONEDA, MO.CODIGO, MO.SIMBOLO, SUM(M.MONTO) AS SALDO " +
+                    " FROM MUTOPROV M INNER JOIN MONEDA MO ON M.IDMONEDA = MO.ID " +
+                    " WHERE M.IDPROVEEDOR = @id AND M.ACTIVO = 1 " +
+                    " GROUP BY M.IDMONEDA, MO.CODIGO, MO.SIMBOLO ", cnx);
+                cmd.Parameters.AddWithValue("@id", idProveedor);
+
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        lista.Add(new SaldoPorMoneda
+                        {
+                            IdMoneda = Convert.ToInt32(rdr["IDMONEDA"]),
+                            CodigoMoneda = Convert.ToString(rdr["CODIGO"]),
+                            SimboloMoneda = Convert.ToString(rdr["SIMBOLO"]),
+                            Saldo = Convert.ToDecimal(rdr["SALDO"])
+                        });
+                    }
+                }
+            }
+
+            return lista;
         }
 
         public static List<MovimientoCuentaProveedor> ObtenerMovimientos(int idProveedor)
@@ -248,8 +307,8 @@ namespace PSC09
             {
                 cnx.Open();
                 SqlCommand cmd = new SqlCommand(
-                    " SELECT M.FECHA, M.ORIGEN, M.DOCUMENTO, M.MONTO, M.BCPENDIENTE, P.ORDENCOMPRA AS ORDENAPLICADA " +
-                    " FROM MUTOPROV M " +
+                    " SELECT M.FECHA, M.ORIGEN, M.DOCUMENTO, M.MONTO, M.BCPENDIENTE, M.IDMONEDA, MO.CODIGO, MO.SIMBOLO, P.ORDENCOMPRA AS ORDENAPLICADA " +
+                    " FROM MUTOPROV M INNER JOIN MONEDA MO ON M.IDMONEDA = MO.ID " +
                     " LEFT JOIN PAGOPROVEEDOR P ON M.ORIGEN = @origenAbono AND M.DOCUMENTO = P.PAGO " +
                     " WHERE M.IDPROVEEDOR = @id AND M.ACTIVO = 1 ORDER BY M.ID ", cnx);
                 cmd.Parameters.AddWithValue("@id", idProveedor);
@@ -266,7 +325,10 @@ namespace PSC09
                             Monto = Convert.ToDecimal(rdr["MONTO"]),
                             SaldoDespues = rdr["BCPENDIENTE"] == DBNull.Value ? 0 : Convert.ToDecimal(rdr["BCPENDIENTE"]),
                             EsAbono = Convert.ToInt32(rdr["ORIGEN"]) == OrigenAbono,
-                            OrdenAplicada = rdr["ORDENAPLICADA"] == DBNull.Value ? "" : Convert.ToString(rdr["ORDENAPLICADA"])
+                            OrdenAplicada = rdr["ORDENAPLICADA"] == DBNull.Value ? "" : Convert.ToString(rdr["ORDENAPLICADA"]),
+                            IdMoneda = Convert.ToInt32(rdr["IDMONEDA"]),
+                            CodigoMoneda = Convert.ToString(rdr["CODIGO"]),
+                            SimboloMoneda = Convert.ToString(rdr["SIMBOLO"])
                         });
                     }
                 }
@@ -306,38 +368,45 @@ namespace PSC09
         // para que frmPagoProveedor pueda elegir a cuál aplicar un pago.
         public static List<OrdenPendiente> ObtenerOrdenesPendientes(int idProveedor)
         {
-            List<Tuple<string, string, decimal>> ordenes = new List<Tuple<string, string, decimal>>();
+            List<OrdenPendiente> ordenes = new List<OrdenPendiente>();
 
             using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
                 cnx.Open();
                 SqlCommand cmd = new SqlCommand(
-                    " SELECT O.NUMERO, O.FECHA, ISNULL(SUM(D.CANTIDAD * D.COSTOUNITARIO), 0) AS MONTO " +
+                    " SELECT O.NUMERO, O.FECHA, O.IDMONEDA, O.TASACAMBIO, MO.SIMBOLO, ISNULL(SUM(D.CANTIDAD * D.COSTOUNITARIO), 0) AS MONTO " +
                     " FROM ORDENCOMPRA O " +
                     " INNER JOIN DORDENCOMPRA D ON O.NUMERO = D.ORDENCOMPRA " +
+                    " INNER JOIN MONEDA MO ON O.IDMONEDA = MO.ID " +
                     " WHERE O.IDPROVEEDOR = @id AND O.ACTIVO = 1 AND O.ESTADO = 'Recibida' " +
-                    " GROUP BY O.NUMERO, O.FECHA ORDER BY O.NUMERO ", cnx);
+                    " GROUP BY O.NUMERO, O.FECHA, O.IDMONEDA, O.TASACAMBIO, MO.SIMBOLO ORDER BY O.NUMERO ", cnx);
                 cmd.Parameters.AddWithValue("@id", idProveedor);
 
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
                     while (rdr.Read())
                     {
-                        ordenes.Add(Tuple.Create(
-                            Convert.ToString(rdr["NUMERO"]),
-                            Convert.ToString(rdr["FECHA"]),
-                            Convert.ToDecimal(rdr["MONTO"])));
+                        ordenes.Add(new OrdenPendiente
+                        {
+                            Orden = Convert.ToString(rdr["NUMERO"]),
+                            Fecha = Convert.ToString(rdr["FECHA"]),
+                            Monto = Convert.ToDecimal(rdr["MONTO"]),
+                            IdMoneda = Convert.ToInt32(rdr["IDMONEDA"]),
+                            TasaCambio = Convert.ToDecimal(rdr["TASACAMBIO"]),
+                            SimboloMoneda = Convert.ToString(rdr["SIMBOLO"])
+                        });
                     }
                 }
             }
 
             List<OrdenPendiente> lista = new List<OrdenPendiente>();
-            foreach (Tuple<string, string, decimal> o in ordenes)
+            foreach (OrdenPendiente o in ordenes)
             {
-                decimal saldo = ObtenerSaldoOrden(o.Item1, o.Item3);
+                decimal saldo = ObtenerSaldoOrden(o.Orden, o.Monto);
                 if (saldo > 0.001m)
                 {
-                    lista.Add(new OrdenPendiente { Orden = o.Item1, Fecha = o.Item2, Monto = o.Item3, Saldo = saldo });
+                    o.Saldo = saldo;
+                    lista.Add(o);
                 }
             }
 

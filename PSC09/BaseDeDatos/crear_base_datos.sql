@@ -383,7 +383,7 @@ IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 105) INSERT INTO SECUENCIA (id
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 106) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (106, 'Comprobante E32', 0);
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 107) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (107, 'Comprobante E34', 0);
 IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 108) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (108, 'Comprobante E44', 0);
-IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 109) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (109, 'Comprobante E44', 0);
+IF NOT EXISTS (SELECT * FROM SECUENCIA WHERE id = 109) INSERT INTO SECUENCIA (id, descripcion, secuencia) VALUES (109, 'Comprobante E45', 0);
 
 IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('SECUENCIA') AND name = 'id' AND is_identity = 1)
     SET IDENTITY_INSERT SECUENCIA OFF;
@@ -689,6 +689,161 @@ GO
 IF NOT EXISTS (SELECT * FROM CLIENTES WHERE nombre = 'Consumidor Final')
     INSERT INTO CLIENTES (nombre, idEstatus, pagaImpuesto)
     VALUES ('Consumidor Final', (SELECT id FROM mESTATUSCTE WHERE estatus = 'Activo'), 0);
+GO
+
+-- ============================================================
+-- Multi-moneda
+--
+-- MONEDA es un catálogo abierto (no solo RD$/USD): cada fila es una moneda
+-- que el negocio puede usar en compras, ventas o precios de producto.
+-- esBase marca cuál es la moneda del negocio (RD$/DOP): sólo puede haber
+-- una, es a la que convierten los reportes consolidados, y su tasa siempre
+-- es 1 (no tiene fila en TASACAMBIO). El símbolo se usa en vez del "RD$"
+-- fijo que traía DocumentoPdf.FormatoMoneda.
+-- ============================================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'MONEDA')
+CREATE TABLE MONEDA (
+    id       INT IDENTITY(1,1) PRIMARY KEY,
+    codigo   NVARCHAR(3)  NOT NULL UNIQUE,
+    nombre   NVARCHAR(40) NOT NULL,
+    simbolo  NVARCHAR(6)  NOT NULL,
+    esBase   BIT          NOT NULL DEFAULT 0,
+    activo   BIT          NOT NULL DEFAULT 1
+);
+GO
+
+IF NOT EXISTS (SELECT * FROM MONEDA WHERE codigo = 'DOP')
+    INSERT INTO MONEDA (codigo, nombre, simbolo, esBase, activo) VALUES ('DOP', 'Peso Dominicano', 'RD$', 1, 1);
+IF NOT EXISTS (SELECT * FROM MONEDA WHERE codigo = 'USD')
+    INSERT INTO MONEDA (codigo, nombre, simbolo, esBase, activo) VALUES ('USD', 'Dólar Estadounidense', 'US$', 0, 1);
+GO
+
+-- Historial de tasas de cambio por moneda (Configuración → Tasas de Cambio,
+-- frmTasasCambio): tasa = cuántos RD$ (moneda base) equivale 1 unidad de
+-- esa moneda. Puede haber varias filas por moneda a lo largo del tiempo;
+-- TasaCambioService.ObtenerTasaVigente toma la más reciente en/antes de una
+-- fecha dada. No aplica a la moneda base (su tasa siempre es 1, no se
+-- guarda aquí).
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TASACAMBIO')
+CREATE TABLE TASACAMBIO (
+    id        INT IDENTITY(1,1) PRIMARY KEY,
+    idMoneda  INT NOT NULL FOREIGN KEY REFERENCES MONEDA(id),
+    fecha     NVARCHAR(12) NULL,
+    tasa      DECIMAL(18,6) NOT NULL,
+    activo    INT NULL
+);
+GO
+
+-- Precio/costo de un producto en una moneda distinta a la base (ej. lista de
+-- precio en USD de un artículo importado). PRODUCTOS.precioVenta/costo NO
+-- cambian de significado: siguen siendo el precio en la moneda base. Si un
+-- producto no tiene fila aquí para la moneda elegida en una venta/compra, se
+-- sigue calculando como PRODUCTOS.precioVenta/costo * tasa del día (ver
+-- PrecioProductoService), esta tabla sólo guarda el override explícito.
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PRODUCTOPRECIO')
+CREATE TABLE PRODUCTOPRECIO (
+    id           INT IDENTITY(1,1) PRIMARY KEY,
+    articulo     NVARCHAR(10) NOT NULL FOREIGN KEY REFERENCES PRODUCTOS(item),
+    idMoneda     INT NOT NULL FOREIGN KEY REFERENCES MONEDA(id),
+    precioVenta  DECIMAL(18,2) NULL,
+    costo        DECIMAL(18,2) NULL
+);
+GO
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UQ_PRODUCTOPRECIO_ARTICULO_MONEDA')
+    ALTER TABLE PRODUCTOPRECIO ADD CONSTRAINT UQ_PRODUCTOPRECIO_ARTICULO_MONEDA UNIQUE (articulo, idMoneda);
+GO
+
+-- Columnas de moneda en las tablas de transacción. idMoneda por defecto
+-- apunta a la moneda base para no dejar NULL el historial ya guardado
+-- (todo lo existente hasta hoy es, de hecho, RD$); tasaCambio 1 y montoBase
+-- = monto para esas mismas filas (ver backfill más abajo). tasaCambio y
+-- montoBase/totalBase siguen el mismo rol que descuentoValor/bcPendiente ya
+-- usados en este script: el valor tal cual se aplicó, no algo que se
+-- recalcule después.
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HFACTURA') AND name = 'idMoneda')
+    ALTER TABLE HFACTURA ADD idMoneda INT NULL FOREIGN KEY REFERENCES MONEDA(id);
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HFACTURA') AND name = 'tasaCambio')
+    ALTER TABLE HFACTURA ADD tasaCambio DECIMAL(18,6) NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HFACTURA') AND name = 'montoFacturadoBase')
+    ALTER TABLE HFACTURA ADD montoFacturadoBase DECIMAL(18,2) NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('DFACTURA') AND name = 'idMoneda')
+    ALTER TABLE DFACTURA ADD idMoneda INT NULL FOREIGN KEY REFERENCES MONEDA(id);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('ORDENCOMPRA') AND name = 'idMoneda')
+    ALTER TABLE ORDENCOMPRA ADD idMoneda INT NULL FOREIGN KEY REFERENCES MONEDA(id);
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('ORDENCOMPRA') AND name = 'tasaCambio')
+    ALTER TABLE ORDENCOMPRA ADD tasaCambio DECIMAL(18,6) NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('ORDENCOMPRA') AND name = 'totalBase')
+    ALTER TABLE ORDENCOMPRA ADD totalBase DECIMAL(18,2) NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('DORDENCOMPRA') AND name = 'idMoneda')
+    ALTER TABLE DORDENCOMPRA ADD idMoneda INT NULL FOREIGN KEY REFERENCES MONEDA(id);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('MUTOCTE') AND name = 'idMoneda')
+    ALTER TABLE MUTOCTE ADD idMoneda INT NULL FOREIGN KEY REFERENCES MONEDA(id);
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('MUTOCTE') AND name = 'montoBase')
+    ALTER TABLE MUTOCTE ADD montoBase DECIMAL(18,2) NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('MUTOPROV') AND name = 'idMoneda')
+    ALTER TABLE MUTOPROV ADD idMoneda INT NULL FOREIGN KEY REFERENCES MONEDA(id);
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('MUTOPROV') AND name = 'montoBase')
+    ALTER TABLE MUTOPROV ADD montoBase DECIMAL(18,2) NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('RECIBO') AND name = 'idMoneda')
+    ALTER TABLE RECIBO ADD idMoneda INT NULL FOREIGN KEY REFERENCES MONEDA(id);
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('RECIBO') AND name = 'tasaCambio')
+    ALTER TABLE RECIBO ADD tasaCambio DECIMAL(18,6) NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('PAGOPROVEEDOR') AND name = 'idMoneda')
+    ALTER TABLE PAGOPROVEEDOR ADD idMoneda INT NULL FOREIGN KEY REFERENCES MONEDA(id);
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('PAGOPROVEEDOR') AND name = 'tasaCambio')
+    ALTER TABLE PAGOPROVEEDOR ADD tasaCambio DECIMAL(18,6) NULL;
+GO
+
+-- NOTACREDITO/NOTADEBITO heredan la moneda de la factura que referencian
+-- (no se puede acreditar/cargar en una moneda distinta a la de esa factura).
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('NOTACREDITO') AND name = 'idMoneda')
+    ALTER TABLE NOTACREDITO ADD idMoneda INT NULL FOREIGN KEY REFERENCES MONEDA(id);
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('NOTACREDITO') AND name = 'tasaCambio')
+    ALTER TABLE NOTACREDITO ADD tasaCambio DECIMAL(18,6) NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('NOTADEBITO') AND name = 'idMoneda')
+    ALTER TABLE NOTADEBITO ADD idMoneda INT NULL FOREIGN KEY REFERENCES MONEDA(id);
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('NOTADEBITO') AND name = 'tasaCambio')
+    ALTER TABLE NOTADEBITO ADD tasaCambio DECIMAL(18,6) NULL;
+GO
+
+-- Backfill: todo lo que ya existía hasta hoy es, de hecho, moneda base
+-- (tasa 1, montoBase = monto). Sin esto, el historial quedaría con
+-- idMoneda NULL y desaparecería de los saldos por moneda (que filtran por
+-- IDMONEDA = @idMoneda).
+DECLARE @idMonedaBase INT = (SELECT id FROM MONEDA WHERE esBase = 1);
+
+UPDATE HFACTURA SET idMoneda = @idMonedaBase, tasaCambio = 1, montoFacturadoBase = montoFacturado WHERE idMoneda IS NULL;
+UPDATE DFACTURA SET idMoneda = @idMonedaBase WHERE idMoneda IS NULL;
+UPDATE ORDENCOMPRA SET idMoneda = @idMonedaBase, tasaCambio = 1 WHERE idMoneda IS NULL;
+UPDATE ORDENCOMPRA SET totalBase = (SELECT ISNULL(SUM(D.CANTIDAD * D.COSTOUNITARIO), 0) FROM DORDENCOMPRA D WHERE D.ORDENCOMPRA = ORDENCOMPRA.NUMERO AND D.ACTIVO = 1) WHERE totalBase IS NULL;
+UPDATE DORDENCOMPRA SET idMoneda = @idMonedaBase WHERE idMoneda IS NULL;
+UPDATE MUTOCTE SET idMoneda = @idMonedaBase, montoBase = monto WHERE idMoneda IS NULL;
+UPDATE MUTOPROV SET idMoneda = @idMonedaBase, montoBase = monto WHERE idMoneda IS NULL;
+UPDATE RECIBO SET idMoneda = @idMonedaBase, tasaCambio = 1 WHERE idMoneda IS NULL;
+UPDATE PAGOPROVEEDOR SET idMoneda = @idMonedaBase, tasaCambio = 1 WHERE idMoneda IS NULL;
+UPDATE NOTACREDITO SET idMoneda = @idMonedaBase, tasaCambio = 1 WHERE idMoneda IS NULL;
+UPDATE NOTADEBITO SET idMoneda = @idMonedaBase, tasaCambio = 1 WHERE idMoneda IS NULL;
 GO
 
 -- Usuario inicial para poder entrar por primera vez.

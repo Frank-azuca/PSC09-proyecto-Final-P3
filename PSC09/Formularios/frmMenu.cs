@@ -79,6 +79,22 @@ namespace PSC09
             frm.Show();
         }
 
+        private void monedasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmMoneda frm = new frmMoneda();
+            frm.Show();
+        }
+
+        private void tasasCambioToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            frmTasasCambio frm = new frmTasasCambio();
+            frm.Show();
+        }
+
         private void reporteFacturaToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Close();

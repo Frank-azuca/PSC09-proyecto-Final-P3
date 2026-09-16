@@ -17,6 +17,7 @@ namespace PSC09
     public partial class frmProductos : Form
     {
         Boolean DataExists;
+        List<Moneda> monedasNoBase = new List<Moneda>();
 
         public frmProductos()
         {
@@ -40,6 +41,186 @@ namespace PSC09
             pcbCodigoBarra.SizeMode = PictureBoxSizeMode.CenterImage;
             pcbCodigoBarra.BackColor = Color.White;
             pcbCodigoBarra.Image = Code128(sTexto, PrintTextInCode: true, Height: nHeight);
+
+            EstiloGridPrecios();
+        }
+
+        // Precios por Moneda (PRODUCTOPRECIO): overrides de precio/costo de este
+        // producto en una moneda distinta a la base. La moneda base no aparece en el
+        // combo porque su precio siempre es PRODUCTOS.precioVenta/costo tal cual (ver
+        // PrecioProductoService).
+        private void EstiloGridPrecios()
+        {
+            monedasNoBase = MonedaService.ObtenerMonedas(soloActivas: true).FindAll(m => !m.EsBase);
+
+            dgvPrecios.AllowUserToAddRows = false;
+            dgvPrecios.AllowUserToDeleteRows = false;
+            dgvPrecios.RowHeadersVisible = false;
+            dgvPrecios.EnableHeadersVisualStyles = false;
+
+            DataGridViewComboBoxColumn colMoneda = new DataGridViewComboBoxColumn
+            {
+                Name = "colMoneda",
+                HeaderText = "Moneda",
+                Width = 150,
+                DataSource = new List<Moneda>(monedasNoBase),
+                DisplayMember = "ToString",
+                ValueMember = "Id",
+                DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox
+            };
+            dgvPrecios.Columns.Add(colMoneda);
+            dgvPrecios.Columns.Add(new DataGridViewTextBoxColumn { Name = "colPrecioVenta", HeaderText = "Precio de Venta", Width = 150 });
+            dgvPrecios.Columns.Add(new DataGridViewTextBoxColumn { Name = "colCosto", HeaderText = "Costo", Width = 150 });
+
+            dgvPrecios.BorderStyle = BorderStyle.None;
+            dgvPrecios.AlternatingRowsDefaultCellStyle.BackColor = Tema.LavandaSuave;
+            dgvPrecios.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dgvPrecios.DefaultCellStyle.SelectionBackColor = Tema.OroEstelar;
+            dgvPrecios.DefaultCellStyle.SelectionForeColor = Tema.TextoOscuro;
+            dgvPrecios.BackgroundColor = Color.White;
+            dgvPrecios.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            dgvPrecios.ColumnHeadersDefaultCellStyle.BackColor = Tema.NebulosaIndigo;
+            dgvPrecios.ColumnHeadersDefaultCellStyle.ForeColor = Tema.TextoClaro;
+            dgvPrecios.ColumnHeadersDefaultCellStyle.Padding = new Padding(4, 6, 4, 6);
+            // Red de seguridad: con DataSource/ValueMember bien puestos no deberia
+            // dispararse (mismo motivo que frmCobro.dgv_DataError).
+            dgvPrecios.DataError += (s, e) => { e.ThrowException = false; };
+        }
+
+        private void CargarPrecios()
+        {
+            dgvPrecios.Rows.Clear();
+
+            if (!DataExists || string.IsNullOrWhiteSpace(txtCodigo.Text))
+            {
+                lblPreciosAviso.Text = "Guarda el producto primero para poder ponerle precios en otra moneda.";
+                dgvPrecios.Enabled = false;
+                btnNuevoPrecio.Enabled = false;
+                return;
+            }
+
+            dgvPrecios.Enabled = true;
+            btnNuevoPrecio.Enabled = monedasNoBase.Count > 0;
+            lblPreciosAviso.Text = monedasNoBase.Count > 0
+                ? "Precio de venta y costo explícitos de este producto en otra moneda. Si una moneda no tiene fila aquí, se calcula convirtiendo el precio en la moneda base con la tasa del día."
+                : "No hay ninguna moneda distinta a la base todavía. Agrega una en Configuración → Monedas primero.";
+
+            foreach (PrecioOverride precio in PrecioProductoService.ObtenerOverrides(txtCodigo.Text.Trim()))
+            {
+                int idx = dgvPrecios.Rows.Add();
+                DataGridViewRow fila = dgvPrecios.Rows[idx];
+                fila.Tag = precio.Id;
+                fila.Cells["colMoneda"].Value = precio.IdMoneda;
+                fila.Cells["colPrecioVenta"].Value = precio.PrecioVenta.HasValue ? precio.PrecioVenta.Value.ToString("0.00") : "";
+                fila.Cells["colCosto"].Value = precio.Costo.HasValue ? precio.Costo.Value.ToString("0.00") : "";
+            }
+        }
+
+        private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (tabControl1.SelectedTab == tabPage3)
+            {
+                CargarPrecios();
+            }
+        }
+
+        private void btnNuevoPrecio_Click(object sender, EventArgs e)
+        {
+            if (monedasNoBase.Count == 0)
+            {
+                MessageBox.Show("No hay ninguna moneda distinta a la base todavía. Agrega una en Configuración → Monedas primero.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            int idx = dgvPrecios.Rows.Add();
+            DataGridViewRow fila = dgvPrecios.Rows[idx];
+            fila.Tag = null;
+            dgvPrecios.CurrentCell = fila.Cells["colMoneda"];
+            dgvPrecios.BeginEdit(true);
+        }
+
+        private void btnGuardarPrecios_Click(object sender, EventArgs e)
+        {
+            dgvPrecios.EndEdit();
+
+            List<string> errores = new List<string>();
+            List<int> monedasVistas = new List<int>();
+
+            foreach (DataGridViewRow fila in dgvPrecios.Rows)
+            {
+                int numeroFila = fila.Index + 1;
+                object valorMoneda = fila.Cells["colMoneda"].Value;
+                int idMoneda;
+
+                if (valorMoneda == null || !int.TryParse(Convert.ToString(valorMoneda), out idMoneda))
+                {
+                    errores.Add("Fila " + numeroFila + ": selecciona una moneda.");
+                    continue;
+                }
+
+                if (monedasVistas.Contains(idMoneda))
+                {
+                    errores.Add("Fila " + numeroFila + ": esa moneda ya tiene una fila para este producto.");
+                    continue;
+                }
+                monedasVistas.Add(idMoneda);
+
+                string textoPrecio = Convert.ToString(fila.Cells["colPrecioVenta"].Value);
+                string textoCosto = Convert.ToString(fila.Cells["colCosto"].Value);
+                decimal precioParsed, costoParsed;
+                bool precioValido = string.IsNullOrWhiteSpace(textoPrecio) || decimal.TryParse(textoPrecio, out precioParsed);
+                bool costoValido = string.IsNullOrWhiteSpace(textoCosto) || decimal.TryParse(textoCosto, out costoParsed);
+
+                if (!precioValido || !costoValido)
+                {
+                    errores.Add("Fila " + numeroFila + ": precio y costo deben ser numeros validos (o quedar vacios).");
+                }
+            }
+
+            if (errores.Count > 0)
+            {
+                MessageBox.Show(string.Join("\n", errores), "Revisa lo siguiente", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                foreach (DataGridViewRow fila in dgvPrecios.Rows)
+                {
+                    int idMoneda = Convert.ToInt32(fila.Cells["colMoneda"].Value);
+
+                    decimal precio;
+                    decimal? precioVenta = decimal.TryParse(Convert.ToString(fila.Cells["colPrecioVenta"].Value), out precio) ? (decimal?)precio : null;
+
+                    decimal costoValor;
+                    decimal? costo = decimal.TryParse(Convert.ToString(fila.Cells["colCosto"].Value), out costoValor) ? (decimal?)costoValor : null;
+
+                    PrecioProductoService.GuardarOverride(txtCodigo.Text.Trim(), idMoneda, precioVenta, costo);
+                }
+
+                MessageBox.Show("Precios guardados.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CargarPrecios();
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(error.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnEliminarPrecio_Click(object sender, EventArgs e)
+        {
+            if (dgvPrecios.CurrentRow == null)
+            {
+                MessageBox.Show("Selecciona la fila que quieres eliminar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (dgvPrecios.CurrentRow.Tag is int)
+            {
+                PrecioProductoService.EliminarOverride((int)dgvPrecios.CurrentRow.Tag);
+            }
+
+            dgvPrecios.Rows.Remove(dgvPrecios.CurrentRow);
         }
 
         private void frmProductos_KeyDown(object sender, KeyEventArgs e)
@@ -214,6 +395,8 @@ namespace PSC09
             pcbCodigoBarra.SizeMode = PictureBoxSizeMode.CenterImage;
             pcbCodigoBarra.BackColor = Color.White;
             pcbCodigoBarra.Image = Code128(sTexto, PrintTextInCode: true, Height: nHeight);
+
+            CargarPrecios();
         }
 
         private void BuscarData(string numProducto)
@@ -257,6 +440,8 @@ namespace PSC09
                 pictureBox1.Image = PSC09.Properties.Resources.boss_man_128;
                 MostrarImagenProducto(numProducto);
             }
+
+            CargarPrecios();
         }
 
         private void MostrarImagenProducto(string numProducto)

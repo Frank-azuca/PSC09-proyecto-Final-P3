@@ -92,8 +92,8 @@ namespace PSC09
 
                 fila.Cells["colFecha"].Value = mov.Fecha;
                 fila.Cells["colDocumento"].Value = mov.Documento;
-                fila.Cells["colMonto"].Value = mov.Monto.ToString("0.00");
-                fila.Cells["colSaldo"].Value = mov.SaldoDespues.ToString("0.00");
+                fila.Cells["colMonto"].Value = mov.CodigoMoneda + " " + mov.Monto.ToString("0.00");
+                fila.Cells["colSaldo"].Value = mov.CodigoMoneda + " " + mov.SaldoDespues.ToString("0.00");
 
                 if (mov.EsAbono && mov.EsNotaCredito)
                 {
@@ -122,15 +122,34 @@ namespace PSC09
                     }
                     else
                     {
-                        fila.Cells["colEstado"].Value = "PENDIENTE: " + DocumentoPdf.FormatoMoneda(mov.SaldoDocumento);
+                        fila.Cells["colEstado"].Value = "PENDIENTE: " + DocumentoPdf.FormatoMoneda(mov.SaldoDocumento, mov.SimboloMoneda);
                         fila.Cells["colEstado"].Style.ForeColor = Color.Firebrick;
                     }
                 }
             }
 
-            decimal saldo = CuentaCliente.ObtenerSaldoPendiente(clienteIdActual.Value);
-            lblSaldoValor.Text = saldo.ToString("0.00");
-            lblSaldoValor.ForeColor = saldo > 0 ? Color.Firebrick : Color.SeaGreen;
+            // Un cliente con historial en más de una moneda no tiene un solo saldo: se
+            // muestra desglosado (no se puede "netear" una deuda en USD contra un abono
+            // en RD$ sin un evento de cambio explícito, ver SaldoPorMoneda).
+            System.Collections.Generic.List<SaldoPorMoneda> saldos = CuentaCliente.ObtenerSaldosPorMoneda(clienteIdActual.Value);
+            if (saldos.Count == 0)
+            {
+                lblSaldoValor.Text = "0.00";
+                lblSaldoValor.ForeColor = Color.SeaGreen;
+            }
+            else
+            {
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                bool hayPendiente = false;
+                foreach (SaldoPorMoneda s in saldos)
+                {
+                    if (sb.Length > 0) sb.Append("   |   ");
+                    sb.Append(s.CodigoMoneda + " " + s.Saldo.ToString("0.00"));
+                    if (s.Saldo > 0) hayPendiente = true;
+                }
+                lblSaldoValor.Text = sb.ToString();
+                lblSaldoValor.ForeColor = hayPendiente ? Color.Firebrick : Color.SeaGreen;
+            }
         }
 
         private void BuscarClientePorCodigo()

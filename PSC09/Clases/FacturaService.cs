@@ -48,9 +48,13 @@ namespace PSC09
         // frmPuntoVenta.TotalizarCarrito) que subtotal/impuesto/total ya reflejan. descuentoValor y
         // descuentoEsPorcentaje son solo para poder reimprimir/mostrar la factura tal como se aplicó
         // (10 + true = "10%", 100.00 + false = "RD$100.00"); no participan en el cálculo aquí.
+        // idMoneda/tasaCambio son la moneda del documento (subtotal/impuesto/total ya están
+        // expresados en ella) y la tasa aplicada ese día; se usan para dejar en HFACTURA el
+        // equivalente en moneda base (montoFacturadoBase) que consolidan los reportes.
         public static string GuardarFactura(string numeroFactura, string cliente, DateTime fecha, TipoComprobante tipo, string comprobante,
             List<LineaFactura> lineas, decimal subtotal, decimal impuesto, decimal total,
-            decimal descuento, decimal? descuentoValor, bool? descuentoEsPorcentaje)
+            decimal descuento, decimal? descuentoValor, bool? descuentoEsPorcentaje,
+            int idMoneda, decimal tasaCambio)
         {
             if (lineas == null || lineas.Count == 0)
             {
@@ -81,8 +85,10 @@ namespace PSC09
                 {
                     try
                     {
-                        string stQuery = " INSERT INTO HFACTURA (FACTURA, CLIENTE, FECHA, SUBTOTAL, IMPUESTO, MONTOFACTURADO, ACTIVO, IDTIPOCOMPROBANTE, COMPROBANTEFISCAL, DESCUENTO, DESCUENTOVALOR, DESCUENTOESPORCENTAJE) " +
-                                         " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8, @A9, @A10, @A11); ";
+                        decimal montoFacturadoBase = Math.Round(total * tasaCambio, 2);
+
+                        string stQuery = " INSERT INTO HFACTURA (FACTURA, CLIENTE, FECHA, SUBTOTAL, IMPUESTO, MONTOFACTURADO, ACTIVO, IDTIPOCOMPROBANTE, COMPROBANTEFISCAL, DESCUENTO, DESCUENTOVALOR, DESCUENTOESPORCENTAJE, IDMONEDA, TASACAMBIO, MONTOFACTURADOBASE) " +
+                                         " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8, @A9, @A10, @A11, @A12, @A13, @A14); ";
 
                         SqlCommand cmd = new SqlCommand(stQuery, cnx, tx);
                         cmd.Parameters.AddWithValue("@A0", numeroFactura);
@@ -97,6 +103,9 @@ namespace PSC09
                         cmd.Parameters.AddWithValue("@A9", descuento);
                         cmd.Parameters.AddWithValue("@A10", (object)descuentoValor ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@A11", (object)descuentoEsPorcentaje ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@A12", idMoneda);
+                        cmd.Parameters.AddWithValue("@A13", tasaCambio);
+                        cmd.Parameters.AddWithValue("@A14", montoFacturadoBase);
                         cmd.ExecuteNonQuery();
 
                         SqlCommand cmdSecFactura = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 2", cnx, tx);
@@ -105,8 +114,8 @@ namespace PSC09
 
                         ComprobanteFiscal.ActualizaSecuencia(cnx, tx, tipo, comprobante);
 
-                        string stQueryLinea = " INSERT INTO DFACTURA (FACTURA, ARTICULO, CANTIDAD, PRECIOVENTA, IMPUESTO, MONTOLINEA, ACTIVO, DESCUENTOLINEA, IMPUESTOBRUTO, MONTOLINEABRUTO) " +
-                                              " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8, @A9) ";
+                        string stQueryLinea = " INSERT INTO DFACTURA (FACTURA, ARTICULO, CANTIDAD, PRECIOVENTA, IMPUESTO, MONTOLINEA, ACTIVO, DESCUENTOLINEA, IMPUESTOBRUTO, MONTOLINEABRUTO, IDMONEDA) " +
+                                              " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8, @A9, @A10) ";
 
                         foreach (LineaFactura linea in lineas)
                         {
@@ -121,12 +130,13 @@ namespace PSC09
                             cmm.Parameters.AddWithValue("@A7", linea.DescuentoLinea);
                             cmm.Parameters.AddWithValue("@A8", linea.ImpuestoBruto);
                             cmm.Parameters.AddWithValue("@A9", linea.MontoLineaBruto);
+                            cmm.Parameters.AddWithValue("@A10", idMoneda);
                             cmm.ExecuteNonQuery();
 
                             InventarioService.RegistrarMovimiento(cnx, tx, linea.Articulo, fecha, InventarioService.Salida, linea.Cantidad, "Factura", numeroFactura, null);
                         }
 
-                        CuentaCliente.RegistrarCargo(cnx, tx, cliente, fecha, numeroFactura, total);
+                        CuentaCliente.RegistrarCargo(cnx, tx, cliente, fecha, numeroFactura, total, idMoneda, tasaCambio);
 
                         tx.Commit();
                     }
@@ -146,7 +156,7 @@ namespace PSC09
         // diseño (encabezado con logo/datos de la empresa, tabla de líneas, totales)
         // vive en Clases/DocumentoPdf.cs, compartido con CuentaCliente.GenerarReciboPdf.
         public static string GenerarPdf(string numeroFactura, string comprobante, DateTime fecha, string clienteId, string clienteNombre,
-            List<LineaFactura> lineas, decimal subtotal, decimal impuesto, decimal total, decimal descuento)
+            List<LineaFactura> lineas, decimal subtotal, decimal impuesto, decimal total, decimal descuento, string simboloMoneda)
         {
             string clienteIdentificacion = "";
             string clienteDireccion = "";
@@ -246,13 +256,13 @@ namespace PSC09
 
             PdfPTable tablaTotales = DocumentoPdf.TablaTotales();
             tablaTotales.SpacingBefore = 12;
-            DocumentoPdf.AgregarTotal(tablaTotales, "Subtotal:", DocumentoPdf.FormatoMoneda(subtotal), false);
-            DocumentoPdf.AgregarTotal(tablaTotales, "ITBIS:", DocumentoPdf.FormatoMoneda(impuesto), false);
+            DocumentoPdf.AgregarTotal(tablaTotales, "Subtotal:", DocumentoPdf.FormatoMoneda(subtotal, simboloMoneda), false);
+            DocumentoPdf.AgregarTotal(tablaTotales, "ITBIS:", DocumentoPdf.FormatoMoneda(impuesto, simboloMoneda), false);
             if (descuento > 0)
             {
-                DocumentoPdf.AgregarTotal(tablaTotales, "Descuento:", "-" + DocumentoPdf.FormatoMoneda(descuento), false);
+                DocumentoPdf.AgregarTotal(tablaTotales, "Descuento:", "-" + DocumentoPdf.FormatoMoneda(descuento, simboloMoneda), false);
             }
-            DocumentoPdf.AgregarTotal(tablaTotales, "TOTAL A PAGAR:", DocumentoPdf.FormatoMoneda(total), true);
+            DocumentoPdf.AgregarTotal(tablaTotales, "TOTAL A PAGAR:", DocumentoPdf.FormatoMoneda(total, simboloMoneda), true);
             doc.Add(tablaTotales);
 
             DocumentoPdf.Pie(doc, "Este documento es un comprobante fiscal válido ante la DGII. Gracias por su compra.");

@@ -52,6 +52,7 @@ namespace PSC09
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colProveedor", HeaderText = "Proveedor", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colEstado", HeaderText = "Estado", Width = 100 });
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colTotal", HeaderText = "Total", Width = 120 });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "colMoneda", HeaderText = "Moneda", Width = 70 });
 
             dgv.BorderStyle = BorderStyle.None;
             dgv.AlternatingRowsDefaultCellStyle.BackColor = Tema.LavandaSuave;
@@ -77,9 +78,10 @@ namespace PSC09
             string filtroProveedor = txtProveedor.Text.Trim();
             string estado = cboEstado.SelectedItem != null ? cboEstado.SelectedItem.ToString() : "Todas";
 
-            string query = " SELECT O.NUMERO, O.FECHA, O.ESTADO, P.NOMBRE, " +
+            string query = " SELECT O.NUMERO, O.FECHA, O.ESTADO, P.NOMBRE, MO.CODIGO, ISNULL(O.TOTALBASE, 0) AS TOTALBASE, " +
                            " ISNULL((SELECT SUM(D.CANTIDAD * D.COSTOUNITARIO) FROM DORDENCOMPRA D WHERE D.ORDENCOMPRA = O.NUMERO AND D.ACTIVO = 1), 0) AS TOTAL " +
                            " FROM ORDENCOMPRA O INNER JOIN PROVEEDORES P ON O.IDPROVEEDOR = P.IDPROVEEDOR " +
+                           " INNER JOIN MONEDA MO ON O.IDMONEDA = MO.ID " +
                            " WHERE 1 = 1 ";
 
             if (filtroProveedor != "") query += " AND O.IDPROVEEDOR = @proveedor ";
@@ -112,6 +114,9 @@ namespace PSC09
 
                         string estadoOrden = Convert.ToString(rdr["ESTADO"]);
                         decimal total = Convert.ToDecimal(rdr["TOTAL"]);
+                        // El gran total se consolida en moneda base (TOTALBASE): sumar TOTAL
+                        // directo no tendría sentido con órdenes en monedas distintas.
+                        decimal totalBase = Convert.ToDecimal(rdr["TOTALBASE"]);
 
                         int idx = dgv.Rows.Add();
                         DataGridViewRow row = dgv.Rows[idx];
@@ -120,6 +125,7 @@ namespace PSC09
                         row.Cells["colProveedor"].Value = Convert.ToString(rdr["NOMBRE"]);
                         row.Cells["colEstado"].Value = estadoOrden;
                         row.Cells["colTotal"].Value = total.ToString("0.00");
+                        row.Cells["colMoneda"].Value = Convert.ToString(rdr["CODIGO"]);
 
                         if (estadoOrden == "Pendiente")
                         {
@@ -136,7 +142,7 @@ namespace PSC09
 
                         if (estadoOrden != "Anulada")
                         {
-                            totalGeneral += total;
+                            totalGeneral += totalBase;
                         }
 
                         cantidad++;
@@ -144,7 +150,7 @@ namespace PSC09
                 }
             }
 
-            lblResumen.Text = cantidad + " orden(es) — Total (sin anuladas): " + Math.Round(totalGeneral, 2);
+            lblResumen.Text = cantidad + " orden(es) — Total sin anuladas (equivalente en " + MonedaService.ObtenerMonedaBase().Codigo + "): " + Math.Round(totalGeneral, 2);
         }
 
         private void btnExportar_Click(object sender, EventArgs e)

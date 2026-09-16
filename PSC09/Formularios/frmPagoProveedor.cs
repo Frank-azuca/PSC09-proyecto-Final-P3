@@ -65,13 +65,18 @@ namespace PSC09
             OrdenPendiente ordenElegida = cboOrden.SelectedItem as OrdenPendiente;
             string numeroOrden = ordenElegida != null ? ordenElegida.Orden : null;
 
+            // Un pago contra una orden concreta debe quedar en la MISMA moneda de esa
+            // orden; un abono general (sin orden) se paga en la moneda base.
+            Moneda monedaPago = ordenElegida != null ? MonedaService.ObtenerPorId(ordenElegida.IdMoneda) : MonedaService.ObtenerMonedaBase();
+            decimal tasaPago = ordenElegida != null ? ordenElegida.TasaCambio : 1m;
+
             try
             {
                 LineaPago linea = new LineaPago { IdTipoPago = tipo.Id, NombreTipoPago = tipo.Nombre, Monto = monto };
                 List<LineaPago> lineas = new List<LineaPago> { linea };
 
-                string numeroPago = CuentaProveedor.RegistrarPago(idProveedor, DateTime.Now, numeroOrden, lineas, txtNota.Text);
-                string archivo = CuentaProveedor.GenerarPagoPdf(numeroPago, DateTime.Now, nombreProveedor, numeroOrden, lineas, monto, txtNota.Text);
+                string numeroPago = CuentaProveedor.RegistrarPago(idProveedor, DateTime.Now, numeroOrden, lineas, txtNota.Text, monedaPago.Id, tasaPago);
+                string archivo = CuentaProveedor.GenerarPagoPdf(numeroPago, DateTime.Now, nombreProveedor, numeroOrden, lineas, monto, txtNota.Text, monedaPago.Simbolo);
 
                 try { FacturaService.ImprimirPdf(archivo); }
                 catch { /* el pago ya quedó guardado; sólo no se pudo mandar a imprimir */ }
@@ -82,7 +87,7 @@ namespace PSC09
                     decimal saldoRestante = CuentaProveedor.ObtenerSaldoOrden(ordenElegida.Orden, ordenElegida.Monto);
                     mensaje += saldoRestante <= 0
                         ? "\nLa orden " + ordenElegida.Orden + " quedó saldada."
-                        : "\nA la orden " + ordenElegida.Orden + " todavía le queda pendiente " + DocumentoPdf.FormatoMoneda(saldoRestante) + ".";
+                        : "\nA la orden " + ordenElegida.Orden + " todavía le queda pendiente " + DocumentoPdf.FormatoMoneda(saldoRestante, ordenElegida.SimboloMoneda) + ".";
                 }
                 MessageBox.Show(mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 

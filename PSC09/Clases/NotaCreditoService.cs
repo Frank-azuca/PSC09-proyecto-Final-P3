@@ -52,6 +52,7 @@ namespace PSC09
         public decimal Impuesto;
         public decimal Monto;
         public bool Activa;
+        public string SimboloMoneda;
     }
 
     // Notas de Crédito (Ventas -> Nota de Crédito, frmNotaCredito): devolución de
@@ -63,6 +64,30 @@ namespace PSC09
     // CuentaCliente.ObtenerMovimientos).
     public static class NotaCreditoService
     {
+        // Moneda/tasa de la factura de referencia: una nota de crédito siempre acredita
+        // en la misma moneda de la factura que devuelve.
+        private static void ObtenerMonedaDeFactura(string numeroFactura, out int idMoneda, out decimal tasaCambio)
+        {
+            idMoneda = MonedaService.ObtenerMonedaBase().Id;
+            tasaCambio = 1m;
+
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand("SELECT IDMONEDA, TASACAMBIO FROM HFACTURA WHERE FACTURA = @factura", cnx);
+                cmd.Parameters.AddWithValue("@factura", numeroFactura);
+
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    if (rdr.Read() && rdr["IDMONEDA"] != DBNull.Value)
+                    {
+                        idMoneda = Convert.ToInt32(rdr["IDMONEDA"]);
+                        tasaCambio = Convert.ToDecimal(rdr["TASACAMBIO"]);
+                    }
+                }
+            }
+        }
+
         // Líneas de la factura de referencia, con cuánto ya se acreditó antes (de
         // notas de crédito activas) y cuánto queda disponible para devolver.
         public static List<LineaFacturaDisponible> ObtenerLineasDisponibles(string numeroFactura)
@@ -159,6 +184,10 @@ namespace PSC09
 
             string numero = "NC" + Busco.BuscaUltimoNumero("6");
 
+            int idMoneda;
+            decimal tasaCambio;
+            ObtenerMonedaDeFactura(numeroFactura, out idMoneda, out tasaCambio);
+
             using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
                 cnx.Open();
@@ -190,8 +219,8 @@ namespace PSC09
                         }
 
                         SqlCommand cmd = new SqlCommand(
-                            " INSERT INTO NOTACREDITO (NUMERO, FECHA, FACTURA, CLIENTE, IDTIPOCOMPROBANTE, COMPROBANTEFISCAL, MOTIVO, SUBTOTAL, IMPUESTO, MONTO, ACTIVO) " +
-                            " VALUES (@numero, @fecha, @factura, @cliente, @tipo, @comprobante, @motivo, @subtotal, @impuesto, @monto, 1) ", cnx, tx);
+                            " INSERT INTO NOTACREDITO (NUMERO, FECHA, FACTURA, CLIENTE, IDTIPOCOMPROBANTE, COMPROBANTEFISCAL, MOTIVO, SUBTOTAL, IMPUESTO, MONTO, ACTIVO, IDMONEDA, TASACAMBIO) " +
+                            " VALUES (@numero, @fecha, @factura, @cliente, @tipo, @comprobante, @motivo, @subtotal, @impuesto, @monto, 1, @idMoneda, @tasaCambio) ", cnx, tx);
                         cmd.Parameters.AddWithValue("@numero", numero);
                         cmd.Parameters.AddWithValue("@fecha", fecha.ToString("dd/MM/yyyy"));
                         cmd.Parameters.AddWithValue("@factura", numeroFactura);
@@ -202,6 +231,8 @@ namespace PSC09
                         cmd.Parameters.AddWithValue("@subtotal", subtotalTotal);
                         cmd.Parameters.AddWithValue("@impuesto", impuestoTotal);
                         cmd.Parameters.AddWithValue("@monto", montoTotal);
+                        cmd.Parameters.AddWithValue("@idMoneda", idMoneda);
+                        cmd.Parameters.AddWithValue("@tasaCambio", tasaCambio);
                         cmd.ExecuteNonQuery();
 
                         SqlCommand cmdSec = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 6", cnx, tx);
@@ -225,7 +256,7 @@ namespace PSC09
                             InventarioService.RegistrarMovimiento(cnx, tx, linea.Articulo, fecha, InventarioService.Entrada, linea.Cantidad, "NotaCredito", numero, null);
                         }
 
-                        CuentaCliente.RegistrarAbonoDirecto(cnx, tx, idCliente.ToString(), fecha, numero, montoTotal);
+                        CuentaCliente.RegistrarAbonoDirecto(cnx, tx, idCliente.ToString(), fecha, numero, montoTotal, idMoneda, tasaCambio);
 
                         tx.Commit();
                     }
@@ -295,8 +326,9 @@ namespace PSC09
                 cnx.Open();
                 SqlCommand cmd = new SqlCommand(
                     " SELECT N.FECHA, N.FACTURA, N.CLIENTE, C.NOMBRE, N.IDTIPOCOMPROBANTE, N.COMPROBANTEFISCAL, " +
-                    " N.MOTIVO, N.SUBTOTAL, N.IMPUESTO, N.MONTO, N.ACTIVO " +
+                    " N.MOTIVO, N.SUBTOTAL, N.IMPUESTO, N.MONTO, N.ACTIVO, MO.SIMBOLO " +
                     " FROM NOTACREDITO N LEFT JOIN CLIENTES C ON N.CLIENTE = CAST(C.IDCLIENTE AS NVARCHAR(20)) " +
+                    " INNER JOIN MONEDA MO ON N.IDMONEDA = MO.ID " +
                     " WHERE N.NUMERO = @numero", cnx);
                 cmd.Parameters.AddWithValue("@numero", numero);
 
@@ -317,7 +349,8 @@ namespace PSC09
                         Subtotal = Convert.ToDecimal(rdr["SUBTOTAL"]),
                         Impuesto = Convert.ToDecimal(rdr["IMPUESTO"]),
                         Monto = Convert.ToDecimal(rdr["MONTO"]),
-                        Activa = Convert.ToInt32(rdr["ACTIVO"]) == 1
+                        Activa = Convert.ToInt32(rdr["ACTIVO"]) == 1,
+                        SimboloMoneda = Convert.ToString(rdr["SIMBOLO"])
                     };
                 }
             }
@@ -357,7 +390,7 @@ namespace PSC09
 
         // Genera el PDF en NotasCredito\NotaCredito_<numero>.pdf. Mismo diseño que
         // FacturaService.GenerarPdf/CuentaCliente.GenerarReciboPdf.
-        public static string GenerarPdf(string numero, DateTime fecha, string comprobante, string numeroFactura, string clienteNombre, List<LineaNotaCredito> lineas, decimal subtotal, decimal impuesto, decimal monto, string motivo)
+        public static string GenerarPdf(string numero, DateTime fecha, string comprobante, string numeroFactura, string clienteNombre, List<LineaNotaCredito> lineas, decimal subtotal, decimal impuesto, decimal monto, string motivo, string simboloMoneda)
         {
             DatosEmpresa empresa = Empresa.ObtenerDatos();
 
@@ -415,9 +448,9 @@ namespace PSC09
 
             PdfPTable tablaTotales = DocumentoPdf.TablaTotales();
             tablaTotales.SpacingBefore = 12;
-            DocumentoPdf.AgregarTotal(tablaTotales, "Subtotal:", DocumentoPdf.FormatoMoneda(subtotal), false);
-            DocumentoPdf.AgregarTotal(tablaTotales, "ITBIS:", DocumentoPdf.FormatoMoneda(impuesto), false);
-            DocumentoPdf.AgregarTotal(tablaTotales, "TOTAL ACREDITADO:", DocumentoPdf.FormatoMoneda(monto), true);
+            DocumentoPdf.AgregarTotal(tablaTotales, "Subtotal:", DocumentoPdf.FormatoMoneda(subtotal, simboloMoneda), false);
+            DocumentoPdf.AgregarTotal(tablaTotales, "ITBIS:", DocumentoPdf.FormatoMoneda(impuesto, simboloMoneda), false);
+            DocumentoPdf.AgregarTotal(tablaTotales, "TOTAL ACREDITADO:", DocumentoPdf.FormatoMoneda(monto, simboloMoneda), true);
             doc.Add(tablaTotales);
 
             DocumentoPdf.Pie(doc, "Este documento reduce el saldo pendiente (o genera un crédito) del cliente por la devolución indicada.");

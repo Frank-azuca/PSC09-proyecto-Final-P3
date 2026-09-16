@@ -37,6 +37,24 @@ namespace PSC09
         // Sólo para cargos: cuánto queda pendiente de ESA factura en particular (no el
         // saldo general del cliente). <= 0 significa que ya quedó saldada.
         public decimal SaldoDocumento;
+
+        // Moneda en la que está expresado Monto/SaldoDespues/SaldoDocumento (un cliente
+        // puede tener movimientos en más de una moneda, ver ObtenerSaldosPorMoneda).
+        public int IdMoneda;
+        public string CodigoMoneda;
+        public string SimboloMoneda;
+    }
+
+    // Saldo pendiente de un cliente/proveedor en UNA moneda, para clientes con
+    // historial mezclado (ver CuentaCliente.ObtenerSaldosPorMoneda): no se puede
+    // "netear" una deuda en USD contra un abono en RD$ sin un evento de cambio
+    // explícito, así que el saldo general se muestra desglosado por moneda.
+    public class SaldoPorMoneda
+    {
+        public int IdMoneda;
+        public string CodigoMoneda;
+        public string SimboloMoneda;
+        public decimal Saldo;
     }
 
     // Una factura con saldo pendiente de un cliente, para elegir a cuál aplicar un
@@ -48,9 +66,15 @@ namespace PSC09
         public decimal Monto;
         public decimal Saldo;
 
+        // Un pago contra esta factura debe registrarse en la MISMA moneda (ver
+        // CuentaCliente.RegistrarRecibo): un pago no puede convertir monedas.
+        public int IdMoneda;
+        public decimal TasaCambio;
+        public string SimboloMoneda;
+
         public override string ToString()
         {
-            return "Factura " + Factura + " (" + Fecha + ") — Pendiente: " + DocumentoPdf.FormatoMoneda(Saldo);
+            return "Factura " + Factura + " (" + Fecha + ") — Pendiente: " + DocumentoPdf.FormatoMoneda(Saldo, SimboloMoneda);
         }
     }
 
@@ -97,10 +121,12 @@ namespace PSC09
 
         // Se llama dentro de la misma transacción de FacturaService.GuardarFactura():
         // si la factura no se guarda, el cargo tampoco queda. Si el cliente no es un
-        // número válido (factura sin cliente), no registra nada.
-        public static void RegistrarCargo(SqlConnection cnx, SqlTransaction tx, string idClienteTexto, DateTime fecha, string documento, decimal monto)
+        // número válido (factura sin cliente), no registra nada. idMoneda/tasaCambio son
+        // la moneda de la factura (monto ya está expresado en ella) y la tasa aplicada,
+        // para dejar el equivalente en moneda base (montoBase) junto al saldo corrido.
+        public static void RegistrarCargo(SqlConnection cnx, SqlTransaction tx, string idClienteTexto, DateTime fecha, string documento, decimal monto, int idMoneda, decimal tasaCambio)
         {
-            RegistrarMovimiento(cnx, tx, idClienteTexto, fecha, OrigenCargo, documento, monto);
+            RegistrarMovimiento(cnx, tx, idClienteTexto, fecha, OrigenCargo, documento, monto, idMoneda, tasaCambio);
         }
 
         // Se llama dentro de la misma transacción de FacturaService.AnularFactura():
@@ -119,9 +145,9 @@ namespace PSC09
         // reduce lo que debe el cliente por el monto de la nota, sin pasar por un
         // RECIBO/forma de pago (no es un cobro, es un ajuste). monto se pasa en
         // positivo; aquí se resta del saldo igual que cualquier abono.
-        public static void RegistrarAbonoDirecto(SqlConnection cnx, SqlTransaction tx, string idClienteTexto, DateTime fecha, string documento, decimal monto)
+        public static void RegistrarAbonoDirecto(SqlConnection cnx, SqlTransaction tx, string idClienteTexto, DateTime fecha, string documento, decimal monto, int idMoneda, decimal tasaCambio)
         {
-            RegistrarMovimiento(cnx, tx, idClienteTexto, fecha, OrigenAbono, documento, -monto);
+            RegistrarMovimiento(cnx, tx, idClienteTexto, fecha, OrigenAbono, documento, -monto, idMoneda, tasaCambio);
         }
 
         // Se llama dentro de la misma transacción de NotaCreditoService.AnularNotaCredito():
@@ -167,8 +193,10 @@ namespace PSC09
         // (cobro al contado desde Punto de Venta/Factura, en el mismo momento de la
         // venta, o un pago posterior elegido a mano desde frmReciboIngreso contra una
         // factura a crédito pendiente); null = abono general, sin factura específica.
-        // Devuelve el número de recibo asignado.
-        public static string RegistrarRecibo(int idCliente, DateTime fecha, string factura, List<LineaPago> lineas, string nota)
+        // Devuelve el número de recibo asignado. idMoneda/tasaCambio son la moneda en la
+        // que se cobra: cuando hay factura, debe ser la MISMA moneda de esa factura (un
+        // pago no puede convertir monedas); un abono general puede elegir cualquiera.
+        public static string RegistrarRecibo(int idCliente, DateTime fecha, string factura, List<LineaPago> lineas, string nota, int idMoneda, decimal tasaCambio)
         {
             if (lineas == null || lineas.Count == 0)
             {
@@ -196,13 +224,15 @@ namespace PSC09
                     try
                     {
                         SqlCommand cmd = new SqlCommand(
-                            " INSERT INTO RECIBO (RECIBO, IDCLIENTE, FECHA, FACTURA, NOTA, ACTIVO) " +
-                            " VALUES (@recibo, @idCliente, @fecha, @factura, @nota, 1) ", cnx, tx);
+                            " INSERT INTO RECIBO (RECIBO, IDCLIENTE, FECHA, FACTURA, NOTA, ACTIVO, IDMONEDA, TASACAMBIO) " +
+                            " VALUES (@recibo, @idCliente, @fecha, @factura, @nota, 1, @idMoneda, @tasaCambio) ", cnx, tx);
                         cmd.Parameters.AddWithValue("@recibo", numeroRecibo);
                         cmd.Parameters.AddWithValue("@idCliente", idCliente);
                         cmd.Parameters.AddWithValue("@fecha", fecha.ToString("dd/MM/yyyy"));
                         cmd.Parameters.AddWithValue("@factura", (object)factura ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@nota", (object)nota ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@idMoneda", idMoneda);
+                        cmd.Parameters.AddWithValue("@tasaCambio", tasaCambio);
                         cmd.ExecuteNonQuery();
 
                         SqlCommand cmdSec = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 3", cnx, tx);
@@ -219,7 +249,7 @@ namespace PSC09
                             cmdDet.ExecuteNonQuery();
                         }
 
-                        RegistrarMovimiento(cnx, tx, idCliente.ToString(), fecha, OrigenAbono, numeroRecibo, -total);
+                        RegistrarMovimiento(cnx, tx, idCliente.ToString(), fecha, OrigenAbono, numeroRecibo, -total, idMoneda, tasaCambio);
 
                         tx.Commit();
                     }
@@ -237,7 +267,7 @@ namespace PSC09
         // Genera el PDF del recibo en Recibos\Recibo_<numero>.pdf y devuelve la ruta. El
         // diseño (encabezado con logo/datos de la empresa, tabla, totales) vive en
         // Clases/DocumentoPdf.cs, compartido con FacturaService.GenerarPdf.
-        public static string GenerarReciboPdf(string numeroRecibo, DateTime fecha, string clienteNombre, string facturaAplicada, List<LineaPago> lineas, decimal total, string nota)
+        public static string GenerarReciboPdf(string numeroRecibo, DateTime fecha, string clienteNombre, string facturaAplicada, List<LineaPago> lineas, decimal total, string nota, string simboloMoneda)
         {
             DatosEmpresa empresa = Empresa.ObtenerDatos();
 
@@ -283,7 +313,7 @@ namespace PSC09
 
             PdfPTable tablaTotales = DocumentoPdf.TablaTotales();
             tablaTotales.SpacingBefore = 12;
-            DocumentoPdf.AgregarTotal(tablaTotales, "TOTAL RECIBIDO:", DocumentoPdf.FormatoMoneda(total), true);
+            DocumentoPdf.AgregarTotal(tablaTotales, "TOTAL RECIBIDO:", DocumentoPdf.FormatoMoneda(total, simboloMoneda), true);
             doc.Add(tablaTotales);
 
             if (!string.IsNullOrWhiteSpace(nota))
@@ -302,42 +332,86 @@ namespace PSC09
             return archivo;
         }
 
-        private static void RegistrarMovimiento(SqlConnection cnx, SqlTransaction tx, string idClienteTexto, DateTime fecha, int origen, string documento, decimal monto)
+        // El saldo corrido (BCPENDIENTE) se lleva POR MONEDA: mezclar montos de monedas
+        // distintas en un mismo SUM daría un número sin sentido (no se puede sumar RD$
+        // con USD sin convertir). montoBase es el equivalente en moneda base, guardado
+        // como fotografía histórica para los reportes consolidados.
+        private static void RegistrarMovimiento(SqlConnection cnx, SqlTransaction tx, string idClienteTexto, DateTime fecha, int origen, string documento, decimal monto, int idMoneda, decimal tasaCambio)
         {
             int idCliente;
             if (!int.TryParse(idClienteTexto, out idCliente)) return;
 
             SqlCommand cmdSaldo = new SqlCommand(
-                "SELECT ISNULL(SUM(MONTO), 0) FROM MUTOCTE WHERE IDCLIENTE = @id AND ACTIVO = 1", cnx, tx);
+                "SELECT ISNULL(SUM(MONTO), 0) FROM MUTOCTE WHERE IDCLIENTE = @id AND IDMONEDA = @idMoneda AND ACTIVO = 1", cnx, tx);
             cmdSaldo.Parameters.AddWithValue("@id", idCliente);
+            cmdSaldo.Parameters.AddWithValue("@idMoneda", idMoneda);
             decimal saldoAnterior = Convert.ToDecimal(cmdSaldo.ExecuteScalar());
             decimal saldoNuevo = saldoAnterior + monto;
 
             SqlCommand cmd = new SqlCommand(
-                " INSERT INTO MUTOCTE (IDCLIENTE, FECHA, ORIGEN, DOCUMENTO, MONTO, BCPENDIENTE, ACTIVO) " +
-                " VALUES (@idCliente, @fecha, @origen, @documento, @monto, @saldo, 1) ", cnx, tx);
+                " INSERT INTO MUTOCTE (IDCLIENTE, FECHA, ORIGEN, DOCUMENTO, MONTO, BCPENDIENTE, ACTIVO, IDMONEDA, MONTOBASE) " +
+                " VALUES (@idCliente, @fecha, @origen, @documento, @monto, @saldo, 1, @idMoneda, @montoBase) ", cnx, tx);
             cmd.Parameters.AddWithValue("@idCliente", idCliente);
             cmd.Parameters.AddWithValue("@fecha", fecha.ToString("dd/MM/yyyy"));
             cmd.Parameters.AddWithValue("@origen", origen);
             cmd.Parameters.AddWithValue("@documento", (object)documento ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@monto", monto);
             cmd.Parameters.AddWithValue("@saldo", saldoNuevo);
+            cmd.Parameters.AddWithValue("@idMoneda", idMoneda);
+            cmd.Parameters.AddWithValue("@montoBase", Math.Round(monto * tasaCambio, 2));
             cmd.ExecuteNonQuery();
         }
 
-        // Saldo pendiente real del cliente, recalculado en vivo (no el bcPendiente
-        // guardado en la última fila, que puede quedar desactualizado si un cargo
-        // anterior se desactivó después).
-        public static decimal ObtenerSaldoPendiente(int idCliente)
+        // Saldo pendiente real del cliente en UNA moneda, recalculado en vivo (no el
+        // bcPendiente guardado en la última fila, que puede quedar desactualizado si un
+        // cargo anterior se desactivó después).
+        public static decimal ObtenerSaldoPendiente(int idCliente, int idMoneda)
         {
             using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
                 cnx.Open();
                 SqlCommand cmd = new SqlCommand(
-                    "SELECT ISNULL(SUM(MONTO), 0) FROM MUTOCTE WHERE IDCLIENTE = @id AND ACTIVO = 1", cnx);
+                    "SELECT ISNULL(SUM(MONTO), 0) FROM MUTOCTE WHERE IDCLIENTE = @id AND IDMONEDA = @idMoneda AND ACTIVO = 1", cnx);
                 cmd.Parameters.AddWithValue("@id", idCliente);
+                cmd.Parameters.AddWithValue("@idMoneda", idMoneda);
                 return Convert.ToDecimal(cmd.ExecuteScalar());
             }
+        }
+
+        // Saldos pendientes de un cliente desglosados por moneda (una fila por cada
+        // moneda con movimientos activos), para clientes con historial mezclado: no se
+        // puede "netear" una deuda en USD contra un abono en RD$ sin un evento de
+        // cambio explícito, así que frmEstadoCuenta muestra cada saldo por separado.
+        public static List<SaldoPorMoneda> ObtenerSaldosPorMoneda(int idCliente)
+        {
+            List<SaldoPorMoneda> lista = new List<SaldoPorMoneda>();
+
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            {
+                cnx.Open();
+                SqlCommand cmd = new SqlCommand(
+                    " SELECT M.IDMONEDA, MO.CODIGO, MO.SIMBOLO, SUM(M.MONTO) AS SALDO " +
+                    " FROM MUTOCTE M INNER JOIN MONEDA MO ON M.IDMONEDA = MO.ID " +
+                    " WHERE M.IDCLIENTE = @id AND M.ACTIVO = 1 " +
+                    " GROUP BY M.IDMONEDA, MO.CODIGO, MO.SIMBOLO ", cnx);
+                cmd.Parameters.AddWithValue("@id", idCliente);
+
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        lista.Add(new SaldoPorMoneda
+                        {
+                            IdMoneda = Convert.ToInt32(rdr["IDMONEDA"]),
+                            CodigoMoneda = Convert.ToString(rdr["CODIGO"]),
+                            SimboloMoneda = Convert.ToString(rdr["SIMBOLO"]),
+                            Saldo = Convert.ToDecimal(rdr["SALDO"])
+                        });
+                    }
+                }
+            }
+
+            return lista;
         }
 
         public static List<MovimientoCuenta> ObtenerMovimientos(int idCliente)
@@ -354,9 +428,9 @@ namespace PSC09
                 // NotaDebitoService) así que nunca chocan con un número de recibo o de
                 // factura real (siempre numéricos).
                 SqlCommand cmd = new SqlCommand(
-                    " SELECT M.FECHA, M.ORIGEN, M.DOCUMENTO, M.MONTO, M.BCPENDIENTE, " +
+                    " SELECT M.FECHA, M.ORIGEN, M.DOCUMENTO, M.MONTO, M.BCPENDIENTE, M.IDMONEDA, MO.CODIGO, MO.SIMBOLO, " +
                     " R.FACTURA AS FACTURAAPLICADA, NC.FACTURA AS FACTURANOTACREDITO, ND.FACTURA AS FACTURANOTADEBITO " +
-                    " FROM MUTOCTE M " +
+                    " FROM MUTOCTE M INNER JOIN MONEDA MO ON M.IDMONEDA = MO.ID " +
                     " LEFT JOIN RECIBO R ON M.ORIGEN = @origenAbono AND M.DOCUMENTO = R.RECIBO " +
                     " LEFT JOIN NOTACREDITO NC ON M.ORIGEN = @origenAbono AND M.DOCUMENTO = NC.NUMERO " +
                     " LEFT JOIN NOTADEBITO ND ON M.ORIGEN = @origenCargo AND M.DOCUMENTO = ND.NUMERO " +
@@ -385,7 +459,10 @@ namespace PSC09
                             EsAbono = Convert.ToInt32(rdr["ORIGEN"]) == OrigenAbono,
                             EsNotaCredito = esNotaCredito,
                             EsNotaDebito = esNotaDebito,
-                            FacturaAplicada = facturaAplicada
+                            FacturaAplicada = facturaAplicada,
+                            IdMoneda = Convert.ToInt32(rdr["IDMONEDA"]),
+                            CodigoMoneda = Convert.ToString(rdr["CODIGO"]),
+                            SimboloMoneda = Convert.ToString(rdr["SIMBOLO"])
                         });
                     }
                 }
@@ -442,34 +519,42 @@ namespace PSC09
         // frmReciboIngreso pueda elegir a cuál aplicar un pago.
         public static List<FacturaPendiente> ObtenerFacturasPendientes(int idCliente)
         {
-            List<Tuple<string, string, decimal>> facturas = new List<Tuple<string, string, decimal>>();
+            List<FacturaPendiente> facturas = new List<FacturaPendiente>();
 
             using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
                 cnx.Open();
                 SqlCommand cmd = new SqlCommand(
-                    "SELECT FACTURA, FECHA, MONTOFACTURADO FROM HFACTURA WHERE CLIENTE = @id AND ACTIVO = 1 ORDER BY FACTURA", cnx);
+                    " SELECT H.FACTURA, H.FECHA, H.MONTOFACTURADO, H.IDMONEDA, H.TASACAMBIO, MO.SIMBOLO " +
+                    " FROM HFACTURA H INNER JOIN MONEDA MO ON H.IDMONEDA = MO.ID " +
+                    " WHERE H.CLIENTE = @id AND H.ACTIVO = 1 ORDER BY H.FACTURA ", cnx);
                 cmd.Parameters.AddWithValue("@id", idCliente);
 
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
                     while (rdr.Read())
                     {
-                        facturas.Add(Tuple.Create(
-                            Convert.ToString(rdr["FACTURA"]),
-                            Convert.ToString(rdr["FECHA"]),
-                            Convert.ToDecimal(rdr["MONTOFACTURADO"])));
+                        facturas.Add(new FacturaPendiente
+                        {
+                            Factura = Convert.ToString(rdr["FACTURA"]),
+                            Fecha = Convert.ToString(rdr["FECHA"]),
+                            Monto = Convert.ToDecimal(rdr["MONTOFACTURADO"]),
+                            IdMoneda = Convert.ToInt32(rdr["IDMONEDA"]),
+                            TasaCambio = Convert.ToDecimal(rdr["TASACAMBIO"]),
+                            SimboloMoneda = Convert.ToString(rdr["SIMBOLO"])
+                        });
                     }
                 }
             }
 
             List<FacturaPendiente> lista = new List<FacturaPendiente>();
-            foreach (Tuple<string, string, decimal> f in facturas)
+            foreach (FacturaPendiente f in facturas)
             {
-                decimal saldo = ObtenerSaldoFactura(f.Item1, f.Item3);
+                decimal saldo = ObtenerSaldoFactura(f.Factura, f.Monto);
                 if (saldo > 0.001m)
                 {
-                    lista.Add(new FacturaPendiente { Factura = f.Item1, Fecha = f.Item2, Monto = f.Item3, Saldo = saldo });
+                    f.Saldo = saldo;
+                    lista.Add(f);
                 }
             }
 

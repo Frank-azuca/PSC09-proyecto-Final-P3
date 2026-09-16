@@ -17,6 +17,20 @@ namespace PSC09
         private int? proveedorIdActual;
         private string estadoActual;
 
+        private Moneda MonedaSeleccionada
+        {
+            get { return cboMoneda.SelectedItem as Moneda; }
+        }
+
+        private decimal TasaSeleccionada
+        {
+            get
+            {
+                decimal tasa;
+                return decimal.TryParse(txtTasa.Text, out tasa) && tasa > 0 ? tasa : 1m;
+            }
+        }
+
         public frmOrdenCompra()
         {
             InitializeComponent();
@@ -28,7 +42,61 @@ namespace PSC09
             this.KeyPreview = true;
 
             EstiloDataGridView();
+            CargarMonedas();
             LimpiarFormulario();
+        }
+
+        private void CargarMonedas()
+        {
+            cboMoneda.DisplayMember = "ToString";
+            cboMoneda.DataSource = MonedaService.ObtenerMonedas(soloActivas: true);
+            SeleccionarMonedaBase();
+        }
+
+        private void SeleccionarMonedaBase()
+        {
+            foreach (Moneda moneda in cboMoneda.Items)
+            {
+                if (moneda.EsBase)
+                {
+                    cboMoneda.SelectedItem = moneda;
+                    return;
+                }
+            }
+        }
+
+        private void cboMoneda_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            Moneda moneda = MonedaSeleccionada;
+            if (moneda == null) return;
+
+            if (moneda.EsBase)
+            {
+                txtTasa.Text = "1";
+                txtTasa.ReadOnly = true;
+            }
+            else
+            {
+                txtTasa.ReadOnly = false;
+                try
+                {
+                    txtTasa.Text = TasaCambioService.ObtenerTasaVigente(moneda.Id, dtpFecha.Value).ToString("0.####");
+                }
+                catch (Exception error)
+                {
+                    txtTasa.Clear();
+                    MessageBox.Show(error.Message, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+        }
+
+        private void txtTasa_Leave(object sender, EventArgs e)
+        {
+            decimal tasa;
+            if (!decimal.TryParse(txtTasa.Text, out tasa) || tasa <= 0)
+            {
+                MessageBox.Show("La tasa debe ser un número mayor a cero.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         private void frmOrdenCompra_KeyDown(object sender, KeyEventArgs e)
@@ -75,6 +143,7 @@ namespace PSC09
             dgv.Rows.Clear();
             LimpiarDetalle();
             RecalcularTotal();
+            SeleccionarMonedaBase();
             ActualizarBotonesSegunEstado();
         }
 
@@ -94,31 +163,41 @@ namespace PSC09
             btnGuardar.Enabled = esNueva;
             btnRecibirOrden.Enabled = !esNueva && estadoActual == OrdenCompraService.EstadoPendiente;
             btnAnularOrden.Enabled = !esNueva && estadoActual != OrdenCompraService.EstadoAnulada;
+            // La moneda de una orden ya guardada no se puede cambiar (mismo criterio que
+            // las líneas: si hace falta corregirla, se anula y se crea una nueva).
+            cboMoneda.Enabled = esNueva;
+            txtTasa.Enabled = esNueva && MonedaSeleccionada != null && !MonedaSeleccionada.EsBase;
         }
 
         private void BuscarArticulo(string codigo)
         {
+            bool existe;
             using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
                 cnx.Open();
-                SqlCommand cmd = new SqlCommand("SELECT DESCRIPCION, COSTO FROM PRODUCTOS WHERE ITEM = @item", cnx);
+                SqlCommand cmd = new SqlCommand("SELECT DESCRIPCION FROM PRODUCTOS WHERE ITEM = @item", cnx);
                 cmd.Parameters.AddWithValue("@item", codigo);
 
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
-                    if (rdr.Read())
-                    {
-                        lblDescripcionArticulo.Text = Convert.ToString(rdr["DESCRIPCION"]);
-                        // Sugiere el costo actual del producto; el usuario lo cambia si el
-                        // costo pactado con el proveedor es distinto.
-                        txtCostoUnitario.Text = rdr["COSTO"] == DBNull.Value ? "" : Convert.ToDecimal(rdr["COSTO"]).ToString("0.00");
-                    }
-                    else
-                    {
-                        lblDescripcionArticulo.Text = "";
-                        MessageBox.Show("No se encontró ningún artículo con ese código.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
+                    existe = rdr.Read();
+                    lblDescripcionArticulo.Text = existe ? Convert.ToString(rdr["DESCRIPCION"]) : "";
                 }
+            }
+
+            if (!existe)
+            {
+                MessageBox.Show("No se encontró ningún artículo con ese código.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // Sugiere el costo actual del producto convertido a la moneda elegida (o el
+            // override explícito en esa moneda, ver PrecioProductoService); el usuario lo
+            // cambia si el costo pactado con el proveedor es distinto.
+            if (MonedaSeleccionada != null)
+            {
+                decimal costo = PrecioProductoService.ResolverCosto(codigo, MonedaSeleccionada.Id, TasaSeleccionada);
+                txtCostoUnitario.Text = costo > 0 ? costo.ToString("0.00") : "";
             }
         }
 
@@ -238,7 +317,7 @@ namespace PSC09
             {
                 cnx.Open();
                 SqlCommand cmd = new SqlCommand(
-                    " SELECT O.FECHA, O.IDPROVEEDOR, P.NOMBRE, O.ESTADO, O.NOTA " +
+                    " SELECT O.FECHA, O.IDPROVEEDOR, P.NOMBRE, O.ESTADO, O.NOTA, O.IDMONEDA, O.TASACAMBIO " +
                     " FROM ORDENCOMPRA O INNER JOIN PROVEEDORES P ON O.IDPROVEEDOR = P.IDPROVEEDOR " +
                     " WHERE O.NUMERO = @numero", cnx);
                 cmd.Parameters.AddWithValue("@numero", numero);
@@ -264,6 +343,13 @@ namespace PSC09
                     estadoActual = Convert.ToString(rdr["ESTADO"]);
                     lblEstadoValor.Text = estadoActual;
                     txtNota.Text = rdr["NOTA"] == DBNull.Value ? "" : Convert.ToString(rdr["NOTA"]);
+
+                    int idMoneda = Convert.ToInt32(rdr["IDMONEDA"]);
+                    foreach (Moneda m in cboMoneda.Items)
+                    {
+                        if (m.Id == idMoneda) { cboMoneda.SelectedItem = m; break; }
+                    }
+                    txtTasa.Text = Convert.ToDecimal(rdr["TASACAMBIO"]).ToString("0.####");
                 }
             }
 
@@ -307,6 +393,12 @@ namespace PSC09
                 return;
             }
 
+            if (MonedaSeleccionada == null || TasaSeleccionada <= 0)
+            {
+                MessageBox.Show("Selecciona una moneda y una tasa válida antes de guardar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             List<LineaOrdenCompra> lineas = new List<LineaOrdenCompra>();
             foreach (DataGridViewRow fila in dgv.Rows)
             {
@@ -315,7 +407,7 @@ namespace PSC09
 
             try
             {
-                string numero = OrdenCompraService.GuardarOrden(null, dtpFecha.Value, proveedorIdActual.Value, txtNota.Text, lineas);
+                string numero = OrdenCompraService.GuardarOrden(null, dtpFecha.Value, proveedorIdActual.Value, txtNota.Text, lineas, MonedaSeleccionada.Id, TasaSeleccionada);
                 MessageBox.Show("Orden de compra " + numero + " guardada como Pendiente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 txtNumero.Text = numero;
