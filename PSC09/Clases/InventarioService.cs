@@ -37,15 +37,23 @@ namespace PSC09
         {
             int signo = tipo == Entrada ? 1 : -1;
 
-            SqlCommand cmdStock = new SqlCommand("UPDATE PRODUCTOS SET CANTIDAD = CANTIDAD + @cant WHERE ITEM = @item", cnx, tx);
+            SqlCommand cmdStock = new SqlCommand(
+                "UPDATE PRODUCTOS SET CANTIDAD = CANTIDAD + @cant OUTPUT inserted.CANTIDAD WHERE ITEM = @item", cnx, tx);
             cmdStock.Parameters.AddWithValue("@cant", signo * cantidad);
             cmdStock.Parameters.AddWithValue("@item", articulo);
-            cmdStock.ExecuteNonQuery();
-
-            SqlCommand cmdSaldo = new SqlCommand("SELECT CANTIDAD FROM PRODUCTOS WHERE ITEM = @item", cnx, tx);
-            cmdSaldo.Parameters.AddWithValue("@item", articulo);
-            object resultadoSaldo = cmdSaldo.ExecuteScalar();
+            object resultadoSaldo = cmdStock.ExecuteScalar();
             decimal saldoResultante = resultadoSaldo == null || resultadoSaldo == DBNull.Value ? 0 : Convert.ToDecimal(resultadoSaldo);
+
+            // Sólo importa para una Salida (venta, ajuste de merma, etc.): una Entrada
+            // (anulación, recepción de orden de compra, devolución) nunca deja el saldo
+            // en negativo. El checkbox de Configuración → Datos de la Empresa decide si
+            // esto se permite (el negocio a veces vende y cuadra el inventario después).
+            if (tipo == Salida && saldoResultante < 0 && !Empresa.PermiteVentaSinExistencia())
+            {
+                throw new InvalidOperationException(
+                    "No hay existencia suficiente de " + articulo + ". Disponible: " +
+                    (saldoResultante + cantidad).ToString("N2") + ", solicitado: " + cantidad.ToString("N2") + ".");
+            }
 
             SqlCommand cmd = new SqlCommand(
                 " INSERT INTO MOVIMIENTOINVENTARIO (FECHA, ARTICULO, TIPO, CANTIDAD, ORIGEN, REFERENCIA, NOTA, SALDORESULTANTE, ACTIVO) " +

@@ -185,7 +185,7 @@ namespace PSC09
             decimal.TryParse(txtSubtotal.Text, out subtotal);
             decimal.TryParse(txtImpuesto.Text, out impuesto);
 
-            lblTotalValor.Text = Math.Round(subtotal + impuesto, 2).ToString("0.00");
+            lblTotalValor.Text = Dinero.Redondear(subtotal + impuesto).ToString("0.00");
         }
 
         private void btnGuardar_Click(object sender, EventArgs e)

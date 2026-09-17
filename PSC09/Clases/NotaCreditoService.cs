@@ -147,8 +147,8 @@ namespace PSC09
             }
 
             decimal factor = cantidadDevolver / disponible.CantidadFacturada;
-            subtotal = Math.Round(disponible.SubtotalOriginal * factor, 2);
-            impuesto = Math.Round(disponible.ImpuestoOriginal * factor, 2);
+            subtotal = Dinero.Redondear(disponible.SubtotalOriginal * factor);
+            impuesto = Dinero.Redondear(disponible.ImpuestoOriginal * factor);
         }
 
         // Inserta NOTACREDITO + DNOTACREDITO, devuelve el inventario de cada línea y
@@ -180,7 +180,7 @@ namespace PSC09
                 subtotalTotal += linea.Subtotal;
                 impuestoTotal += linea.Impuesto;
             }
-            decimal montoTotal = Math.Round(subtotalTotal + impuestoTotal, 2);
+            decimal montoTotal = Dinero.Redondear(subtotalTotal + impuestoTotal);
 
             string numero = "NC" + Busco.BuscaUltimoNumero("6");
 
@@ -235,7 +235,7 @@ namespace PSC09
                         cmd.Parameters.AddWithValue("@tasaCambio", tasaCambio);
                         cmd.ExecuteNonQuery();
 
-                        SqlCommand cmdSec = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 6", cnx, tx);
+                        SqlCommand cmdSec = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 6 AND SECUENCIA < @numero", cnx, tx);
                         cmdSec.Parameters.AddWithValue("@numero", numero.Substring(2));
                         cmdSec.ExecuteNonQuery();
 
@@ -259,6 +259,12 @@ namespace PSC09
                         CuentaCliente.RegistrarAbonoDirecto(cnx, tx, idCliente.ToString(), fecha, numero, montoTotal, idMoneda, tasaCambio);
 
                         tx.Commit();
+                    }
+                    catch (SqlException ex) when (ex.Number == 2601 || ex.Number == 2627)
+                    {
+                        tx.Rollback();
+                        throw new Exception("Ese numero de comprobante fiscal (" + comprobante + ") ya fue usado. " +
+                            "Es probable que otra caja haya guardado al mismo tiempo -- actualiza el comprobante y guarda de nuevo.");
                     }
                     catch
                     {

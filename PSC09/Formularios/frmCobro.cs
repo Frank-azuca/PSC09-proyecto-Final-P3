@@ -111,7 +111,7 @@ namespace PSC09
 
         private void ActualizarFalta()
         {
-            decimal falta = Math.Round(totalAPagar - SumaLineas(), 2);
+            decimal falta = Dinero.Redondear(totalAPagar - SumaLineas());
             lblFalta.Text = "Falta cubrir: " + falta.ToString("0.00");
             lblFalta.ForeColor = falta == 0 ? Color.SeaGreen : Color.Firebrick;
         }
@@ -131,7 +131,7 @@ namespace PSC09
 
         private void btnAgregarLinea_Click(object sender, EventArgs e)
         {
-            decimal falta = Math.Max(0, Math.Round(totalAPagar - SumaLineas(), 2));
+            decimal falta = Math.Max(0, Dinero.Redondear(totalAPagar - SumaLineas()));
             AgregarLinea(falta);
             ActualizarFalta();
         }
@@ -169,7 +169,7 @@ namespace PSC09
                 lineas.Add(new LineaPago { IdTipoPago = tipo.Id, NombreTipoPago = tipo.Nombre, Monto = monto });
             }
 
-            if (Math.Round(totalAPagar - SumaLineas(), 2) != 0)
+            if (Dinero.Redondear(totalAPagar - SumaLineas()) != 0)
             {
                 MessageBox.Show("La suma de las líneas debe cubrir exactamente el total a pagar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;

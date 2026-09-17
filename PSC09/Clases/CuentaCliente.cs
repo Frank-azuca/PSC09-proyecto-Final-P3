@@ -235,7 +235,7 @@ namespace PSC09
                         cmd.Parameters.AddWithValue("@tasaCambio", tasaCambio);
                         cmd.ExecuteNonQuery();
 
-                        SqlCommand cmdSec = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 3", cnx, tx);
+                        SqlCommand cmdSec = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 3 AND SECUENCIA < @numero", cnx, tx);
                         cmdSec.Parameters.AddWithValue("@numero", numeroRecibo);
                         cmdSec.ExecuteNonQuery();
 
@@ -358,7 +358,7 @@ namespace PSC09
             cmd.Parameters.AddWithValue("@monto", monto);
             cmd.Parameters.AddWithValue("@saldo", saldoNuevo);
             cmd.Parameters.AddWithValue("@idMoneda", idMoneda);
-            cmd.Parameters.AddWithValue("@montoBase", Math.Round(monto * tasaCambio, 2));
+            cmd.Parameters.AddWithValue("@montoBase", Dinero.Redondear(monto * tasaCambio));
             cmd.ExecuteNonQuery();
         }
 
@@ -512,7 +512,7 @@ namespace PSC09
         // se le ha abonado. <= 0 significa que ya está saldada.
         public static decimal ObtenerSaldoFactura(string numeroFactura, decimal montoFacturado)
         {
-            return Math.Round(montoFacturado - ObtenerMontoPagadoDeFactura(numeroFactura), 2);
+            return Dinero.Redondear(montoFacturado - ObtenerMontoPagadoDeFactura(numeroFactura));
         }
 
         // Facturas activas de un cliente que todavía tienen saldo pendiente, para que

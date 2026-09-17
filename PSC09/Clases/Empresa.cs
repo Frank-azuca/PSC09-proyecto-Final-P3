@@ -17,6 +17,11 @@ namespace PSC09
         // entre sí: NULL en cualquiera de los dos significa "sin límite" para ese modo.
         public decimal? DescuentoMaxPorcentaje;
         public decimal? DescuentoMaxMonto;
+
+        // Si está marcado, InventarioService.RegistrarMovimiento deja que una Salida
+        // deje el inventario en negativo en vez de rechazarla (ver Configuración →
+        // Datos de la Empresa).
+        public bool PermiteVentaSinExistencia;
     }
 
     // Datos de la empresa (fila única, EMPRESA.id = 1), configurables desde
@@ -31,7 +36,7 @@ namespace PSC09
             {
                 cnx.Open();
                 SqlCommand cmd = new SqlCommand(
-                    "SELECT NOMBRECOMERCIAL, RAZONSOCIAL, RNC, DIRECCION, TELEFONO, CORREO, LOGO, DESCUENTOMAXPORCENTAJE, DESCUENTOMAXMONTO FROM EMPRESA WHERE ID = 1", cnx);
+                    "SELECT NOMBRECOMERCIAL, RAZONSOCIAL, RNC, DIRECCION, TELEFONO, CORREO, LOGO, DESCUENTOMAXPORCENTAJE, DESCUENTOMAXMONTO, PERMITEVENTASINEXISTENCIA FROM EMPRESA WHERE ID = 1", cnx);
 
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
@@ -47,7 +52,8 @@ namespace PSC09
                             Correo = rdr["CORREO"] == DBNull.Value ? "" : Convert.ToString(rdr["CORREO"]),
                             Logo = rdr["LOGO"] == DBNull.Value ? null : (byte[])rdr["LOGO"],
                             DescuentoMaxPorcentaje = rdr["DESCUENTOMAXPORCENTAJE"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(rdr["DESCUENTOMAXPORCENTAJE"]),
-                            DescuentoMaxMonto = rdr["DESCUENTOMAXMONTO"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(rdr["DESCUENTOMAXMONTO"])
+                            DescuentoMaxMonto = rdr["DESCUENTOMAXMONTO"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(rdr["DESCUENTOMAXMONTO"]),
+                            PermiteVentaSinExistencia = rdr["PERMITEVENTASINEXISTENCIA"] != DBNull.Value && Convert.ToBoolean(rdr["PERMITEVENTASINEXISTENCIA"])
                         };
                     }
                 }
@@ -64,7 +70,8 @@ namespace PSC09
                 SqlCommand cmd = new SqlCommand(
                     " UPDATE EMPRESA SET NOMBRECOMERCIAL = @nombre, RAZONSOCIAL = @razon, RNC = @rnc, " +
                     " DIRECCION = @dir, TELEFONO = @tel, CORREO = @correo, LOGO = @logo, " +
-                    " DESCUENTOMAXPORCENTAJE = @descMaxPct, DESCUENTOMAXMONTO = @descMaxMonto WHERE ID = 1 ", cnx);
+                    " DESCUENTOMAXPORCENTAJE = @descMaxPct, DESCUENTOMAXMONTO = @descMaxMonto, " +
+                    " PERMITEVENTASINEXISTENCIA = @permiteVentaSinExistencia WHERE ID = 1 ", cnx);
                 cmd.Parameters.AddWithValue("@nombre", (object)datos.NombreComercial ?? "");
                 cmd.Parameters.AddWithValue("@razon", (object)datos.RazonSocial ?? "");
                 cmd.Parameters.AddWithValue("@rnc", (object)datos.Rnc ?? "");
@@ -74,8 +81,16 @@ namespace PSC09
                 cmd.Parameters.AddWithValue("@logo", (object)datos.Logo ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@descMaxPct", (object)datos.DescuentoMaxPorcentaje ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@descMaxMonto", (object)datos.DescuentoMaxMonto ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@permiteVentaSinExistencia", datos.PermiteVentaSinExistencia);
                 cmd.ExecuteNonQuery();
             }
+        }
+
+        // Conveniencia para InventarioService (evita traer todo DatosEmpresa sólo para
+        // leer un booleano en el punto más caliente del guardado de una venta).
+        public static bool PermiteVentaSinExistencia()
+        {
+            return ObtenerDatos().PermiteVentaSinExistencia;
         }
     }
 }

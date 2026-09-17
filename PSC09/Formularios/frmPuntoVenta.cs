@@ -390,15 +390,15 @@ namespace PSC09
                 impuesto = linea.TasaImpuesto * subtotal;
             }
 
-            linea.MontoLineaBruto = Math.Round(subtotal, 2);
-            linea.ImpuestoBruto = Math.Round(impuesto, 2);
+            linea.MontoLineaBruto = Dinero.Redondear(subtotal);
+            linea.ImpuestoBruto = Dinero.Redondear(impuesto);
 
             decimal totalBruto = linea.MontoLineaBruto + linea.ImpuestoBruto;
             if (linea.DescuentoLinea > totalBruto) linea.DescuentoLinea = totalBruto;
             decimal factorLinea = totalBruto > 0 ? linea.DescuentoLinea / totalBruto : 0;
 
-            linea.MontoLinea = Math.Round(linea.MontoLineaBruto * (1 - factorLinea), 2);
-            linea.Impuesto = Math.Round(linea.ImpuestoBruto * (1 - factorLinea), 2);
+            linea.MontoLinea = Dinero.Redondear(linea.MontoLineaBruto * (1 - factorLinea));
+            linea.Impuesto = Dinero.Redondear(linea.ImpuestoBruto * (1 - factorLinea));
         }
 
         private void ActualizarCeldas(DataGridViewRow fila, LineaCarrito linea)
@@ -434,13 +434,13 @@ namespace PSC09
             // pantalla, se guarda y se cobra es el monto ya descontado (lblXxxValor).
             zDescuento = CalcularDescuento(zSubtotal, zTotal);
             decimal factor = zTotal > 0 ? zDescuento / zTotal : 0;
-            decimal subtotalConDescuento = Math.Round(zSubtotal * (1 - factor), 2);
-            decimal impuestoConDescuento = Math.Round(zImpuesto * (1 - factor), 2);
+            decimal subtotalConDescuento = Dinero.Redondear(zSubtotal * (1 - factor));
+            decimal impuestoConDescuento = Dinero.Redondear(zImpuesto * (1 - factor));
 
             lblSubtotalValor.Text = subtotalConDescuento.ToString("0.00");
             lblImpuestoValor.Text = impuestoConDescuento.ToString("0.00");
             lblDescuentoValor.Text = zDescuento.ToString("0.00");
-            lblTotalValor.Text = Math.Round(subtotalConDescuento + impuestoConDescuento, 2).ToString("0.00");
+            lblTotalValor.Text = Dinero.Redondear(subtotalConDescuento + impuestoConDescuento).ToString("0.00");
 
             ActualizarCambio();
         }
@@ -468,7 +468,7 @@ namespace PSC09
                 // Sobre el TOTAL (no el subtotal): así "Descuento Aplicado" siempre
                 // coincide con lo que realmente baja el Total (Precio - Descuento
                 // Aplicado = Total), sea el artículo con ITBIS incluido o no.
-                return Math.Round(baseTotal * valor / 100m, 2);
+                return Dinero.Redondear(baseTotal * valor / 100m);
             }
 
             if (empresa.DescuentoMaxMonto.HasValue && valor > empresa.DescuentoMaxMonto.Value)
@@ -476,7 +476,7 @@ namespace PSC09
                 valor = empresa.DescuentoMaxMonto.Value;
             }
             if (valor > baseTotal) valor = baseTotal;
-            return Math.Round(valor, 2);
+            return Dinero.Redondear(valor);
         }
 
         // Valida lo escrito en txtDescuento (sin topar/clamp): si no es válido,

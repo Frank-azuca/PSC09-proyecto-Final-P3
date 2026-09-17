@@ -20,6 +20,22 @@ GO
 USE sistemaFacturacion;
 GO
 
+-- Los indices unicos filtrados que agrega este script (ver UQ_HFACTURA_NCF mas
+-- abajo) exigen estas opciones ON (y NUMERIC_ROUNDABORT OFF) en la sesion que
+-- crea el indice Y en cualquier INSERT/UPDATE/DELETE posterior contra esa
+-- tabla -- no solo al crearlo. SSMS y System.Data.SqlClient (la app en C#) ya
+-- las traen ON por defecto; sqlcmd con la configuracion por defecto de este
+-- servidor, no, así que se fijan aquí para que el script corra igual con
+-- cualquiera de los dos.
+SET ANSI_NULLS ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET QUOTED_IDENTIFIER ON;
+SET NUMERIC_ROUNDABORT OFF;
+GO
+
 -- clave es NVARCHAR(200) porque guarda el hash PBKDF2 (formato
 -- "iteraciones.saltBase64.hashBase64", ver Clases/Seguridad.cs), no la
 -- contraseña en texto plano. Las cuentas creadas antes de ese cambio
@@ -844,6 +860,41 @@ UPDATE RECIBO SET idMoneda = @idMonedaBase, tasaCambio = 1 WHERE idMoneda IS NUL
 UPDATE PAGOPROVEEDOR SET idMoneda = @idMonedaBase, tasaCambio = 1 WHERE idMoneda IS NULL;
 UPDATE NOTACREDITO SET idMoneda = @idMonedaBase, tasaCambio = 1 WHERE idMoneda IS NULL;
 UPDATE NOTADEBITO SET idMoneda = @idMonedaBase, tasaCambio = 1 WHERE idMoneda IS NULL;
+GO
+
+-- Indice unico sobre el comprobante fiscal (NCF): sin esto, dos cajas guardando
+-- casi al mismo tiempo podian terminar con el mismo NCF en dos documentos
+-- distintos sin que nadie se enterara. Filtrado (WHERE ... IS NOT NULL) porque
+-- una factura puede quedar sin comprobante asignado todavia (ver SET QUOTED_IDENTIFIER
+-- ON al principio del script -- lo exige un indice filtrado).
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UQ_HFACTURA_NCF')
+    CREATE UNIQUE INDEX UQ_HFACTURA_NCF ON HFACTURA (comprobanteFiscal) WHERE comprobanteFiscal IS NOT NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UQ_NOTACREDITO_NCF')
+    CREATE UNIQUE INDEX UQ_NOTACREDITO_NCF ON NOTACREDITO (comprobanteFiscal) WHERE comprobanteFiscal IS NOT NULL;
+GO
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UQ_NOTADEBITO_NCF')
+    CREATE UNIQUE INDEX UQ_NOTADEBITO_NCF ON NOTADEBITO (comprobanteFiscal) WHERE comprobanteFiscal IS NOT NULL;
+GO
+
+-- Cantidad como DECIMAL en vez de INT: una venta o compra por fraccion de
+-- unidad (ej. 1.5 cajas, 0.750 de un producto a granel) se estaba truncando
+-- silenciosamente al anular la factura (Convert.ToInt32 en FacturaService).
+IF EXISTS (SELECT * FROM sys.columns c JOIN sys.types t ON c.system_type_id = t.system_type_id
+           WHERE c.object_id = OBJECT_ID('DFACTURA') AND c.name = 'cantidad' AND t.name = 'int')
+    ALTER TABLE DFACTURA ALTER COLUMN cantidad DECIMAL(18,3) NULL;
+GO
+IF EXISTS (SELECT * FROM sys.columns c JOIN sys.types t ON c.system_type_id = t.system_type_id
+           WHERE c.object_id = OBJECT_ID('PRODUCTOS') AND c.name = 'cantidad' AND t.name = 'int')
+    ALTER TABLE PRODUCTOS ALTER COLUMN cantidad DECIMAL(18,3) NULL;
+GO
+
+-- Si esta marcado, InventarioService.RegistrarMovimiento deja vender aunque la
+-- existencia quede en negativo (comportamiento de antes, para el negocio que
+-- factura primero y cuadra el inventario despues); si no, lo rechaza con un
+-- mensaje claro en vez de dejar el inventario negativo en silencio.
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('EMPRESA') AND name = 'permiteVentaSinExistencia')
+    ALTER TABLE EMPRESA ADD permiteVentaSinExistencia BIT NOT NULL DEFAULT 0;
 GO
 
 -- Usuario inicial para poder entrar por primera vez.

@@ -130,7 +130,7 @@ namespace PSC09
                         cmd.Parameters.AddWithValue("@tasaCambio", tasaCambio);
                         cmd.ExecuteNonQuery();
 
-                        SqlCommand cmdSec = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 5", cnx, tx);
+                        SqlCommand cmdSec = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 5 AND SECUENCIA < @numero", cnx, tx);
                         cmdSec.Parameters.AddWithValue("@numero", numeroPago);
                         cmdSec.ExecuteNonQuery();
 
@@ -247,7 +247,7 @@ namespace PSC09
             cmd.Parameters.AddWithValue("@monto", monto);
             cmd.Parameters.AddWithValue("@saldo", saldoNuevo);
             cmd.Parameters.AddWithValue("@idMoneda", idMoneda);
-            cmd.Parameters.AddWithValue("@montoBase", Math.Round(monto * tasaCambio, 2));
+            cmd.Parameters.AddWithValue("@montoBase", Dinero.Redondear(monto * tasaCambio));
             cmd.ExecuteNonQuery();
         }
 
@@ -361,7 +361,7 @@ namespace PSC09
 
         public static decimal ObtenerSaldoOrden(string numeroOrden, decimal montoOrden)
         {
-            return Math.Round(montoOrden - ObtenerMontoPagadoDeOrden(numeroOrden), 2);
+            return Dinero.Redondear(montoOrden - ObtenerMontoPagadoDeOrden(numeroOrden));
         }
 
         // Órdenes de compra activas de un proveedor que todavía tienen saldo pendiente,

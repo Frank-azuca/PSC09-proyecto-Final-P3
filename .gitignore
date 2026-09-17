@@ -361,3 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Artefactos de herramientas / archivos de trabajo fuera del repo de codigo
+graphify-out/
+COSTOS DE CAJAS VENTA LOCAL.xlsx
+KELVIN P FORMULARIO DE INGRESO Y GASTOS.xlsx

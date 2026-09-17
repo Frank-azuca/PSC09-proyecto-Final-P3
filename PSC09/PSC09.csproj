@@ -55,6 +55,7 @@
     <Compile Include="Clases\ComprobanteFiscal.cs" />
     <Compile Include="Clases\ConvertImage.cs" />
     <Compile Include="Clases\DocumentoPdf.cs" />
+    <Compile Include="Clases\Dinero.cs" />
     <Compile Include="Clases\CuentaCliente.cs" />
     <Compile Include="Clases\CuentaProveedor.cs" />
     <Compile Include="Clases\Empresa.cs" />

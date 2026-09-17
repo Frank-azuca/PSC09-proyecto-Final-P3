@@ -41,6 +41,7 @@ namespace PSC09
             this.txtDescuentoMaxPorcentaje = new System.Windows.Forms.TextBox();
             this.lblDescuentoMaxMonto = new System.Windows.Forms.Label();
             this.txtDescuentoMaxMonto = new System.Windows.Forms.TextBox();
+            this.chkPermiteVentaSinExistencia = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLogo)).BeginInit();
             this.SuspendLayout();
             //
@@ -286,12 +287,24 @@ namespace PSC09
             this.txtDescuentoMaxMonto.Size = new System.Drawing.Size(150, 29);
             this.txtDescuentoMaxMonto.TabIndex = 21;
             //
+            // chkPermiteVentaSinExistencia
+            //
+            this.chkPermiteVentaSinExistencia.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chkPermiteVentaSinExistencia.Location = new System.Drawing.Point(14, 592);
+            this.chkPermiteVentaSinExistencia.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.chkPermiteVentaSinExistencia.Name = "chkPermiteVentaSinExistencia";
+            this.chkPermiteVentaSinExistencia.Size = new System.Drawing.Size(500, 27);
+            this.chkPermiteVentaSinExistencia.TabIndex = 22;
+            this.chkPermiteVentaSinExistencia.Text = "Permitir vender aunque no haya existencia suficiente";
+            this.chkPermiteVentaSinExistencia.UseVisualStyleBackColor = true;
+            //
             // frmDatosEmpresa
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = PSC09.Tema.FondoClaro;
-            this.ClientSize = new System.Drawing.Size(910, 610);
+            this.ClientSize = new System.Drawing.Size(910, 640);
+            this.Controls.Add(this.chkPermiteVentaSinExistencia);
             this.Controls.Add(this.txtDescuentoMaxMonto);
             this.Controls.Add(this.lblDescuentoMaxMonto);
             this.Controls.Add(this.txtDescuentoMaxPorcentaje);
@@ -314,7 +327,7 @@ namespace PSC09
             this.Controls.Add(this.btnCerrar);
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.label1);
-            this.MinimumSize = new System.Drawing.Size(926, 650);
+            this.MinimumSize = new System.Drawing.Size(926, 680);
             this.Name = "frmDatosEmpresa";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "frmDatosEmpresa";
@@ -351,5 +364,6 @@ namespace PSC09
         private System.Windows.Forms.TextBox txtDescuentoMaxPorcentaje;
         private System.Windows.Forms.Label lblDescuentoMaxMonto;
         private System.Windows.Forms.TextBox txtDescuentoMaxMonto;
+        private System.Windows.Forms.CheckBox chkPermiteVentaSinExistencia;
     }
 }

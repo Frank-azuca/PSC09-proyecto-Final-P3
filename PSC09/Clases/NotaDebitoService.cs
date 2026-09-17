@@ -82,7 +82,7 @@ namespace PSC09
                 throw new Exception(errorComprobante);
             }
 
-            decimal monto = Math.Round(subtotal + impuesto, 2);
+            decimal monto = Dinero.Redondear(subtotal + impuesto);
             if (monto <= 0)
             {
                 throw new Exception("El monto de la nota de débito debe ser mayor a cero.");
@@ -121,7 +121,7 @@ namespace PSC09
                         cmd.Parameters.AddWithValue("@tasaCambio", tasaCambio);
                         cmd.ExecuteNonQuery();
 
-                        SqlCommand cmdSec = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 7", cnx, tx);
+                        SqlCommand cmdSec = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 7 AND SECUENCIA < @numero", cnx, tx);
                         cmdSec.Parameters.AddWithValue("@numero", numero.Substring(2));
                         cmdSec.ExecuteNonQuery();
 
@@ -130,6 +130,12 @@ namespace PSC09
                         CuentaCliente.RegistrarCargo(cnx, tx, idCliente.ToString(), fecha, numero, monto, idMoneda, tasaCambio);
 
                         tx.Commit();
+                    }
+                    catch (SqlException ex) when (ex.Number == 2601 || ex.Number == 2627)
+                    {
+                        tx.Rollback();
+                        throw new Exception("Ese numero de comprobante fiscal (" + comprobante + ") ya fue usado. " +
+                            "Es probable que otra caja haya guardado al mismo tiempo -- actualiza el comprobante y guarda de nuevo.");
                     }
                     catch
                     {

@@ -65,7 +65,7 @@ namespace PSC09
                         cmd.Parameters.AddWithValue("@tasaCambio", tasaCambio);
                         cmd.ExecuteNonQuery();
 
-                        SqlCommand cmdSec = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 4", cnx, tx);
+                        SqlCommand cmdSec = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 4 AND SECUENCIA < @numero", cnx, tx);
                         cmdSec.Parameters.AddWithValue("@numero", numero);
                         cmdSec.ExecuteNonQuery();
 
@@ -88,7 +88,7 @@ namespace PSC09
                             totalOrdenNueva += linea.Cantidad * linea.CostoUnitario;
                         }
                         SqlCommand cmdTotal = new SqlCommand("UPDATE ORDENCOMPRA SET TOTALBASE = @totalBase WHERE NUMERO = @numero", cnx, tx);
-                        cmdTotal.Parameters.AddWithValue("@totalBase", Math.Round(totalOrdenNueva * tasaCambio, 2));
+                        cmdTotal.Parameters.AddWithValue("@totalBase", Dinero.Redondear(totalOrdenNueva * tasaCambio));
                         cmdTotal.Parameters.AddWithValue("@numero", numero);
                         cmdTotal.ExecuteNonQuery();
 
@@ -188,7 +188,7 @@ namespace PSC09
                             // PRODUCTOS.COSTO siempre está en moneda base (igual que
                             // PRODUCTOS.precioVenta): el costo unitario de la línea, expresado
                             // en la moneda de la orden, se convierte antes de costear.
-                            decimal costoUnitarioBase = Math.Round(linea.CostoUnitario * tasaCambio, 2);
+                            decimal costoUnitarioBase = Dinero.Redondear(linea.CostoUnitario * tasaCambio);
 
                             decimal? nuevoCosto = null;
                             if (metodoCosteo == CosteoUltimoCosto)
@@ -199,7 +199,7 @@ namespace PSC09
                             {
                                 decimal cantidadTotal = cantidadPrevia + linea.Cantidad;
                                 nuevoCosto = cantidadTotal > 0
-                                    ? Math.Round((cantidadPrevia * costoPrevio + linea.Cantidad * costoUnitarioBase) / cantidadTotal, 2)
+                                    ? Dinero.Redondear((cantidadPrevia * costoPrevio + linea.Cantidad * costoUnitarioBase) / cantidadTotal)
                                     : costoUnitarioBase;
                             }
 

@@ -22,8 +22,9 @@ namespace PSC09
     // (PRODUCTOPRECIO): si el producto tiene un precio explícito puesto para esa
     // moneda (ej. una lista de precios en USD para un artículo importado), se usa tal
     // cual; si no, se calcula convirtiendo el precio en moneda base con la tasa del
-    // día (PRODUCTOS.precioVenta/costo * tasaCambio). En la moneda base siempre es
-    // PRODUCTOS.precioVenta/costo sin tocar, tasa incluida o no.
+    // día (PRODUCTOS.precioVenta/costo / tasaCambio, ya que tasaCambio son los RD$
+    // que equivale 1 unidad de esa moneda -- ver TasaCambioService). En la moneda
+    // base siempre es PRODUCTOS.precioVenta/costo sin tocar, tasa incluida o no.
     public static class PrecioProductoService
     {
         public static decimal ResolverPrecioVenta(string articulo, int idMoneda, decimal tasaCambio)
@@ -33,7 +34,7 @@ namespace PSC09
             if (precioOverride.HasValue) return precioOverride.Value;
 
             decimal baseValue = precioBase ?? 0;
-            return Math.Round(baseValue * tasaCambio, 2);
+            return tasaCambio > 0 ? Dinero.Redondear(baseValue / tasaCambio) : 0;
         }
 
         public static decimal ResolverCosto(string articulo, int idMoneda, decimal tasaCambio)
@@ -43,7 +44,7 @@ namespace PSC09
             if (costoOverride.HasValue) return costoOverride.Value;
 
             decimal baseValue = costoBase ?? 0;
-            return Math.Round(baseValue * tasaCambio, 2);
+            return tasaCambio > 0 ? Dinero.Redondear(baseValue / tasaCambio) : 0;
         }
 
         // Devuelve el override de PRODUCTOPRECIO para esa columna (NULL si no hay uno

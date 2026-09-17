@@ -334,13 +334,13 @@ namespace PSC09
             // línea, sin tener que guardar la tasa de cada línea por separado.
             zDescuento = CalcularDescuento(zSubtotal, zTotal);
             decimal factor = zTotal > 0 ? zDescuento / zTotal : 0;
-            decimal subtotalConDescuento = Math.Round(zSubtotal * (1 - factor), 2);
-            decimal impuestoConDescuento = Math.Round(zImpuesto * (1 - factor), 2);
+            decimal subtotalConDescuento = Dinero.Redondear(zSubtotal * (1 - factor));
+            decimal impuestoConDescuento = Dinero.Redondear(zImpuesto * (1 - factor));
 
             lblSubtotal.Text = subtotalConDescuento.ToString();
             lblImpuesto.Text = impuestoConDescuento.ToString();
             lblDescuento.Text = zDescuento.ToString();
-            lblTotal.Text = Math.Round(subtotalConDescuento + impuestoConDescuento, 2).ToString();
+            lblTotal.Text = Dinero.Redondear(subtotalConDescuento + impuestoConDescuento).ToString();
         }
 
         // Calcula el monto de descuento a partir de lo escrito en txtDescuento y el modo
@@ -367,7 +367,7 @@ namespace PSC09
                 // Sobre el TOTAL (no el subtotal): así "Descuento Aplicado" siempre
                 // coincide con lo que realmente baja el Total (Precio - Descuento
                 // Aplicado = Total), sea el artículo con ITBIS incluido o no.
-                return Math.Round(baseTotal * valor / 100m, 2);
+                return Dinero.Redondear(baseTotal * valor / 100m);
             }
 
             if (empresa.DescuentoMaxMonto.HasValue && valor > empresa.DescuentoMaxMonto.Value)
@@ -375,7 +375,7 @@ namespace PSC09
                 valor = empresa.DescuentoMaxMonto.Value;
             }
             if (valor > baseTotal) valor = baseTotal;
-            return Math.Round(valor, 2);
+            return Dinero.Redondear(valor);
         }
 
         // Valida lo escrito en txtDescuento (sin topar/clamp): si no es válido, devuelve el
@@ -808,8 +808,8 @@ namespace PSC09
                         totalImp = lnImpuesto * subtotal;
                     }
 
-                    lnSubtotalBruto = Math.Round(subtotal, 2);
-                    lnImpuestoBruto = Math.Round(totalImp, 2);
+                    lnSubtotalBruto = Dinero.Redondear(subtotal);
+                    lnImpuestoBruto = Dinero.Redondear(totalImp);
 
                     ActualizarPreviewLinea();
                 }
@@ -838,8 +838,8 @@ namespace PSC09
             }
 
             decimal factorLn = totalBruto > 0 ? descuentoLn / totalBruto : 0;
-            lblImpuestoLn.Text = Math.Round(lnImpuestoBruto * (1 - factorLn), 2).ToString();
-            lblTotalLn.Text = Math.Round(lnSubtotalBruto * (1 - factorLn), 2).ToString();
+            lblImpuestoLn.Text = Dinero.Redondear(lnImpuestoBruto * (1 - factorLn)).ToString();
+            lblTotalLn.Text = Dinero.Redondear(lnSubtotalBruto * (1 - factorLn)).ToString();
         }
 
         private void cboTipoComprobante_SelectedIndexChanged(object sender, EventArgs e)
@@ -998,8 +998,8 @@ namespace PSC09
                 decimal valor = descuentoLn > totalBruto ? totalBruto : descuentoLn;
                 decimal factorLn = totalBruto > 0 ? valor / totalBruto : 0;
 
-                fila.Cells[4].Value = Math.Round(impuestoBruto * (1 - factorLn), 2).ToString();
-                fila.Cells[5].Value = Math.Round(subtotalBruto * (1 - factorLn), 2).ToString();
+                fila.Cells[4].Value = Dinero.Redondear(impuestoBruto * (1 - factorLn)).ToString();
+                fila.Cells[5].Value = Dinero.Redondear(subtotalBruto * (1 - factorLn)).ToString();
                 fila.Cells[6].Value = valor.ToString("0.00");
             }
 

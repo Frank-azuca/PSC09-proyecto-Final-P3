@@ -191,7 +191,15 @@ namespace PSC09
             string parteNumerica = comprobanteUsado.Trim().ToUpper().Substring(tipo.Prefijo.Length);
             long numero = Convert.ToInt64(parteNumerica);
 
-            FijarProximoNumero(cnx, tx, tipo, numero + 1);
+            // A diferencia de FijarProximoNumero (que un administrador puede usar para
+            // corregir la secuencia a mano, incluso hacia atrás, desde Configuración),
+            // este avance automático tras guardar un comprobante NUNCA debe retroceder:
+            // si dos cajas guardan casi al mismo tiempo, que la secuencia se quede en el
+            // numero mas alto de las dos en vez de que la segunda la regrese.
+            SqlCommand cmd = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = @id AND SECUENCIA < @numero", cnx, tx);
+            cmd.Parameters.AddWithValue("@numero", numero);
+            cmd.Parameters.AddWithValue("@id", tipo.Id);
+            cmd.ExecuteNonQuery();
         }
 
         // Fija directamente cuál es el próximo número a usar de este tipo (lo que la

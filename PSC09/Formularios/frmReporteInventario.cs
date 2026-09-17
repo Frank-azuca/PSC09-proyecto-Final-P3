@@ -93,7 +93,7 @@ namespace PSC09
                     {
                         int existencia = rdr["CANTIDAD"] == DBNull.Value ? 0 : Convert.ToInt32(rdr["CANTIDAD"]);
                         decimal costo = rdr["COSTO"] == DBNull.Value ? 0 : Convert.ToDecimal(rdr["COSTO"]);
-                        decimal valorInventario = Math.Round(existencia * costo, 2);
+                        decimal valorInventario = Dinero.Redondear(existencia * costo);
 
                         int idx = dgv.Rows.Add();
                         DataGridViewRow row = dgv.Rows[idx];
@@ -117,7 +117,7 @@ namespace PSC09
                 }
             }
 
-            lblResumen.Text = cantidadProductos + " producto(s) — Valor total en inventario: " + Math.Round(valorTotal, 2);
+            lblResumen.Text = cantidadProductos + " producto(s) — Valor total en inventario: " + Dinero.Redondear(valorTotal);
         }
 
         private void btnExportar_Click(object sender, EventArgs e)

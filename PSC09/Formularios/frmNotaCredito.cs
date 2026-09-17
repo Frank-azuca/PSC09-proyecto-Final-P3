@@ -245,7 +245,7 @@ namespace PSC09
                 total += subtotal + impuesto;
             }
 
-            lblTotalValor.Text = Math.Round(total, 2).ToString("0.00");
+            lblTotalValor.Text = Dinero.Redondear(total).ToString("0.00");
         }
 
         private void btnGuardar_Click(object sender, EventArgs e)

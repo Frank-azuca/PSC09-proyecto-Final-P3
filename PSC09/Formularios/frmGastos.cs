@@ -131,7 +131,7 @@ namespace PSC09
                 }
             }
 
-            lblResumen.Text = cantidad + " gasto(s) — Total: " + Math.Round(totalGeneral, 2);
+            lblResumen.Text = cantidad + " gasto(s) — Total: " + Dinero.Redondear(totalGeneral);
         }
 
         private void btnNuevo_Click(object sender, EventArgs e)

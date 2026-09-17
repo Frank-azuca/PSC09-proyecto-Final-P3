@@ -42,6 +42,7 @@ namespace PSC09
             txtCorreo.Text = datos.Correo;
             txtDescuentoMaxPorcentaje.Text = datos.DescuentoMaxPorcentaje.HasValue ? datos.DescuentoMaxPorcentaje.Value.ToString("0.####") : "";
             txtDescuentoMaxMonto.Text = datos.DescuentoMaxMonto.HasValue ? datos.DescuentoMaxMonto.Value.ToString("0.##") : "";
+            chkPermiteVentaSinExistencia.Checked = datos.PermiteVentaSinExistencia;
 
             logoActual = datos.Logo;
             MostrarLogo();
@@ -138,7 +139,8 @@ namespace PSC09
                     Correo = txtCorreo.Text.Trim(),
                     Logo = logoActual,
                     DescuentoMaxPorcentaje = descuentoMaxPorcentaje,
-                    DescuentoMaxMonto = descuentoMaxMonto
+                    DescuentoMaxMonto = descuentoMaxMonto,
+                    PermiteVentaSinExistencia = chkPermiteVentaSinExistencia.Checked
                 });
 
                 MessageBox.Show("Datos de la empresa guardados.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);

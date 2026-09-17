@@ -144,7 +144,7 @@ namespace PSC09
                 }
             }
 
-            lblResumen.Text = cantidad + " factura(s) — Total (equivalente en " + MonedaService.ObtenerMonedaBase().Codigo + "): " + Math.Round(totalGeneral, 2);
+            lblResumen.Text = cantidad + " factura(s) — Total (equivalente en " + MonedaService.ObtenerMonedaBase().Codigo + "): " + Dinero.Redondear(totalGeneral);
         }
 
         private void btnAnular_Click(object sender, EventArgs e)

@@ -472,90 +472,119 @@ namespace PSC09
         {
             byte[] byteArrayImagen = ConvertImage.ImagetoByteArray(pictureBox1.Image);
 
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-
-            SqlCommand cmd = new SqlCommand("UPDATE PRODUCTOS SET IMAGEN = @A1 WHERE ITEM = @item", cnx);
-            cmd.Parameters.AddWithValue("@A1", byteArrayImagen);
-            cmd.Parameters.AddWithValue("@item", numProducto);
-
-            cmd.ExecuteNonQuery();
-            cnx.Close();
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            using (SqlCommand cmd = new SqlCommand("UPDATE PRODUCTOS SET IMAGEN = @A1 WHERE ITEM = @item", cnx))
+            {
+                cnx.Open();
+                cmd.Parameters.AddWithValue("@A1", byteArrayImagen);
+                cmd.Parameters.AddWithValue("@item", numProducto);
+                cmd.ExecuteNonQuery();
+            }
         }
 
-        private void ActualizaData()
+        // cantidad/costo/precioVenta/impuesto ya vienen parseados y validados como
+        // decimal desde btnGuardar_Click (ver ValidarNumeros) -- aqui solo se mandan
+        // como parametros tipados en vez de texto crudo.
+        private void ActualizaData(decimal cantidad, decimal costo, decimal precioVenta, decimal impuesto)
         {
             string stQuery = " UPDATE PRODUCTOS SET DESCRIPCION = @A2, CANTIDAD = @A3, COSTO = @A4, PRECIOVENTA = @A5, IMPUESTO = @A6, BARCODE = @A7, TIENEIMPUESTO = @A8 " +
                              " WHERE ITEM = @A1 ";
 
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            SqlCommand cdm = new SqlCommand(stQuery, cnx);
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            using (SqlCommand cdm = new SqlCommand(stQuery, cnx))
+            {
+                cnx.Open();
 
-            cdm.Parameters.AddWithValue("@A1", txtCodigo.Text);
-            cdm.Parameters.AddWithValue("@A2", txtDescripcion.Text);
-            cdm.Parameters.AddWithValue("@A3", txtExistencia.Text);
-            cdm.Parameters.AddWithValue("@A4", txtCostoProducto.Text);
-            cdm.Parameters.AddWithValue("@A5", txtPrecioVenta.Text);
-            cdm.Parameters.AddWithValue("@A6", txtImpuesto.Text);
-            cdm.Parameters.AddWithValue("@A7", txtBarCode.Text);
-            cdm.Parameters.AddWithValue("@A8", chkImpuestoIncluido.Checked ? 1 : 0);
+                cdm.Parameters.AddWithValue("@A1", txtCodigo.Text);
+                cdm.Parameters.AddWithValue("@A2", txtDescripcion.Text);
+                cdm.Parameters.Add("@A3", SqlDbType.Decimal).Value = cantidad;
+                cdm.Parameters.Add("@A4", SqlDbType.Decimal).Value = costo;
+                cdm.Parameters.Add("@A5", SqlDbType.Decimal).Value = precioVenta;
+                cdm.Parameters.Add("@A6", SqlDbType.Decimal).Value = impuesto;
+                cdm.Parameters.AddWithValue("@A7", txtBarCode.Text);
+                cdm.Parameters.AddWithValue("@A8", chkImpuestoIncluido.Checked ? 1 : 0);
 
-            cdm.ExecuteNonQuery();
-
-            cdm.Dispose();
-            cnx.Close();
-
+                cdm.ExecuteNonQuery();
+            }
         }
 
-        private void InsertarData()
+        private void InsertarData(decimal cantidad, decimal costo, decimal precioVenta, decimal impuesto)
         {
             string stQuery = "INSERT INTO PRODUCTOS (item, descripcion, cantidad, costo, precioventa, impuesto, estatusproducto, barcode, tieneimpuesto) " +
                              " VALUES ( @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8, @A9 )";
 
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            SqlCommand cdm = new SqlCommand(stQuery, cnx);
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            using (SqlCommand cdm = new SqlCommand(stQuery, cnx))
+            {
+                cnx.Open();
 
-            cdm.Parameters.AddWithValue("@A1", txtCodigo.Text);
-            cdm.Parameters.AddWithValue("@A2", txtDescripcion.Text);
-            cdm.Parameters.AddWithValue("@A3", txtExistencia.Text);
-            cdm.Parameters.AddWithValue("@A4", txtCostoProducto.Text);
-            cdm.Parameters.AddWithValue("@A5", txtPrecioVenta.Text);
-            cdm.Parameters.AddWithValue("@A6", txtImpuesto.Text);
-            cdm.Parameters.AddWithValue("@A7", 1);
-            cdm.Parameters.AddWithValue("@A8", txtBarCode.Text);
-            cdm.Parameters.AddWithValue("@A9", chkImpuestoIncluido.Checked ? 1 : 0);
+                cdm.Parameters.AddWithValue("@A1", txtCodigo.Text);
+                cdm.Parameters.AddWithValue("@A2", txtDescripcion.Text);
+                cdm.Parameters.Add("@A3", SqlDbType.Decimal).Value = cantidad;
+                cdm.Parameters.Add("@A4", SqlDbType.Decimal).Value = costo;
+                cdm.Parameters.Add("@A5", SqlDbType.Decimal).Value = precioVenta;
+                cdm.Parameters.Add("@A6", SqlDbType.Decimal).Value = impuesto;
+                cdm.Parameters.AddWithValue("@A7", 1);
+                cdm.Parameters.AddWithValue("@A8", txtBarCode.Text);
+                cdm.Parameters.AddWithValue("@A9", chkImpuestoIncluido.Checked ? 1 : 0);
 
-            cdm.ExecuteNonQuery();
-
-            cdm.Dispose();
-            cnx.Close();
-
+                cdm.ExecuteNonQuery();
+            }
         }
 
         private void ActualizaSecuencia(string numProducto)
         {
-            string stQuery = "UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 1";
-
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            SqlCommand cmd = new SqlCommand(stQuery, cnx);
-            cmd.Parameters.AddWithValue("@numero", numProducto);
-
-            cmd.ExecuteNonQuery();
-
-            cmd.Dispose();
-            cnx.Close();
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            using (SqlCommand cmd = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 1 AND SECUENCIA < @numero", cnx))
+            {
+                cnx.Open();
+                cmd.Parameters.AddWithValue("@numero", numProducto);
+                cmd.ExecuteNonQuery();
+            }
         }
 
         private void BorrarData(string numProducto)
         {
-            SqlConnection cnx = new SqlConnection(cnn.db); cnx.Open();
-            string tQuery = "UPDATE PRODUCTOS SET estatusProducto = 0 WHERE item = @item";
+            using (SqlConnection cnx = new SqlConnection(cnn.db))
+            using (SqlCommand cmd = new SqlCommand("UPDATE PRODUCTOS SET estatusProducto = 0 WHERE item = @item", cnx))
+            {
+                cnx.Open();
+                cmd.Parameters.AddWithValue("@item", numProducto);
+                cmd.ExecuteNonQuery();
+            }
+        }
 
-            SqlCommand cmd = new SqlCommand(tQuery, cnx);
-            cmd.Parameters.AddWithValue("@item", numProducto);
-            cmd.ExecuteNonQuery();
+        // Valida que Existencia/Costo/Precio de Venta/Impuesto sean numeros validos
+        // antes de guardar (antes se mandaba el texto crudo a columnas numericas,
+        // confiando en la conversion implicita de SQL Server -- fallaba feo o
+        // guardaba un valor inesperado si el cajero escribia una coma, una letra, etc.)
+        private bool ValidarNumeros(out decimal cantidad, out decimal costo, out decimal precioVenta, out decimal impuesto, out string error)
+        {
+            cantidad = costo = precioVenta = impuesto = 0;
+            error = null;
 
-            cmd.Dispose();
-            cnx.Close();
+            if (!decimal.TryParse(txtExistencia.Text, out cantidad) || cantidad < 0)
+            {
+                error = "La Existencia debe ser un número válido mayor o igual a 0.";
+                return false;
+            }
+            if (!decimal.TryParse(txtCostoProducto.Text, out costo) || costo < 0)
+            {
+                error = "El Costo debe ser un número válido mayor o igual a 0.";
+                return false;
+            }
+            if (!decimal.TryParse(txtPrecioVenta.Text, out precioVenta) || precioVenta < 0)
+            {
+                error = "El Precio de Venta debe ser un número válido mayor o igual a 0.";
+                return false;
+            }
+            if (!decimal.TryParse(txtImpuesto.Text, out impuesto) || impuesto < 0)
+            {
+                error = "El Impuesto debe ser un número válido mayor o igual a 0.";
+                return false;
+            }
+
+            return true;
         }
 
         // Eventos
@@ -576,9 +605,17 @@ namespace PSC09
                                 {
                                     if (txtBarCode.Text.Trim() != string.Empty)
                                     {
+                                        decimal cantidad, costo, precioVenta, impuesto;
+                                        string errorNumero;
+                                        if (!ValidarNumeros(out cantidad, out costo, out precioVenta, out impuesto, out errorNumero))
+                                        {
+                                            MessageBox.Show(errorNumero, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                            return;
+                                        }
+
                                         if (DataExists == false)
                                         {
-                                            InsertarData();
+                                            InsertarData(cantidad, costo, precioVenta, impuesto);
                                             ActualizarImagenProducto(txtCodigo.Text);
                                             ActualizaSecuencia(txtCodigo.Text);
                                             LimpiarFormulario();
@@ -586,7 +623,7 @@ namespace PSC09
                                         }
                                         else
                                         {
-                                            ActualizaData();
+                                            ActualizaData(cantidad, costo, precioVenta, impuesto);
                                             ActualizarImagenProducto(txtCodigo.Text);
                                             LimpiarFormulario();
                                             MessageBox.Show("Datos actualizados exitosamente", "Succesfull", MessageBoxButtons.OK, MessageBoxIcon.Information);

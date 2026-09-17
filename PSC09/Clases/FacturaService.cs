@@ -85,7 +85,7 @@ namespace PSC09
                 {
                     try
                     {
-                        decimal montoFacturadoBase = Math.Round(total * tasaCambio, 2);
+                        decimal montoFacturadoBase = Dinero.Redondear(total * tasaCambio);
 
                         string stQuery = " INSERT INTO HFACTURA (FACTURA, CLIENTE, FECHA, SUBTOTAL, IMPUESTO, MONTOFACTURADO, ACTIVO, IDTIPOCOMPROBANTE, COMPROBANTEFISCAL, DESCUENTO, DESCUENTOVALOR, DESCUENTOESPORCENTAJE, IDMONEDA, TASACAMBIO, MONTOFACTURADOBASE) " +
                                          " VALUES (@A0, @A1, @A2, @A3, @A4, @A5, @A6, @A7, @A8, @A9, @A10, @A11, @A12, @A13, @A14); ";
@@ -108,7 +108,7 @@ namespace PSC09
                         cmd.Parameters.AddWithValue("@A14", montoFacturadoBase);
                         cmd.ExecuteNonQuery();
 
-                        SqlCommand cmdSecFactura = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 2", cnx, tx);
+                        SqlCommand cmdSecFactura = new SqlCommand("UPDATE SECUENCIA SET SECUENCIA = @numero WHERE id = 2 AND SECUENCIA < @numero", cnx, tx);
                         cmdSecFactura.Parameters.AddWithValue("@numero", numeroFactura);
                         cmdSecFactura.ExecuteNonQuery();
 
@@ -139,6 +139,12 @@ namespace PSC09
                         CuentaCliente.RegistrarCargo(cnx, tx, cliente, fecha, numeroFactura, total, idMoneda, tasaCambio);
 
                         tx.Commit();
+                    }
+                    catch (SqlException ex) when (ex.Number == 2601 || ex.Number == 2627)
+                    {
+                        tx.Rollback();
+                        throw new Exception("Ese numero de comprobante fiscal (" + comprobante + ") ya fue usado. " +
+                            "Es probable que otra caja haya guardado al mismo tiempo -- actualiza el comprobante (click derecho sobre el campo) y guarda de nuevo.");
                     }
                     catch
                     {
@@ -308,7 +314,7 @@ namespace PSC09
                 {
                     try
                     {
-                        List<Tuple<string, int>> lineas = new List<Tuple<string, int>>();
+                        List<Tuple<string, decimal>> lineas = new List<Tuple<string, decimal>>();
 
                         SqlCommand cmdSel = new SqlCommand(
                             "SELECT ARTICULO, CANTIDAD FROM DFACTURA WHERE FACTURA = @factura AND ACTIVO = '1'", cnx, tx);
@@ -318,11 +324,11 @@ namespace PSC09
                         {
                             while (rdr.Read())
                             {
-                                lineas.Add(Tuple.Create(rdr["ARTICULO"].ToString(), Convert.ToInt32(rdr["CANTIDAD"])));
+                                lineas.Add(Tuple.Create(rdr["ARTICULO"].ToString(), Convert.ToDecimal(rdr["CANTIDAD"])));
                             }
                         }
 
-                        foreach (Tuple<string, int> linea in lineas)
+                        foreach (Tuple<string, decimal> linea in lineas)
                         {
                             InventarioService.RegistrarMovimiento(cnx, tx, linea.Item1, DateTime.Now, InventarioService.Entrada, linea.Item2, "Anulacion", numFactura, null);
                         }
