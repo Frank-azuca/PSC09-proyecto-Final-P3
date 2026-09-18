@@ -183,9 +183,8 @@ para todo el sistema, no sólo para Factura.
   se dejaron intactas a propósito, no eran datos de prueba).
 
 **Falta (a propósito, fuera de esta ronda):**
-- No hay todavía una pantalla para **consultar** la bitácora (`SELECT * FROM
-  AUDITORIA` es la única forma de verla por ahora). Sería una pantalla de sólo
-  lectura, parecida a un reporte, con filtro por usuario/entidad/fecha.
+- ~~No hay todavía una pantalla para consultar la bitácora~~ — RESUELTO
+  (2026-09-18, ver "Séptima ronda" más abajo).
 - No quedó conectada en: Monedas/Tasas de Cambio ya sí quedaron, pero
   `ComprobanteFiscal.FijarProximoNumero` (corrección manual de secuencia) y algunas
   pantallas menores no se revisaron una por una — el criterio fue cubrir las
@@ -193,6 +192,19 @@ para todo el sistema, no sólo para Factura.
   auditar cada `INSERT`/`UPDATE` del proyecto.
 - No hay una forma de purgar o archivar filas viejas de `AUDITORIA` (crecerá sin
   límite); no se pidió y no urge con el volumen actual del negocio.
+
+**Séptima ronda (18 de septiembre de 2026, mismo día): pantalla para consultar la
+bitácora.** `Formularios/frmAuditoria.cs` (nueva, Reporte → Auditoría, permiso
+`AUDITORIA` nuevo, sembrado solo para Administrador): pantalla de sólo lectura
+sobre `Auditoria.ObtenerRegistros()` (nueva, hasta 1000 filas más recientes del
+rango elegido) con filtro por Usuario (texto), Entidad (combo poblado dinámicamente
+con `Auditoria.ObtenerEntidadesDistintas()`, no una lista fija que se desactualice)
+y Fecha Desde/Hasta (por defecto los últimos 30 días). Reusa `ExportadorCsv` para
+exportar. A propósito no tiene botón de editar ni borrar -- una bitácora que se
+puede alterar desde su propia pantalla de consulta no sirve como bitácora. Probado
+en vivo: se ven las 10 filas reales que ya había (facturas, ediciones de producto y
+datos de empresa, un cliente creado, y los dos logins de esta sesión), y el filtro
+por Entidad = FACTURA devuelve exactamente las 3 facturas.
 
 ---
 
@@ -875,3 +887,8 @@ pedía para Factura, conectada en la mayoría de las acciones de crear/editar/an
 del sistema, incluido login/logout (ver "Sexta ronda" al principio del documento).
 Falta una pantalla para consultarla. Todo lo demás de P2-P4 sigue pendiente, sin
 cambios.*
+
+*Séptima actualización (18 de septiembre de 2026, mismo día): se agregó la pantalla
+que faltaba para consultar la bitácora (`frmAuditoria`, Reporte → Auditoría, ver
+"Séptima ronda" al principio del documento), probada en vivo contra los datos
+reales que ya había. Todo lo demás de P2-P4 sigue pendiente, sin cambios.*

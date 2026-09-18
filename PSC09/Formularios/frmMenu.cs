@@ -69,8 +69,10 @@ namespace PSC09
             inventarioToolStripMenuItem.Available = Sesion.Puede(Permisos.ReporteInventario);
             consolidadoToolStripMenuItem.Available = Sesion.Puede(Permisos.ReporteConsolidado);
             ordenesCompraReporteToolStripMenuItem.Available = Sesion.Puede(Permisos.ReporteOrdenesCompra);
+            auditoriaToolStripMenuItem.Available = Sesion.Puede(Permisos.Auditoria);
             reporteToolStripMenuItem.Available = facturaToolStripMenuItem1.Available || inventarioToolStripMenuItem.Available ||
-                consolidadoToolStripMenuItem.Available || ordenesCompraReporteToolStripMenuItem.Available;
+                consolidadoToolStripMenuItem.Available || ordenesCompraReporteToolStripMenuItem.Available ||
+                auditoriaToolStripMenuItem.Available;
 
             permisoAUsuarioToolStripMenuItem.Available = Sesion.Puede(Permisos.PermisosRol);
             comprobantesFiscalesToolStripMenuItem.Available = Sesion.Puede(Permisos.ComprobantesFiscales);
@@ -287,6 +289,15 @@ namespace PSC09
             this.Close();
 
             frmEstadoCuentaProveedor frm = new frmEstadoCuentaProveedor();
+            frm.Show();
+        }
+
+        private void auditoriaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!Sesion.Puede(Permisos.Auditoria)) { SinPermiso(); return; }
+            this.Close();
+
+            frmAuditoria frm = new frmAuditoria();
             frm.Show();
         }
 

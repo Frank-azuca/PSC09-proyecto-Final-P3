@@ -54,6 +54,7 @@
             this.inventarioToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.consolidadoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ordenesCompraReporteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.auditoriaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.configuraciónToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.respaldarBaseDeDatosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.permisoAUsuarioToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -252,7 +253,8 @@
             this.reporteToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.inventarioToolStripMenuItem,
             this.consolidadoToolStripMenuItem,
-            this.ordenesCompraReporteToolStripMenuItem});
+            this.ordenesCompraReporteToolStripMenuItem,
+            this.auditoriaToolStripMenuItem});
             this.reporteToolStripMenuItem.Name = "reporteToolStripMenuItem";
             this.reporteToolStripMenuItem.Size = new System.Drawing.Size(60, 22);
             this.reporteToolStripMenuItem.Text = "Reporte";
@@ -284,6 +286,13 @@
             this.ordenesCompraReporteToolStripMenuItem.Size = new System.Drawing.Size(113, 22);
             this.ordenesCompraReporteToolStripMenuItem.Text = "Órdenes de Compra";
             this.ordenesCompraReporteToolStripMenuItem.Click += new System.EventHandler(this.ordenesCompraReporteToolStripMenuItem_Click);
+            //
+            // auditoriaToolStripMenuItem
+            //
+            this.auditoriaToolStripMenuItem.Name = "auditoriaToolStripMenuItem";
+            this.auditoriaToolStripMenuItem.Size = new System.Drawing.Size(113, 22);
+            this.auditoriaToolStripMenuItem.Text = "Auditoría";
+            this.auditoriaToolStripMenuItem.Click += new System.EventHandler(this.auditoriaToolStripMenuItem_Click);
             //
             // configuraciónToolStripMenuItem
             // 
@@ -444,6 +453,7 @@
         private System.Windows.Forms.ToolStripMenuItem inventarioToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem consolidadoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem ordenesCompraReporteToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem auditoriaToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem salirToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem cerrarProgramaToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem cerrarSesionToolStripMenuItem;
