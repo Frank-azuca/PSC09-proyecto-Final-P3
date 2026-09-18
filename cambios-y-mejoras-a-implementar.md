@@ -94,6 +94,65 @@ contra la app real: tras el fix, el admin ve todas las opciones correspondientes
 sus 25 permisos. Esto cierra la única verificación manual que P1.6 tenía pendiente
 (ver "Orden de ejecución sugerido" más abajo).
 
+**Quinta ronda (17 de septiembre de 2026, mismo día): seis pendientes chicos de
+P2-P4 resueltos en una sola pasada, todos probados contra la app real.**
+
+- **P1.6, verificación que faltaba, cerrada de verdad:** se creó un usuario de
+  prueba con rol Cajero, se inició sesión con él contra la app compilada, y se
+  confirmó que el menú muestra exactamente lo esperado (Registro con solo los dos
+  ítems muertos sin permiso asociado, Ventas, Cuentas por Cobrar, Reporte, Salir —
+  nada de Cuentas por Pagar ni Configuración). Usuario de prueba borrado al terminar.
+- **P2.4 (parcial) · Validación de Cédula/RNC:** `Clases/ValidadorFiscal.cs` valida
+  el dígito verificador de la Cédula dominicana (11 dígitos) desde
+  `frmCliente.btnGuardar_Click`. Solo avisa (MessageBox Sí/No), no bloquea — un typo
+  es más probable que un documento real inválido. El RNC (9 dígitos) sólo se valida
+  por longitud: no hay un algoritmo de dígito verificador de RNC igual de bien
+  documentado públicamente, y mejor no validar que validar mal el identificador
+  fiscal real de un negocio. Falta la columna `tipoIdentificacion` (RNC vs. Cédula
+  explícito) que pide P2.2 completo.
+- **P3.2 (parcial) · Pruebas unitarias de aritmética:** se extrajo
+  `Clases/ConversionMoneda.cs` (la división base/tasa que P1.8 encontró invertida)
+  de `PrecioProductoService`, y se agregó `PSC09.Tests/DineroYMonedaTests.cs` (17
+  pruebas) contra `Dinero`, `ConversionMoneda` y `ValidadorFiscal` — enlazadas
+  directo en el .csproj de pruebas (`Compile Include` con `Link`) porque son clases
+  puras sin WinForms ni SqlClient, así que compilan igual en el net8.0 de
+  `PSC09.Tests`. Las 17 pasan. **Hallazgo colateral:** las pruebas de interfaz con
+  Appium/Selenium que ya existían (`FacturaTests`, `LoginTests`, `NavigationTests`,
+  `ProductosTests`, `TestBase`) actualmente **no compilan** — usan tipos
+  (`WindowsElement`/`WindowsDriver`) que no existen en la versión de
+  `Appium.WebDriver` referenciada (8.2.0). No se investigó ni se corrigió (fuera de
+  alcance de esta ronda); para correr las pruebas unitarias nuevas mientras tanto,
+  esos 5 archivos se sacaron temporalmente del proyecto, se verificó, y se
+  restauraron intactos.
+- **P3.4 (parcial) · Registro de errores:** `Clases/Log.cs`, nueva, escribe a un
+  archivo de texto (carpeta `Logs/` junto al ejecutable). Conectada a los 8 sitios
+  que tragaban en silencio un error de impresión después de que la operación
+  principal ya había quedado guardada (frmFactura x2, frmPuntoVenta x2, frmCobro,
+  frmNotaCredito, frmNotaDebito, frmPagoProveedor, frmReciboIngreso), y a
+  `frmProductos.Code128` (que además perdía el stack trace original al envolver la
+  excepción — ahora lo preserva como `InnerException`). El resto de los 70+ bloques
+  `catch` del proyecto queda para una ronda aparte.
+- **P3.10 · Centralizar la ruta de documentos:** `Empresa.CarpetaDocumentos()`
+  (con columna nueva `EMPRESA.carpetaDocumentos`) reemplaza los 7 usos hardcodeados
+  de `Environment.SpecialFolder.Desktop` (FacturaService, CuentaCliente,
+  CuentaProveedor, NotaCreditoService, NotaDebitoService, ExportadorCsv,
+  frmFactura). Configurable desde Configuración → Datos de la Empresa (campo +
+  "Elegir carpeta..."); vacío sigue cayendo al Escritorio.
+- **P4 (parcial) · Respaldo de base de datos bajo demanda:** `Clases/
+  RespaldoService.cs` corre `BACKUP DATABASE ... TO DISK`. Nuevo permiso
+  `RESPALDO_BD` (solo Administrador) y nuevo ítem "Configuración → Respaldar Base de
+  Datos", que reemplaza el ítem muerto "Opciones del Menú" (mismo patrón que
+  "Permiso a Usuario" → "Permisos por Rol"). Avisa que el respaldo lo genera el
+  SERVIDOR de SQL Server, no el equipo cliente. Probado contra la base real: generó
+  un `.bak` de 7.2 MB correctamente, borrado después por ser de prueba. Sigue
+  pendiente el respaldo AUTOMÁTICO programado (un job de SQL Server Agent o una
+  tarea del Programador de Windows) — este es manual, con un clic.
+
+Migración de base de datos: hubo que volver a correr `crear_base_datos.sql` contra
+la base real a mitad de esta ronda (la columna `carpetaDocumentos` y el permiso
+`RESPALDO_BD` no existían todavía) — recordatorio de que este script no se ejecuta
+solo, hay que correrlo a mano después de actualizar el ejecutable.
+
 ---
 
 ## Cómo leer este documento
@@ -343,11 +402,21 @@ Sigue siendo el cambio de mayor retorno del documento. Cada módulo nuevo que ag
 en texto, así que la migración es cada vez un poco más grande. Conviene hacerla antes de
 que seas tú mismo escribiendo el módulo número diez con el mismo defecto.
 
-## P2.2 a P2.5
+## P2.2, P2.3, P2.5
 
 Sin cambios. Ningún campo de e-CF (`trackId`, `estadoDGII`, `codigoSeguridad`,
-`indicadorFacturacion`, etc.) existe todavía en el esquema. Ninguna validación de RNC.
-Ver detalle técnico completo más abajo.
+`indicadorFacturacion`, etc.) existe todavía en el esquema. Ver detalle técnico
+completo más abajo.
+
+## ~~P2.4 · Validación de RNC/cédula~~ — RESUELTO PARCIAL (2026-09-17)
+
+`Clases/ValidadorFiscal.cs` valida el dígito verificador de la Cédula dominicana (11
+dígitos) desde `frmCliente.btnGuardar_Click`, sin bloquear el guardado (solo avisa).
+El RNC (9 dígitos) sólo se valida por longitud, a propósito: no hay un algoritmo de
+dígito verificador de RNC públicamente bien documentado, y validar mal el
+identificador fiscal real de un negocio es peor que no validarlo. Ver "Quinta ronda"
+al principio del documento. Pendiente real: la columna `tipoIdentificacion` (RNC vs.
+Cédula explícito) que pide P2.2 completo — hoy sigue siendo un solo campo de texto.
 
 ---
 
@@ -369,11 +438,16 @@ descuento, y pronto los campos del e-CF) es una razón más para que el cálculo
 clase que no dependa de `System.Windows.Forms`, en vez de seguir agregando parámetros a
 un formulario de 1.100+ líneas.
 
-## P3.2 · Probar la aritmética, no la interfaz
+## ~~P3.2 · Probar la aritmética, no la interfaz~~ — RESUELTO PARCIAL (2026-09-17)
 
-Sigue sin resolver. Ninguna prueba unitaria nueva para el cálculo de conversión de
-moneda, que es exactamente el tipo de aritmética delicada (redondeos, tasas, tres
-decimales) que más se beneficia de una prueba rápida.
+Se extrajo `Clases/ConversionMoneda.cs` (la división base/tasa de P1.8) de
+`PrecioProductoService`, y `PSC09.Tests/DineroYMonedaTests.cs` la prueba junto con
+`Dinero` y `ValidadorFiscal` (17 pruebas, todas pasan). Ver "Quinta ronda" al
+principio del documento para el detalle, incluido el hallazgo de que las pruebas de
+interfaz con Appium ya existentes no compilan. Pendiente real: el resto de la
+aritmética delicada (ITBIS por línea, descuento por línea vs. por factura, prorrateo
+de Nota de Crédito) sigue sin pruebas porque todavía vive dentro de `frmFactura.cs`
+sin extraer (ver P3.1) — no hay una `FacturaEnEdicion` que probar todavía.
 
 ## P3.3 · Objetos de parámetros en vez de listas largas
 
@@ -382,26 +456,44 @@ Sigue sin resolver, y el riesgo ya se concretó parcialmente: agregar `idMoneda`
 el build. La próxima vez que agregues un campo (el primero de los campos del e-CF, por
 ejemplo) va a pasar lo mismo si la firma sigue siendo posicional.
 
-## P3.4 · Registro de errores
+## ~~P3.4 · Registro de errores~~ — RESUELTO PARCIAL (2026-09-17)
 
-Sigue sin resolver. Sin una clase `Log` en todo el proyecto. Los mismos 19+ bloques
-`catch` vacíos o casi vacíos siguen ahí, incluyendo el `throw new Exception(...)` que
-borra el stack trace en `frmProductos.cs:707`.
+`Clases/Log.cs`, nueva, escribe a un archivo de texto (carpeta `Logs/` junto al
+ejecutable). Conectada a los 8 sitios que tragaban en silencio un error de
+impresión después de guardar (ver "Quinta ronda"), y al `throw new Exception(...)`
+de `frmProductos.cs` que perdía el stack trace (ahora lo preserva como
+`InnerException`). Pendiente real: el resto de los 70+ bloques `catch` del proyecto
+sigue sin tocar — sólo se conectaron los más claramente silenciosos, no se auditó
+cada uno.
 
-## P3.5 a P3.10
+## P3.5 a P3.9
 
 Sin cambios: tipos de columna (`activo INT` en vez de `BIT` en la mayoría de tablas),
 cero índices no-clustered en todo el esquema, los cuatro `JOIN ... CAST(...)` residuales
-en Notas de Crédito/Débito, iTextSharp 5 (AGPL) sigue siendo la única forma de generar
-PDF, y las rutas al Escritorio siguen hardcodeadas en 7 archivos distintos. Ver detalle
-técnico completo más abajo.
+en Notas de Crédito/Débito, e iTextSharp 5 (AGPL) sigue siendo la única forma de generar
+PDF. Ver detalle técnico completo más abajo.
+
+## ~~P3.10 · Centralizar la ruta de documentos~~ — RESUELTO (2026-09-17)
+
+`Empresa.CarpetaDocumentos()` (columna nueva `EMPRESA.carpetaDocumentos`) reemplaza
+los 7 usos hardcodeados de `Environment.SpecialFolder.Desktop` (FacturaService,
+CuentaCliente, CuentaProveedor, NotaCreditoService, NotaDebitoService,
+ExportadorCsv, frmFactura), exactamente el diseño que ya sugería este documento.
+Configurable desde Configuración → Datos de la Empresa; vacío sigue cayendo al
+Escritorio.
 
 ---
 
-# P4 — Funcionalidad y calidad operativa (sin cambios)
+# P4 — Funcionalidad y calidad operativa
 
-Sin cambios: sin formatos 606/607/608, sin respaldo automático, sin impresión térmica,
-sin retenciones de ITBIS/ISR.
+Sin formatos 606/607/608, sin impresión térmica, sin retenciones de ITBIS/ISR.
+
+**Respaldo de base de datos: RESUELTO PARCIAL (2026-09-17).** `Clases/
+RespaldoService.cs` + Configuración → Respaldar Base de Datos (permiso
+`RESPALDO_BD`, solo Administrador) generan un `.bak` bajo demanda con un clic,
+probado contra la base real. Pendiente real: sigue sin existir un respaldo
+AUTOMÁTICO programado (un job de SQL Server Agent o una tarea del Programador de
+Windows) que corra solo, sin que alguien tenga que acordarse de darle clic.
 
 ---
 
@@ -556,13 +648,19 @@ public static string CarpetaDocumentos()
 - Commitear todo el trabajo del 16-17 de septiembre: el fix de conversión de moneda
   (P1.8), los 6 items mecánicos de P0/P1 (P0.3, P1.1-P1.5, P1.7), permisos por rol
   (P1.6, con `Sesion`/`RolService`/`Permisos`/`frmPermisosPorRol` nuevos, más el fix
-  de `.Visible`/`.Available` en `frmMenu` del 17 de septiembre), más la actualización
-  de `MANUAL_TECNICO.docx`/`MANUAL_USUARIO.docx`. Ver P0.2.
+  de `.Visible`/`.Available` en `frmMenu`), el buscador de artículos y el fix de
+  Precios por Moneda en `frmProductos`, y los seis pendientes de la "Quinta ronda"
+  (P2.4 parcial, P3.2 parcial, P3.4 parcial, P3.10, respaldo bajo demanda), más la
+  actualización de `MANUAL_TECNICO.docx`/`MANUAL_USUARIO.docx`. Ver P0.2.
 - ~~Revisar a mano en la app real que `frmMenu` oculta los ítems correctos para un
-  usuario Cajero~~ — RESUELTO (2026-09-17): se verificó contra la app compilada real
-  y se encontró y corrigió un bug que ocultaba el menú completo (ver arriba). Sigue
-  pendiente probar específicamente con un usuario de rol Cajero (se probó con
-  Administrador), pero el mecanismo ya es el correcto (`.Available`).
+  usuario Cajero~~ — RESUELTO (2026-09-17): probado con un usuario de prueba de rol
+  Cajero real contra la app compilada — el menú muestra exactamente lo esperado
+  (sin Cuentas por Pagar ni Configuración, y sin nada del catálogo de Registro salvo
+  los dos ítems muertos sin permiso asociado). Usuario de prueba borrado al
+  terminar. Con esto P1.6 queda completamente verificado.
+- Investigar por qué las pruebas de interfaz con Appium (`PSC09.Tests`) no
+  compilan (`WindowsElement`/`WindowsDriver` no existen en `Appium.WebDriver`
+  8.2.0) — hallazgo de la "Quinta ronda", sin corregir todavía.
 
 **Esta semana:**
 
@@ -653,3 +751,13 @@ la app real que quedó pendiente arriba, y encontró un bug real que la ocultaba
 sólo "Salir" visible para cualquier rol (ver "Cuarta ronda" al principio del documento).
 Corregido y reverificado. P1.6 y toda la sección P1 quedan ahora completamente
 verificadas. P2-P4 siguen pendientes, sin cambios.*
+
+*Quinta actualización (17 de septiembre de 2026, mismo día): se resolvieron seis
+pendientes chicos de P2-P4 en una sola pasada (ver "Quinta ronda" al principio del
+documento) — P2.4 parcial (validación de Cédula), P3.2 parcial (pruebas unitarias de
+`Dinero`/`ConversionMoneda`/`ValidadorFiscal`, 17 pruebas), P3.4 parcial (clase `Log`
+conectada a 9 sitios), P3.10 (carpeta de documentos centralizada), y respaldo de base
+de datos bajo demanda (P4 parcial). Además se verificó P1.6 con un usuario de rol
+Cajero real contra la app compilada (quedaba pendiente desde la cuarta ronda), y se
+encontró que las pruebas de interfaz con Appium ya existentes no compilan
+(hallazgo sin corregir). Todo lo demás de P2-P4 sigue pendiente, sin cambios.*

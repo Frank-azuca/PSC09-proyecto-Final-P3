@@ -221,7 +221,7 @@ namespace PSC09
         {
             DatosEmpresa empresa = Empresa.ObtenerDatos();
 
-            string ruta = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            string ruta = Empresa.CarpetaDocumentos();
             string carpeta = Path.Combine(ruta, "NotasDebito");
             Directory.CreateDirectory(carpeta);
 

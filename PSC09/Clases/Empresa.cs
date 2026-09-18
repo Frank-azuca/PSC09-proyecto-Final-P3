@@ -22,6 +22,12 @@ namespace PSC09
         // deje el inventario en negativo en vez de rechazarla (ver Configuración →
         // Datos de la Empresa).
         public bool PermiteVentaSinExistencia;
+
+        // Carpeta donde se guardan las Facturas/Recibos/Pagos/Notas/exportaciones CSV
+        // generados (cada uno en su propia subcarpeta dentro de ésta, igual que antes).
+        // Vacío = usar el Escritorio, mismo comportamiento que había antes de que este
+        // campo existiera.
+        public string CarpetaDocumentos;
     }
 
     // Datos de la empresa (fila única, EMPRESA.id = 1), configurables desde
@@ -36,7 +42,7 @@ namespace PSC09
             {
                 cnx.Open();
                 SqlCommand cmd = new SqlCommand(
-                    "SELECT NOMBRECOMERCIAL, RAZONSOCIAL, RNC, DIRECCION, TELEFONO, CORREO, LOGO, DESCUENTOMAXPORCENTAJE, DESCUENTOMAXMONTO, PERMITEVENTASINEXISTENCIA FROM EMPRESA WHERE ID = 1", cnx);
+                    "SELECT NOMBRECOMERCIAL, RAZONSOCIAL, RNC, DIRECCION, TELEFONO, CORREO, LOGO, DESCUENTOMAXPORCENTAJE, DESCUENTOMAXMONTO, PERMITEVENTASINEXISTENCIA, CARPETADOCUMENTOS FROM EMPRESA WHERE ID = 1", cnx);
 
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
@@ -53,7 +59,8 @@ namespace PSC09
                             Logo = rdr["LOGO"] == DBNull.Value ? null : (byte[])rdr["LOGO"],
                             DescuentoMaxPorcentaje = rdr["DESCUENTOMAXPORCENTAJE"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(rdr["DESCUENTOMAXPORCENTAJE"]),
                             DescuentoMaxMonto = rdr["DESCUENTOMAXMONTO"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(rdr["DESCUENTOMAXMONTO"]),
-                            PermiteVentaSinExistencia = rdr["PERMITEVENTASINEXISTENCIA"] != DBNull.Value && Convert.ToBoolean(rdr["PERMITEVENTASINEXISTENCIA"])
+                            PermiteVentaSinExistencia = rdr["PERMITEVENTASINEXISTENCIA"] != DBNull.Value && Convert.ToBoolean(rdr["PERMITEVENTASINEXISTENCIA"]),
+                            CarpetaDocumentos = rdr["CARPETADOCUMENTOS"] == DBNull.Value ? "" : Convert.ToString(rdr["CARPETADOCUMENTOS"])
                         };
                     }
                 }
@@ -71,7 +78,7 @@ namespace PSC09
                     " UPDATE EMPRESA SET NOMBRECOMERCIAL = @nombre, RAZONSOCIAL = @razon, RNC = @rnc, " +
                     " DIRECCION = @dir, TELEFONO = @tel, CORREO = @correo, LOGO = @logo, " +
                     " DESCUENTOMAXPORCENTAJE = @descMaxPct, DESCUENTOMAXMONTO = @descMaxMonto, " +
-                    " PERMITEVENTASINEXISTENCIA = @permiteVentaSinExistencia WHERE ID = 1 ", cnx);
+                    " PERMITEVENTASINEXISTENCIA = @permiteVentaSinExistencia, CARPETADOCUMENTOS = @carpetaDocumentos WHERE ID = 1 ", cnx);
                 cmd.Parameters.AddWithValue("@nombre", (object)datos.NombreComercial ?? "");
                 cmd.Parameters.AddWithValue("@razon", (object)datos.RazonSocial ?? "");
                 cmd.Parameters.AddWithValue("@rnc", (object)datos.Rnc ?? "");
@@ -82,6 +89,7 @@ namespace PSC09
                 cmd.Parameters.AddWithValue("@descMaxPct", (object)datos.DescuentoMaxPorcentaje ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@descMaxMonto", (object)datos.DescuentoMaxMonto ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@permiteVentaSinExistencia", datos.PermiteVentaSinExistencia);
+                cmd.Parameters.AddWithValue("@carpetaDocumentos", (object)datos.CarpetaDocumentos ?? "");
                 cmd.ExecuteNonQuery();
             }
         }
@@ -91,6 +99,20 @@ namespace PSC09
         public static bool PermiteVentaSinExistencia()
         {
             return ObtenerDatos().PermiteVentaSinExistencia;
+        }
+
+        // Carpeta base para todo lo que el sistema genera (Facturas, Recibos, Pagos,
+        // Notas de Crédito/Débito, exportaciones CSV): antes estaba hardcodeada al
+        // Escritorio en 7 archivos distintos (FacturaService, CuentaCliente,
+        // CuentaProveedor, NotaCreditoService, NotaDebitoService, ExportadorCsv,
+        // frmFactura). Configurable desde Configuración → Datos de la Empresa; vacío
+        // sigue cayendo al Escritorio, mismo comportamiento de siempre.
+        public static string CarpetaDocumentos()
+        {
+            string configurada = ObtenerDatos().CarpetaDocumentos;
+            return string.IsNullOrWhiteSpace(configurada)
+                ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+                : configurada;
         }
     }
 }

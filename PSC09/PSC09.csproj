@@ -56,6 +56,10 @@
     <Compile Include="Clases\ConvertImage.cs" />
     <Compile Include="Clases\DocumentoPdf.cs" />
     <Compile Include="Clases\Dinero.cs" />
+    <Compile Include="Clases\Log.cs" />
+    <Compile Include="Clases\ValidadorFiscal.cs" />
+    <Compile Include="Clases\RespaldoService.cs" />
+    <Compile Include="Clases\ConversionMoneda.cs" />
     <Compile Include="Clases\CuentaCliente.cs" />
     <Compile Include="Clases\CuentaProveedor.cs" />
     <Compile Include="Clases\Empresa.cs" />

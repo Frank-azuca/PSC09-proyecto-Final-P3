@@ -91,7 +91,11 @@ de facturacion excelente, de mas a menos urgente.
 
 3) CALIDAD OPERATIVA
 ---------------------------------------------------
-- Respaldo automatico de la base de datos.
+- Respaldo de la base de datos: RESUELTO PARCIAL (2026-09-17). Configuracion ->
+  Respaldar Base de Datos genera un .bak con un clic (solo Administrador). Sigue
+  pendiente que corra AUTOMATICO y programado (un job de SQL Server Agent o una
+  tarea del Programador de Windows), sin que alguien tenga que acordarse de darle
+  clic.
 
 - Impresion en impresora termica para el recibo, en vez de solo el PDF
   completo que genera hoy.

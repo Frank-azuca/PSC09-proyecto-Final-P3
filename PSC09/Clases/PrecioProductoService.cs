@@ -33,8 +33,7 @@ namespace PSC09
             decimal? precioOverride = ObtenerOverride(articulo, idMoneda, "PRECIOVENTA", out precioBase);
             if (precioOverride.HasValue) return precioOverride.Value;
 
-            decimal baseValue = precioBase ?? 0;
-            return tasaCambio > 0 ? Dinero.Redondear(baseValue / tasaCambio) : 0;
+            return ConversionMoneda.DesdeBase(precioBase ?? 0, tasaCambio);
         }
 
         public static decimal ResolverCosto(string articulo, int idMoneda, decimal tasaCambio)
@@ -43,8 +42,7 @@ namespace PSC09
             decimal? costoOverride = ObtenerOverride(articulo, idMoneda, "COSTO", out costoBase);
             if (costoOverride.HasValue) return costoOverride.Value;
 
-            decimal baseValue = costoBase ?? 0;
-            return tasaCambio > 0 ? Dinero.Redondear(baseValue / tasaCambio) : 0;
+            return ConversionMoneda.DesdeBase(costoBase ?? 0, tasaCambio);
         }
 
         // Devuelve el override de PRODUCTOPRECIO para esa columna (NULL si no hay uno

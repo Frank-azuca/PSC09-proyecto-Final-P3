@@ -31,6 +31,7 @@ namespace PSC09
         public const string TiposPago = "TIPOS_PAGO";
         public const string Monedas = "MONEDAS";
         public const string TasasCambio = "TASAS_CAMBIO";
+        public const string RespaldoBd = "RESPALDO_BD";
 
         // Un solo lugar con la lista completa (para pintar el grid de Permisos por Rol y
         // para sembrar el rol Administrador con todos, sin repetir la lista dos veces).
@@ -40,7 +41,7 @@ namespace PSC09
             MovimientosInventario, PuntoVenta, NotaCredito, NotaDebito, EstadoCuenta,
             AlfabeticoClientes, Proveedores, CuentaPorPagar, ReporteFactura,
             ReporteInventario, ReporteConsolidado, ReporteOrdenesCompra, PermisosRol,
-            ComprobantesFiscales, DatosEmpresa, TiposPago, Monedas, TasasCambio
+            ComprobantesFiscales, DatosEmpresa, TiposPago, Monedas, TasasCambio, RespaldoBd
         };
 
         // Nombre para mostrar en la pantalla de Permisos por Rol (mismo orden que Todos).
@@ -73,6 +74,7 @@ namespace PSC09
                 case TiposPago: return "Tipos de Pago";
                 case Monedas: return "Monedas";
                 case TasasCambio: return "Tasas de Cambio";
+                case RespaldoBd: return "Respaldar Base de Datos";
                 default: return permiso;
             }
         }

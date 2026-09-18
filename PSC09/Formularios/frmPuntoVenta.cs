@@ -915,7 +915,7 @@ namespace PSC09
                     // A crédito: se imprime la factura de una vez, porque no hay ningún
                     // cobro que esperar (queda pendiente en la cuenta del cliente).
                     try { FacturaService.ImprimirPdf(archivo); }
-                    catch { /* la venta ya se guardó; sólo no se pudo mandar a imprimir */ }
+                    catch (Exception exImprimir) { Log.Registrar(exImprimir, "Imprimir venta a crédito (Punto de Venta) tras guardar"); }
 
                     mensaje += "\n\nVenta a crédito: queda pendiente en la cuenta del cliente (Consulta → Estado de Cuenta).";
                     MessageBox.Show(mensaje, "Venta a crédito", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -930,7 +930,7 @@ namespace PSC09
                         if (frmCobrar.ShowDialog(this) == DialogResult.OK)
                         {
                             try { FacturaService.ImprimirPdf(archivo); }
-                            catch { /* la venta y el cobro ya se guardaron; sólo no se pudo mandar a imprimir */ }
+                            catch (Exception exImprimir) { Log.Registrar(exImprimir, "Imprimir venta de contado (Punto de Venta) tras cobrar"); }
 
                             MessageBox.Show(mensaje + "\n\nCobrada de contado.", "Venta completada", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }

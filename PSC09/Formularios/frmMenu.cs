@@ -78,9 +78,11 @@ namespace PSC09
             tiposPagoToolStripMenuItem.Available = Sesion.Puede(Permisos.TiposPago);
             monedasToolStripMenuItem.Available = Sesion.Puede(Permisos.Monedas);
             tasasCambioToolStripMenuItem.Available = Sesion.Puede(Permisos.TasasCambio);
+            respaldarBaseDeDatosToolStripMenuItem.Available = Sesion.Puede(Permisos.RespaldoBd);
             configuraciónToolStripMenuItem.Available = permisoAUsuarioToolStripMenuItem.Available || comprobantesFiscalesToolStripMenuItem.Available ||
                 datosEmpresaToolStripMenuItem.Available || tiposPagoToolStripMenuItem.Available ||
-                monedasToolStripMenuItem.Available || tasasCambioToolStripMenuItem.Available;
+                monedasToolStripMenuItem.Available || tasasCambioToolStripMenuItem.Available ||
+                respaldarBaseDeDatosToolStripMenuItem.Available;
         }
 
         private void SinPermiso()
@@ -167,6 +169,44 @@ namespace PSC09
 
             frmTasasCambio frm = new frmTasasCambio();
             frm.Show();
+        }
+
+        private void respaldarBaseDeDatosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!Sesion.Puede(Permisos.RespaldoBd)) { SinPermiso(); return; }
+
+            DialogResult aviso = MessageBox.Show(
+                "El respaldo lo genera el propio servidor de SQL Server, no esta computadora. " +
+                "Si el servidor corre en otra máquina (ver App.config), la carpeta que elijas a " +
+                "continuación tiene que existir y ser accesible DESDE EL SERVIDOR, no solo desde aquí.\n\n" +
+                "¿Deseas continuar?",
+                "Respaldar Base de Datos", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+            if (aviso != DialogResult.Yes) return;
+
+            using (SaveFileDialog dlg = new SaveFileDialog())
+            {
+                dlg.Filter = "Respaldo de base de datos (*.bak)|*.bak";
+                dlg.FileName = "sistemaFacturacion_" + DateTime.Now.ToString("yyyy-MM-dd_HHmm") + ".bak";
+                dlg.Title = "Guardar respaldo de la base de datos";
+                dlg.InitialDirectory = Empresa.CarpetaDocumentos();
+
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+                try
+                {
+                    RespaldoService.RespaldarBaseDeDatos(dlg.FileName);
+                    MessageBox.Show("Respaldo creado correctamente en:\n" + dlg.FileName, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception error)
+                {
+                    Log.Registrar(error, "Respaldar Base de Datos");
+                    MessageBox.Show(
+                        "No se pudo crear el respaldo: " + error.Message +
+                        "\n\nSi el mensaje habla de acceso denegado o ruta no encontrada, recuerda que la " +
+                        "carpeta debe ser accesible desde el servidor de SQL Server, no solo desde este equipo.",
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
         private void permisoAUsuarioToolStripMenuItem_Click(object sender, EventArgs e)

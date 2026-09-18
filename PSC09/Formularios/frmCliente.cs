@@ -296,6 +296,18 @@ namespace PSC09
                 return;
             }
 
+            // Solo avisa (no bloquea): un typo es mas probable que una Cedula real
+            // invalida. RNC (9 digitos) no se valida por digito verificador, solo
+            // Cedula (11 digitos) -- ver ValidadorFiscal.cs.
+            string identificacion = txtIdentificacion.Text.Trim();
+            if (ValidadorFiscal.PareceCedula(identificacion) && !ValidadorFiscal.DigitoVerificadorCedulaValido(identificacion))
+            {
+                DialogResult confirmarCedula = MessageBox.Show(
+                    "La Cédula \"" + identificacion + "\" no parece válida (el dígito verificador no cuadra). ¿Deseas guardarla de todas formas?",
+                    "Verifica la Cédula", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (confirmarCedula == DialogResult.No) return;
+            }
+
             try
             {
                 if (existeElCliente && txtCodigo.Text.Trim() != string.Empty)

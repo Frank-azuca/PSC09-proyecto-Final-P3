@@ -17,4 +17,13 @@
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
 
+  <!-- Clases puras del proyecto principal (sin WinForms ni SqlClient) enlazadas
+       directamente en vez de referenciar todo PSC09.csproj (net472, WinForms EXE) desde
+       este proyecto net8.0. Ver P3.2 en cambios-y-mejoras-a-implementar.md. -->
+  <ItemGroup>
+    <Compile Include="..\PSC09\Clases\Dinero.cs" Link="ClasesProbadas\Dinero.cs" />
+    <Compile Include="..\PSC09\Clases\ConversionMoneda.cs" Link="ClasesProbadas\ConversionMoneda.cs" />
+    <Compile Include="..\PSC09\Clases\ValidadorFiscal.cs" Link="ClasesProbadas\ValidadorFiscal.cs" />
+  </ItemGroup>
+
 </Project>

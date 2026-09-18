@@ -42,6 +42,10 @@ namespace PSC09
             this.lblDescuentoMaxMonto = new System.Windows.Forms.Label();
             this.txtDescuentoMaxMonto = new System.Windows.Forms.TextBox();
             this.chkPermiteVentaSinExistencia = new System.Windows.Forms.CheckBox();
+            this.lblCarpetaDocumentos = new System.Windows.Forms.Label();
+            this.txtCarpetaDocumentos = new System.Windows.Forms.TextBox();
+            this.btnBuscarCarpetaDocumentos = new System.Windows.Forms.Button();
+            this.folderBrowserDialogDocumentos = new System.Windows.Forms.FolderBrowserDialog();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLogo)).BeginInit();
             this.SuspendLayout();
             //
@@ -298,12 +302,51 @@ namespace PSC09
             this.chkPermiteVentaSinExistencia.Text = "Permitir vender aunque no haya existencia suficiente";
             this.chkPermiteVentaSinExistencia.UseVisualStyleBackColor = true;
             //
+            // lblCarpetaDocumentos
+            //
+            this.lblCarpetaDocumentos.BackColor = PSC09.Tema.LavandaSuave;
+            this.lblCarpetaDocumentos.Font = PSC09.Tema.FuenteEtiqueta(true);
+            this.lblCarpetaDocumentos.Location = new System.Drawing.Point(14, 630);
+            this.lblCarpetaDocumentos.Name = "lblCarpetaDocumentos";
+            this.lblCarpetaDocumentos.Size = new System.Drawing.Size(600, 23);
+            this.lblCarpetaDocumentos.TabIndex = 23;
+            this.lblCarpetaDocumentos.Text = "Carpeta de Documentos (Facturas, Recibos, etc.) — vacío = Escritorio";
+            this.lblCarpetaDocumentos.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // txtCarpetaDocumentos
+            //
+            this.txtCarpetaDocumentos.Font = PSC09.Tema.FuenteCampo();
+            this.txtCarpetaDocumentos.Location = new System.Drawing.Point(14, 654);
+            this.txtCarpetaDocumentos.MaxLength = 260;
+            this.txtCarpetaDocumentos.Name = "txtCarpetaDocumentos";
+            this.txtCarpetaDocumentos.Size = new System.Drawing.Size(700, 29);
+            this.txtCarpetaDocumentos.TabIndex = 24;
+            //
+            // btnBuscarCarpetaDocumentos
+            //
+            this.btnBuscarCarpetaDocumentos.Location = new System.Drawing.Point(720, 653);
+            this.btnBuscarCarpetaDocumentos.Name = "btnBuscarCarpetaDocumentos";
+            this.btnBuscarCarpetaDocumentos.Size = new System.Drawing.Size(182, 31);
+            this.btnBuscarCarpetaDocumentos.TabIndex = 25;
+            this.btnBuscarCarpetaDocumentos.Text = "Elegir carpeta...";
+            this.btnBuscarCarpetaDocumentos.UseVisualStyleBackColor = false;
+            PSC09.Tema.EstilizarBotonSecundario(this.btnBuscarCarpetaDocumentos);
+            this.btnBuscarCarpetaDocumentos.Click += new System.EventHandler(this.btnBuscarCarpetaDocumentos_Click);
+            //
+            // folderBrowserDialogDocumentos
+            //
+            this.folderBrowserDialogDocumentos.Description = "Elige la carpeta donde se guardarán las Facturas, Recibos, Pagos, Notas y export" +
+    "aciones CSV";
+            //
             // frmDatosEmpresa
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = PSC09.Tema.FondoClaro;
-            this.ClientSize = new System.Drawing.Size(910, 640);
+            this.ClientSize = new System.Drawing.Size(910, 710);
+            this.Controls.Add(this.btnBuscarCarpetaDocumentos);
+            this.Controls.Add(this.txtCarpetaDocumentos);
+            this.Controls.Add(this.lblCarpetaDocumentos);
             this.Controls.Add(this.chkPermiteVentaSinExistencia);
             this.Controls.Add(this.txtDescuentoMaxMonto);
             this.Controls.Add(this.lblDescuentoMaxMonto);
@@ -327,7 +370,7 @@ namespace PSC09
             this.Controls.Add(this.btnCerrar);
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.label1);
-            this.MinimumSize = new System.Drawing.Size(926, 680);
+            this.MinimumSize = new System.Drawing.Size(926, 750);
             this.Name = "frmDatosEmpresa";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "frmDatosEmpresa";
@@ -365,5 +408,9 @@ namespace PSC09
         private System.Windows.Forms.Label lblDescuentoMaxMonto;
         private System.Windows.Forms.TextBox txtDescuentoMaxMonto;
         private System.Windows.Forms.CheckBox chkPermiteVentaSinExistencia;
+        private System.Windows.Forms.Label lblCarpetaDocumentos;
+        private System.Windows.Forms.TextBox txtCarpetaDocumentos;
+        private System.Windows.Forms.Button btnBuscarCarpetaDocumentos;
+        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialogDocumentos;
     }
 }

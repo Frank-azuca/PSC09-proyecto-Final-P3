@@ -83,7 +83,7 @@ namespace PSC09
                 string archivo = CuentaCliente.GenerarReciboPdf(numeroRecibo, DateTime.Now, nombreCliente, numeroFactura, lineas, monto, txtNota.Text, monedaRecibo.Simbolo);
 
                 try { FacturaService.ImprimirPdf(archivo); }
-                catch { /* el recibo ya quedo guardado; solo no se pudo mandar a imprimir */ }
+                catch (Exception exImprimir) { Log.Registrar(exImprimir, "Imprimir recibo de ingreso tras guardar"); }
 
                 string mensaje = "Recibo " + numeroRecibo + " registrado.";
                 if (facturaElegida != null)

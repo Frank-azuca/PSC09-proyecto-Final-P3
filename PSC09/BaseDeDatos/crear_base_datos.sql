@@ -897,6 +897,13 @@ IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('EMPRESA') 
     ALTER TABLE EMPRESA ADD permiteVentaSinExistencia BIT NOT NULL DEFAULT 0;
 GO
 
+-- Carpeta configurable donde se guardan Facturas/Recibos/Pagos/Notas/CSV (P3.10):
+-- vacio sigue cayendo al Escritorio (Empresa.CarpetaDocumentos()), mismo
+-- comportamiento que antes de que este campo existiera.
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('EMPRESA') AND name = 'carpetaDocumentos')
+    ALTER TABLE EMPRESA ADD carpetaDocumentos NVARCHAR(260) NULL;
+GO
+
 -- Roles y permisos (Configuracion -> Permisos por Rol, Clases/RolService.cs/Sesion.cs):
 -- antes de esto, cualquier usuario que entraba veia y podia hacer todo. La lista de
 -- permisos posibles la define el codigo (Clases/Permisos.cs); cuales tiene cada rol es
@@ -936,7 +943,7 @@ CROSS JOIN (VALUES
     ('CUENTA_POR_PAGAR'),('REPORTE_FACTURA'),('REPORTE_INVENTARIO'),
     ('REPORTE_CONSOLIDADO'),('REPORTE_ORDENES_COMPRA'),('PERMISOS_ROL'),
     ('COMPROBANTES_FISCALES'),('DATOS_EMPRESA'),('TIPOS_PAGO'),('MONEDAS'),
-    ('TASAS_CAMBIO')
+    ('TASAS_CAMBIO'),('RESPALDO_BD')
 ) AS P(permiso)
 WHERE R.nombre = 'Administrador'
   AND NOT EXISTS (SELECT * FROM ROLPERMISO RP WHERE RP.idRol = R.id AND RP.permiso = P.permiso);

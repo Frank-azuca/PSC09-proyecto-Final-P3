@@ -18,7 +18,7 @@ namespace PSC09
             {
                 dlg.Filter = "CSV (delimitado por comas)|*.csv";
                 dlg.FileName = nombreSugerido;
-                dlg.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                dlg.InitialDirectory = Empresa.CarpetaDocumentos();
 
                 if (dlg.ShowDialog(owner) != DialogResult.OK) return;
 

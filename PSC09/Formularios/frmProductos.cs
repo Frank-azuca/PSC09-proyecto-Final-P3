@@ -757,8 +757,10 @@ namespace PSC09
                 }
                 catch (Exception ex)
                 {
-
-                    throw new Exception("Error Codigo de Barra Code128. Desc: " + ex.Message);
+                    Log.Registrar(ex, "Generar código de barra Code128");
+                    // Se preserva "ex" como InnerException (antes se perdía el stack trace
+                    // original al envolverla en una excepción nueva sin ese segundo parámetro).
+                    throw new Exception("Error Codigo de Barra Code128. Desc: " + ex.Message, ex);
                 }
             }
         }

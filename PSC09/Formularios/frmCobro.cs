@@ -181,7 +181,7 @@ namespace PSC09
                 string archivo = CuentaCliente.GenerarReciboPdf(numeroRecibo, DateTime.Now, nombreCliente, numeroFactura, lineas, totalAPagar, "Venta de contado - Factura " + numeroFactura, simboloMoneda);
 
                 try { FacturaService.ImprimirPdf(archivo); }
-                catch { /* la venta y el cobro ya quedaron guardados; solo no se pudo mandar a imprimir */ }
+                catch (Exception exImprimir) { Log.Registrar(exImprimir, "Imprimir recibo de cobro tras guardar"); }
 
                 this.DialogResult = DialogResult.OK;
                 this.Close();

@@ -272,7 +272,7 @@ namespace PSC09
                 string archivo = NotaDebitoService.GenerarPdf(numero, fecha, info.ComprobanteFiscal, info.Factura, info.NombreCliente, info.Concepto, info.Subtotal, info.Impuesto, info.Monto, info.SimboloMoneda);
 
                 try { FacturaService.ImprimirPdf(archivo); }
-                catch { /* la nota ya quedó guardada; sólo no se pudo mandar a imprimir */ }
+                catch (Exception exImprimir) { Log.Registrar(exImprimir, "Imprimir Nota de Débito tras guardar"); }
             }
             catch (Exception error)
             {

@@ -43,6 +43,7 @@ namespace PSC09
             txtDescuentoMaxPorcentaje.Text = datos.DescuentoMaxPorcentaje.HasValue ? datos.DescuentoMaxPorcentaje.Value.ToString("0.####") : "";
             txtDescuentoMaxMonto.Text = datos.DescuentoMaxMonto.HasValue ? datos.DescuentoMaxMonto.Value.ToString("0.##") : "";
             chkPermiteVentaSinExistencia.Checked = datos.PermiteVentaSinExistencia;
+            txtCarpetaDocumentos.Text = datos.CarpetaDocumentos;
 
             logoActual = datos.Logo;
             MostrarLogo();
@@ -90,6 +91,19 @@ namespace PSC09
         {
             logoActual = null;
             MostrarLogo();
+        }
+
+        private void btnBuscarCarpetaDocumentos_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(txtCarpetaDocumentos.Text) && System.IO.Directory.Exists(txtCarpetaDocumentos.Text))
+            {
+                folderBrowserDialogDocumentos.SelectedPath = txtCarpetaDocumentos.Text;
+            }
+
+            if (folderBrowserDialogDocumentos.ShowDialog() == DialogResult.OK)
+            {
+                txtCarpetaDocumentos.Text = folderBrowserDialogDocumentos.SelectedPath;
+            }
         }
 
         private void btnGuardar_Click(object sender, EventArgs e)
@@ -140,7 +154,8 @@ namespace PSC09
                     Logo = logoActual,
                     DescuentoMaxPorcentaje = descuentoMaxPorcentaje,
                     DescuentoMaxMonto = descuentoMaxMonto,
-                    PermiteVentaSinExistencia = chkPermiteVentaSinExistencia.Checked
+                    PermiteVentaSinExistencia = chkPermiteVentaSinExistencia.Checked,
+                    CarpetaDocumentos = txtCarpetaDocumentos.Text.Trim()
                 });
 
                 MessageBox.Show("Datos de la empresa guardados.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);

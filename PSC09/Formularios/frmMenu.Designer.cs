@@ -55,7 +55,7 @@
             this.consolidadoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ordenesCompraReporteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.configuraciónToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.opcionesDelMenuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.respaldarBaseDeDatosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.permisoAUsuarioToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.comprobantesFiscalesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.datosEmpresaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -288,7 +288,7 @@
             // configuraciónToolStripMenuItem
             // 
             this.configuraciónToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.opcionesDelMenuToolStripMenuItem,
+            this.respaldarBaseDeDatosToolStripMenuItem,
             this.permisoAUsuarioToolStripMenuItem,
             this.comprobantesFiscalesToolStripMenuItem,
             this.datosEmpresaToolStripMenuItem,
@@ -299,11 +299,12 @@
             this.configuraciónToolStripMenuItem.Size = new System.Drawing.Size(95, 22);
             this.configuraciónToolStripMenuItem.Text = "Configuración";
             //
-            // opcionesDelMenuToolStripMenuItem
+            // respaldarBaseDeDatosToolStripMenuItem
             //
-            this.opcionesDelMenuToolStripMenuItem.Name = "opcionesDelMenuToolStripMenuItem";
-            this.opcionesDelMenuToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.opcionesDelMenuToolStripMenuItem.Text = "Opciones del Menu";
+            this.respaldarBaseDeDatosToolStripMenuItem.Name = "respaldarBaseDeDatosToolStripMenuItem";
+            this.respaldarBaseDeDatosToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.respaldarBaseDeDatosToolStripMenuItem.Text = "Respaldar Base de Datos";
+            this.respaldarBaseDeDatosToolStripMenuItem.Click += new System.EventHandler(this.respaldarBaseDeDatosToolStripMenuItem_Click);
             //
             // permisoAUsuarioToolStripMenuItem
             //
@@ -432,7 +433,7 @@
         private System.Windows.Forms.ToolStripMenuItem cuentasPorPagarToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem proveedoresToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem cuentaPorPagarToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem opcionesDelMenuToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem respaldarBaseDeDatosToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem permisoAUsuarioToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem datosEmpresaToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem tiposPagoToolStripMenuItem;

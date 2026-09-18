@@ -1114,7 +1114,7 @@ namespace PSC09
                     // A crédito: se imprime la factura de una vez, porque no hay ningún
                     // cobro que esperar (queda pendiente en la cuenta del cliente).
                     try { FacturaService.ImprimirPdf(archivo); }
-                    catch { /* la factura ya se guardó; sólo no se pudo mandar a imprimir */ }
+                    catch (Exception exImprimir) { Log.Registrar(exImprimir, "Imprimir factura a crédito tras guardar"); }
 
                     mensaje += "\n\nVenta a crédito: queda pendiente en la cuenta del cliente (Consulta → Estado de Cuenta).";
                     MessageBox.Show(mensaje, "Venta a crédito", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1129,7 +1129,7 @@ namespace PSC09
                         if (frmCobrar.ShowDialog(this) == DialogResult.OK)
                         {
                             try { FacturaService.ImprimirPdf(archivo); }
-                            catch { /* la venta y el cobro ya se guardaron; sólo no se pudo mandar a imprimir */ }
+                            catch (Exception exImprimir) { Log.Registrar(exImprimir, "Imprimir factura de contado tras cobrar"); }
 
                             MessageBox.Show(mensaje + "\n\nCobrada de contado.", "Venta completada", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
@@ -1164,7 +1164,7 @@ namespace PSC09
             // si no lo tenemos en memoria, se busca ahi por convencion antes de rendirse.
             if (string.IsNullOrEmpty(archivo) || !File.Exists(archivo))
             {
-                string carpeta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Facturas");
+                string carpeta = Path.Combine(Empresa.CarpetaDocumentos(), "Facturas");
                 archivo = Path.Combine(carpeta, "Factura_" + lblFactura.Text + ".pdf");
             }
 

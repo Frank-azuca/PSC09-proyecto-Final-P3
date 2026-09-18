@@ -79,7 +79,7 @@ namespace PSC09
                 string archivo = CuentaProveedor.GenerarPagoPdf(numeroPago, DateTime.Now, nombreProveedor, numeroOrden, lineas, monto, txtNota.Text, monedaPago.Simbolo);
 
                 try { FacturaService.ImprimirPdf(archivo); }
-                catch { /* el pago ya quedó guardado; sólo no se pudo mandar a imprimir */ }
+                catch (Exception exImprimir) { Log.Registrar(exImprimir, "Imprimir pago a proveedor tras guardar"); }
 
                 string mensaje = "Pago " + numeroPago + " registrado.";
                 if (ordenElegida != null)
