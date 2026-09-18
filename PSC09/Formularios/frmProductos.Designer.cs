@@ -31,7 +31,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
-            this.button1 = new System.Windows.Forms.Button();
+            this.btnBuscarProducto = new System.Windows.Forms.Button();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.txtBarCode = new System.Windows.Forms.TextBox();
             this.txtImpuesto = new System.Windows.Forms.TextBox();
@@ -110,7 +110,7 @@
             // tabPage1
             // 
             this.tabPage1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.tabPage1.Controls.Add(this.button1);
+            this.tabPage1.Controls.Add(this.btnBuscarProducto);
             this.tabPage1.Controls.Add(this.pictureBox1);
             this.tabPage1.Controls.Add(this.txtBarCode);
             this.tabPage1.Controls.Add(this.txtImpuesto);
@@ -137,18 +137,18 @@
             this.tabPage1.Text = "Registro Producto";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
-            // button1
-            // 
-            this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button1.Location = new System.Drawing.Point(596, 53);
-            this.button1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(39, 23);
-            this.button1.TabIndex = 15;
-            this.button1.Text = "...";
-            this.button1.TextAlign = System.Drawing.ContentAlignment.TopCenter;
-            this.button1.UseVisualStyleBackColor = false;
+            // btnBuscarProducto
+            //
+            this.btnBuscarProducto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnBuscarProducto.Image = global::PSC09.Properties.Resources.search1;
+            this.btnBuscarProducto.Location = new System.Drawing.Point(596, 53);
+            this.btnBuscarProducto.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnBuscarProducto.Name = "btnBuscarProducto";
+            this.btnBuscarProducto.Size = new System.Drawing.Size(39, 29);
+            this.btnBuscarProducto.TabIndex = 15;
+            this.btnBuscarProducto.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.btnBuscarProducto.UseVisualStyleBackColor = false;
+            this.btnBuscarProducto.Click += new System.EventHandler(this.btnBuscarProducto_Click);
             // 
             // pictureBox1
             // 
@@ -622,7 +622,7 @@
         private System.Windows.Forms.TextBox txtCostoProducto;
         private System.Windows.Forms.TextBox txtPrecioVenta;
         private System.Windows.Forms.PictureBox pictureBox1;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btnBuscarProducto;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Button btnActualizar;

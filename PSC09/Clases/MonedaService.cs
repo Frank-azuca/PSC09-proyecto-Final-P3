@@ -7,19 +7,34 @@ namespace PSC09
     // Una moneda del catálogo (MONEDA): RD$/DOP siempre existe y es la moneda base
     // (Moneda.EsBase) del negocio, el resto (USD, EUR, ...) se agregan desde
     // Configuración → Monedas (frmMoneda) según haga falta.
+    // Id/Codigo/etc. son propiedades (no campos públicos) a propósito: frmProductos
+    // (pestaña "Precios por Moneda") las usa como DisplayMember/ValueMember de un
+    // DataGridViewComboBoxColumn, que resuelve esos nombres con PropertyDescriptor
+    // (TypeDescriptor) y no encuentra un campo público -- lanza "El campo denominado
+    // Id no existe" aunque el campo exista, porque para ese mecanismo de enlace un
+    // campo público no cuenta como propiedad. Un ComboBox normal (frmFactura,
+    // frmPuntoVenta, frmOrdenCompra, frmTasasCambio) no tiene ese problema: si
+    // DisplayMember no coincide con nada cae de vuelta a ToString() sin quejarse, así
+    // que hubiera tolerado campos públicos igual.
     public class Moneda
     {
-        public int Id;
-        public string Codigo;
-        public string Nombre;
-        public string Simbolo;
-        public bool EsBase;
-        public bool Activo;
+        public int Id { get; set; }
+        public string Codigo { get; set; }
+        public string Nombre { get; set; }
+        public string Simbolo { get; set; }
+        public bool EsBase { get; set; }
+        public bool Activo { get; set; }
 
         public override string ToString()
         {
             return Codigo + " - " + Nombre;
         }
+
+        // Para DisplayMember del mismo DataGridViewComboBoxColumn de arriba: "ToString"
+        // a secas tampoco sirve ahí (es un método heredado, no una propiedad), así que
+        // frmProductos usa esta en su lugar. Los combos normales siguen usando
+        // "ToString" tal cual porque a ellos sí les funciona (ver nota de la clase).
+        public string Descripcion { get { return ToString(); } }
     }
 
     // Catálogo abierto de monedas (MONEDA). Sólo una fila puede tener EsBase = true:

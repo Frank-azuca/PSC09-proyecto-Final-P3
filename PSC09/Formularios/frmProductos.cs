@@ -64,7 +64,7 @@ namespace PSC09
                 HeaderText = "Moneda",
                 Width = 150,
                 DataSource = new List<Moneda>(monedasNoBase),
-                DisplayMember = "ToString",
+                DisplayMember = "Descripcion",
                 ValueMember = "Id",
                 DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox
             };
@@ -230,6 +230,23 @@ namespace PSC09
                 // frmVENPRO pro = new frmVENPRO();
                 // pro.Show();
                 Application.Exit();
+            }
+        }
+
+        // Reusa la misma pantalla de consulta que ya usan Factura y Punto de Venta
+        // (busca por código o descripción) en vez de obligar a memorizar el código
+        // exacto del producto.
+        private void btnBuscarProducto_Click(object sender, EventArgs e)
+        {
+            using (frmConsultaArticulos frm = new frmConsultaArticulos())
+            {
+                frm.ShowDialog(this);
+
+                if (!string.IsNullOrWhiteSpace(frm.var1))
+                {
+                    txtCodigo.Text = frm.var1;
+                    txtCodigo_Leave(txtCodigo, EventArgs.Empty);
+                }
             }
         }
 
