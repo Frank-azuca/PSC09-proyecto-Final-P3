@@ -68,6 +68,9 @@
     <Compile Include="Clases\TasaCambioService.cs" />
     <Compile Include="Clases\PrecioProductoService.cs" />
     <Compile Include="Clases\OrdenCompraService.cs" />
+    <Compile Include="Clases\Permisos.cs" />
+    <Compile Include="Clases\RolService.cs" />
+    <Compile Include="Clases\Sesion.cs" />
     <Compile Include="Clases\Seguridad.cs" />
     <Compile Include="Clases\Tema.cs" />
     <Compile Include="Formularios\frmCambiarComprobante.cs">
@@ -105,6 +108,12 @@
     </Compile>
     <Compile Include="Formularios\frmTasasCambio.Designer.cs">
       <DependentUpon>frmTasasCambio.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Formularios\frmPermisosPorRol.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Formularios\frmPermisosPorRol.Designer.cs">
+      <DependentUpon>frmPermisosPorRol.cs</DependentUpon>
     </Compile>
     <Compile Include="Formularios\frmGastos.cs">
       <SubType>Form</SubType>
@@ -305,6 +314,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmTasasCambio.resx">
       <DependentUpon>frmTasasCambio.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Formularios\frmPermisosPorRol.resx">
+      <DependentUpon>frmPermisosPorRol.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Formularios\frmGastos.resx">
       <DependentUpon>frmGastos.cs</DependentUpon>

@@ -32,6 +32,8 @@ namespace PSC09
             this.txtCorreo = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.txtClave = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.cboRol = new System.Windows.Forms.ComboBox();
             this.chkActivo = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             //
@@ -212,15 +214,37 @@ namespace PSC09
             this.txtClave.Size = new System.Drawing.Size(560, 35);
             this.txtClave.TabIndex = 14;
             //
+            // label7 (Rol)
+            //
+            this.label7.BackColor = PSC09.Tema.LavandaSuave;
+            this.label7.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.Location = new System.Drawing.Point(51, 440);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(290, 35);
+            this.label7.TabIndex = 15;
+            this.label7.Text = "Rol";
+            this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // cboRol
+            //
+            this.cboRol.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
+            this.cboRol.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboRol.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cboRol.Location = new System.Drawing.Point(364, 440);
+            this.cboRol.Name = "cboRol";
+            this.cboRol.Size = new System.Drawing.Size(560, 33);
+            this.cboRol.TabIndex = 16;
+            //
             // chkActivo
             //
             this.chkActivo.Checked = true;
             this.chkActivo.CheckState = System.Windows.Forms.CheckState.Checked;
             this.chkActivo.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chkActivo.Location = new System.Drawing.Point(364, 440);
+            this.chkActivo.Location = new System.Drawing.Point(364, 500);
             this.chkActivo.Name = "chkActivo";
             this.chkActivo.Size = new System.Drawing.Size(300, 30);
-            this.chkActivo.TabIndex = 15;
+            this.chkActivo.TabIndex = 17;
             this.chkActivo.Text = "Usuario Activo";
             this.chkActivo.UseVisualStyleBackColor = true;
             //
@@ -229,8 +253,10 @@ namespace PSC09
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = PSC09.Tema.FondoClaro;
-            this.ClientSize = new System.Drawing.Size(970, 510);
+            this.ClientSize = new System.Drawing.Size(970, 570);
             this.Controls.Add(this.chkActivo);
+            this.Controls.Add(this.cboRol);
+            this.Controls.Add(this.label7);
             this.Controls.Add(this.txtClave);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.txtCorreo);
@@ -246,7 +272,7 @@ namespace PSC09
             this.Controls.Add(this.btnLimpiar);
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.label1);
-            this.MinimumSize = new System.Drawing.Size(986, 549);
+            this.MinimumSize = new System.Drawing.Size(986, 609);
             this.Name = "frmUsuario";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "frmUsuario";
@@ -274,6 +300,8 @@ namespace PSC09
         private System.Windows.Forms.TextBox txtCorreo;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox txtClave;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.ComboBox cboRol;
         private System.Windows.Forms.CheckBox chkActivo;
     }
 }

@@ -25,7 +25,14 @@ namespace PSC09
         {
             this.Text = "Andrómeda - Usuarios";
             this.KeyPreview = true;
+            CargarRoles();
             LimpiarFormulario();
+        }
+
+        private void CargarRoles()
+        {
+            cboRol.DisplayMember = "ToString";
+            cboRol.DataSource = RolService.ObtenerRoles(soloActivos: true);
         }
 
         private void frmUsuario_KeyDown(object sender, KeyEventArgs e)
@@ -44,6 +51,7 @@ namespace PSC09
             txtCorreo.Clear();
             txtClave.Clear();
             chkActivo.Checked = true;
+            cboRol.SelectedIndex = -1;
 
             idEmpleadoActual = 0;
             existeElUsuario = false;
@@ -80,6 +88,17 @@ namespace PSC09
                     txtCorreo.Text = rdr["correo"].ToString();
                     txtClave.Clear(); // la clave guardada es un hash: no se muestra. Vacío = no cambiarla.
                     chkActivo.Checked = rdr["activo"].ToString().Trim() == "1";
+
+                    int? idRolActual = rdr["idRol"] == DBNull.Value ? (int?)null : Convert.ToInt32(rdr["idRol"]);
+                    cboRol.SelectedIndex = -1;
+                    foreach (Rol rol in cboRol.Items)
+                    {
+                        if (idRolActual.HasValue && rol.Id == idRolActual.Value)
+                        {
+                            cboRol.SelectedItem = rol;
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -89,8 +108,8 @@ namespace PSC09
             using (SqlConnection cnx = new SqlConnection(cnn.db))
             {
                 cnx.Open();
-                string stQuery = " INSERT INTO USUARIO (posicion, nombrecorto, correo, clave, activo, nombrecompleto) " +
-                                 " VALUES (@posicion, @nombrecorto, @correo, @clave, @activo, @nombrecompleto) ";
+                string stQuery = " INSERT INTO USUARIO (posicion, nombrecorto, correo, clave, activo, nombrecompleto, idRol) " +
+                                 " VALUES (@posicion, @nombrecorto, @correo, @clave, @activo, @nombrecompleto, @idRol) ";
 
                 SqlCommand cmd = new SqlCommand(stQuery, cnx);
                 AgregarParametros(cmd);
@@ -111,7 +130,7 @@ namespace PSC09
 
                 string stQuery = " UPDATE USUARIO SET posicion = @posicion, correo = @correo, " +
                                  (cambiaClave ? " clave = @clave, " : "") +
-                                 " activo = @activo, nombrecompleto = @nombrecompleto WHERE idEmpleado = @id ";
+                                 " activo = @activo, nombrecompleto = @nombrecompleto, idRol = @idRol WHERE idEmpleado = @id ";
 
                 SqlCommand cmd = new SqlCommand(stQuery, cnx);
                 AgregarParametros(cmd);
@@ -126,8 +145,10 @@ namespace PSC09
 
         private void AgregarParametros(SqlCommand cmd)
         {
+            Rol rolSeleccionado = cboRol.SelectedItem as Rol;
             cmd.Parameters.AddWithValue("@posicion", txtPosicion.Text.Trim());
             cmd.Parameters.AddWithValue("@nombrecorto", txtNombreCorto.Text.Trim());
+            cmd.Parameters.AddWithValue("@idRol", rolSeleccionado != null ? (object)rolSeleccionado.Id : DBNull.Value);
             cmd.Parameters.AddWithValue("@correo", txtCorreo.Text.Trim());
             cmd.Parameters.AddWithValue("@activo", chkActivo.Checked ? "1" : "0");
             cmd.Parameters.AddWithValue("@nombrecompleto", txtNombreCompleto.Text.Trim());
@@ -149,6 +170,12 @@ namespace PSC09
             if (txtNombreCorto.Text.Trim() == string.Empty)
             {
                 MessageBox.Show("Debes escribir el usuario", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (cboRol.SelectedItem == null)
+            {
+                MessageBox.Show("Debes elegir un Rol para el usuario.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 

@@ -68,6 +68,32 @@ dejó fuera a propósito**: a diferencia de todo lo anterior, es una feature nue
 preguntas de diseño abiertas (qué roles, qué granularidad), no un fix mecánico — igual
 que P2-P4, que quedan para una ronda aparte.
 
+**Tercera ronda (16 de septiembre de 2026, mismo día): P1.6 resuelto.** Con las
+preguntas de diseño ya respondidas (roles flexibles vía una pantalla nueva, Cajero
+= "solo vender" sin anular factura), se construyó `Sesion`/`RolService`/`Permisos`
+desde cero, la pantalla `frmPermisosPorRol`, el combo de Rol en `frmUsuario`, y el
+ocultamiento + revalidación de permisos en `frmMenu`. Único punto fuera de alcance
+a propósito: la bitácora de quién crea/anula una factura, que el audit mencionaba
+junto a este item pero que es una mejora aparte.
+
+**Cuarta ronda (17 de septiembre de 2026): verificación manual de P1.6 hecha, y
+encontró un bug real.** El usuario reportó que tras iniciar sesión solo aparecía el
+botón "Salir" — nada más del menú. Diagnóstico contra la app compilada real (login
+automatizado como `admin`, con diálogos de depuración temporales): la base de datos
+y `Sesion` tenían los 25 permisos correctos, pero `frmMenu.AplicarPermisos()` los
+mostraba todos ocultos igual. Causa: el método usaba `.Visible` no solo para marcar
+cada ítem hijo, sino para **leerlo de vuelta** y decidir la visibilidad del ítem
+padre (`registroToolStripMenuItem.Visible = usuarioToolStripMenuItem.Visible || ...`).
+El *getter* `.Visible` de un `ToolStripMenuItem` hijo de un dropdown que todavía no
+se abrió siempre da `false` (sólo refleja si está pintado en pantalla en ese
+instante), aunque el *setter* sí haya actualizado el estado interno — por eso todos
+los `||` daban `false` y el menú completo quedaba oculto para cualquier rol,
+incluido Administrador. Se cambiaron las 26 asignaciones/lecturas de `.Visible` a
+`.Available` en `AplicarPermisos()`, que no tiene ese problema. Verificado de nuevo
+contra la app real: tras el fix, el admin ve todas las opciones correspondientes a
+sus 25 permisos. Esto cierra la única verificación manual que P1.6 tenía pendiente
+(ver "Orden de ejecución sugerido" más abajo).
+
 ---
 
 ## Cómo leer este documento
@@ -137,11 +163,10 @@ archivos de trabajo reales, no se borran, sólo se excluyen del repo de código)
 
 ---
 
-# P1 — Corrupción de datos y riesgo fiscal (P1.1-P1.5, P1.7 y P1.8 resueltos)
+# P1 — Corrupción de datos y riesgo fiscal (todo resuelto: P1.1-P1.8)
 
-Sólo **P1.6 (permisos por rol)** sigue sin tocar a propósito — es una feature nueva con
-preguntas de diseño abiertas (qué roles, qué granularidad), no un fix mecánico. Todo lo
-demás de esta sección se resolvió el 16 de septiembre de 2026.
+Toda la sección P1 se resolvió el 16 de septiembre de 2026, en dos rondas separadas
+(mecánico primero, P1.6 después con sus preguntas de diseño ya respondidas).
 
 ## ~~P1.1 · Dos cajas pueden emitir el mismo NCF~~ — RESUELTO (2026-09-16)
 
@@ -208,18 +233,49 @@ checkbox desmarcado, lo permite marcado, y no deja rastro en la base al terminar
 prueba (todo dentro de transacciones revertidas, salvo el propio checkbox que se
 restauró a su valor original).
 
-## P1.6 · Cualquier usuario puede hacer cualquier cosa
+## ~~P1.6 · Cualquier usuario puede hacer cualquier cosa~~ — RESUELTO (2026-09-16)
 
-Sigue sin resolver. La única referencia a permisos en todo el proyecto sigue siendo el
-texto del menú (`frmMenu.Designer.cs:312`, `"Permiso a Usuario"`), que no filtra nada.
-Sin bitácora de quién crea o anula una factura.
+Se construyó de cero el concepto de sesión y rol que no existía (`frmLogin` validaba
+credenciales pero nunca guardaba quién había iniciado sesión). Diseño implementado,
+más simple que el "Sesion.Exigir + ROL/PERMISO" del detalle técnico original en un
+punto (el catálogo de permisos posibles es una lista fija en código, `Clases/
+Permisos.cs`, no una tabla `PERMISO` editable — sólo el rol de cada usuario es
+editable):
 
-Con el módulo de multi-moneda añadiendo aún más superficie sensible (marcar una moneda
-como base, cambiar tasas de cambio que afectan reportes consolidados), esto sube de
-urgencia, no baja: ahora hay más acciones que un empleado sin supervisión puede tocar.
+- `ROL`/`ROLPERMISO` (esquema) + `Clases/RolService.cs`: catálogo de roles y qué
+  permiso tiene cada uno. Sembrado con `Administrador` (los 25 permisos que existen
+  hoy) y `Cajero` ("solo vender": Facturar, Punto de Venta, Notas de Crédito/Débito,
+  Clientes, Estado de Cuenta, Alfabético y los 4 reportes — sin anular factura,
+  Configuración, Usuarios, Compras/Proveedores, Gastos ni Productos). Todo usuario que
+  no tenía rol (incluido `admin`) quedó como Administrador en la migración — nadie
+  pierde acceso por sorpresa.
+- `Clases/Sesion.cs`: quién inició sesión y sus permisos en memoria (`Puede`/`Exigir`),
+  cargado en `frmLogin` tras validar credenciales.
+- `Formularios/frmPermisosPorRol.cs` (nueva, reemplaza el ítem de menú muerto
+  "Permiso a Usuario"): crear roles nuevos y marcar/desmarcar cada permiso con
+  casillas, mismo patrón de grid + checkbox + "Guardar" por lote que ya usaba
+  `frmComprobantesFiscales`.
+- `frmUsuario` gana un combo "Rol" (obligatorio). `frmMenu` oculta cada ítem sin
+  permiso y además revalida el mismo permiso dentro de cada `Click` (esconder un botón
+  no es seguridad). `frmFactura.btnBorrar_Click` exige `ANULAR_FACTURA` aparte de
+  `FACTURAR`, porque Cajero tiene uno y no el otro.
 
-Ver diseño completo de `ROL` / `PERMISO` / `Sesion.Exigir(...)` en la sección P1.6 del
-detalle técnico más abajo.
+Probado con un harness de consola contra la base real: Administrador con los 25
+permisos, Cajero con exactamente los 11 esperados, un usuario de prueba con rol
+Cajero confirma `Sesion.Puede`/`Exigir` correctos (incluida la excepción al exigir
+`ANULAR_FACTURA`), y `RolService.CrearRol`/`GuardarPermisos`/`ObtenerPermisos`
+(lo que usa la pantalla nueva) reemplazando un conjunto de permisos por otro sin dejar
+residuos. Todo el usuario/rol de prueba se borró al terminar.
+
+**Actualización (17 de septiembre de 2026):** la verificación manual contra la app
+real (lo único que el harness de consola no podía probar) encontró que `frmMenu`
+ocultaba el menú completo para cualquier rol, incluido Administrador — bug de
+`.Visible` vs `.Available` en `AplicarPermisos()`, ya corregido y reverificado. Ver
+el detalle en "Qué cambió desde la última revisión" al principio del documento.
+
+**Fuera de alcance a propósito** (no se pidió): bitácora de quién crea/anula una
+factura — el audit lo mencionaba junto a este punto, pero es una mejora aparte que
+ahora es barata de agregar reutilizando `Sesion.IdEmpleado`.
 
 ## ~~P1.7 · Redondeo bancario en cálculos de dinero~~ — RESUELTO (2026-09-16)
 
@@ -497,9 +553,16 @@ public static string CarpetaDocumentos()
 
 **Ahora mismo — antes de escribir código nuevo:**
 
-- Commitear todo el trabajo del 16 de septiembre: el fix de conversión de moneda
-  (P1.8) y los 7 items de P0/P1 resueltos en esta misma ronda (P0.3, P1.1-P1.5, P1.7),
-  más la actualización de `MANUAL_TECNICO.docx`/`MANUAL_USUARIO.docx`. Ver P0.2.
+- Commitear todo el trabajo del 16-17 de septiembre: el fix de conversión de moneda
+  (P1.8), los 6 items mecánicos de P0/P1 (P0.3, P1.1-P1.5, P1.7), permisos por rol
+  (P1.6, con `Sesion`/`RolService`/`Permisos`/`frmPermisosPorRol` nuevos, más el fix
+  de `.Visible`/`.Available` en `frmMenu` del 17 de septiembre), más la actualización
+  de `MANUAL_TECNICO.docx`/`MANUAL_USUARIO.docx`. Ver P0.2.
+- ~~Revisar a mano en la app real que `frmMenu` oculta los ítems correctos para un
+  usuario Cajero~~ — RESUELTO (2026-09-17): se verificó contra la app compilada real
+  y se encontró y corrigió un bug que ocultaba el menú completo (ver arriba). Sigue
+  pendiente probar específicamente con un usuario de rol Cajero (se probó con
+  Administrador), pero el mecanismo ya es el correcto (`.Available`).
 
 **Esta semana:**
 
@@ -516,7 +579,8 @@ public static string CarpetaDocumentos()
 - P3.1 · Extraer `FacturaEnEdicion`
 - P3.2 · Pruebas unitarias, incluida la conversión de moneda
 - P2.2 · Campos de e-CF en el esquema
-- P1.6 · Permisos por rol y bitácora
+- Bitácora de quién crea/anula una factura (mencionada junto a P1.6 en el audit
+  original; P1.6 mismo ya se resolvió el 16 de septiembre, ver arriba)
 
 **Semanas 5-8:**
 
@@ -576,4 +640,16 @@ silenciosa encontrado y corregido en esta misma fecha.*
 
 *Segunda actualización, mismo día: se implementaron y probaron contra la base de datos
 P0.3 y P1.1-P1.5 y P1.7 (ver "Segunda ronda de arreglos" al principio del documento).
-P1.6 y todo P2-P4 siguen pendientes, sin cambios respecto a lo descrito abajo.*
+P1.6 y todo P2-P4 seguían pendientes en ese momento.*
+
+*Tercera actualización, mismo día: se implementó y probó P1.6 (permisos por rol) contra
+la base de datos real (ver "Tercera ronda" al principio del documento). Toda la sección
+P1 queda resuelta. Sólo queda pendiente de verificar a mano en la app real que `frmMenu`
+oculta los ítems correctos por rol (no se puede probar por consola). P2-P4 siguen
+pendientes, sin cambios.*
+
+*Cuarta actualización (17 de septiembre de 2026): se hizo la verificación manual contra
+la app real que quedó pendiente arriba, y encontró un bug real que la ocultaba dejando
+sólo "Salir" visible para cualquier rol (ver "Cuarta ronda" al principio del documento).
+Corregido y reverificado. P1.6 y toda la sección P1 quedan ahora completamente
+verificadas. P2-P4 siguen pendientes, sin cambios.*

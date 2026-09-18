@@ -109,12 +109,14 @@ namespace PSC09
                     cnxn.Open();
 
                     SqlCommand cmd = new SqlCommand(
-                        "SELECT idEmpleado, clave FROM USUARIO WHERE nombrecorto = @usuario AND activo = '1'",
+                        "SELECT idEmpleado, clave, nombrecompleto, idRol FROM USUARIO WHERE nombrecorto = @usuario AND activo = '1'",
                         cnxn);
                     cmd.Parameters.AddWithValue("@usuario", usuario);
 
                     int idEmpleado;
                     string claveGuardada;
+                    string nombreCompleto;
+                    int? idRol;
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -122,6 +124,8 @@ namespace PSC09
 
                         idEmpleado = Convert.ToInt32(reader["idEmpleado"]);
                         claveGuardada = reader["clave"].ToString();
+                        nombreCompleto = reader["nombrecompleto"] == DBNull.Value ? usuario : Convert.ToString(reader["nombrecompleto"]);
+                        idRol = reader["idRol"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["idRol"]);
                     }
 
                     bool esValida;
@@ -146,6 +150,12 @@ namespace PSC09
                             {
                             }
                         }
+                    }
+
+                    if (esValida)
+                    {
+                        Rol rol = idRol.HasValue ? RolService.ObtenerRolPorId(idRol.Value) : null;
+                        Sesion.IniciarSesion(idEmpleado, usuario, nombreCompleto, idRol, rol != null ? rol.Nombre : null);
                     }
 
                     return esValida;

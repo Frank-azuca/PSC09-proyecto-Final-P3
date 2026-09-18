@@ -70,8 +70,20 @@ de facturacion excelente, de mas a menos urgente.
   frmReciboIngreso registra los cobros (uno o varios, repartidos entre
   formas de pago). Esta nota estaba desactualizada.
 
-- Permisos por rol: el menu "Permiso a Usuario" esta ahi pero no filtra
-  nada; hoy cualquier usuario que entra ve y puede hacer todo.
+- Permisos por rol: RESUELTO (2026-09-16). Cada usuario tiene un Rol
+  (Administrador o Cajero de fabrica, o los que se agreguen) que decide
+  que puede ver y hacer. Configuracion -> Permisos por Rol (antes "Permiso
+  a Usuario", que no hacia nada) deja crear roles nuevos y marcar/desmarcar
+  cada permiso; el Rol de cada usuario se asigna desde Registro -> Usuario.
+  Cajero viene armado para "solo vender" (Factura, Punto de Venta, Notas de
+  Credito/Debito, Clientes, Estado de Cuenta, Alfabetico y los reportes) sin
+  poder anular una factura ni entrar a Configuracion, Usuarios, Compras/
+  Proveedores, Gastos ni Productos.
+  Nota (2026-09-17): al probar esto en la app real (no solo por consola) aparecio
+  un bug que dejaba el menu vacio (solo "Salir") para cualquier rol, incluido
+  Administrador -- ya corregido (frmMenu.cs usaba .Visible en vez de .Available
+  para leer de vuelta el estado de los items del menu, ver cambios-y-mejoras-a-
+  implementar.md para el detalle tecnico).
 
 - Notas de credito / devoluciones de productos: RESUELTO (2026-09-13, ver
   seccion 6).

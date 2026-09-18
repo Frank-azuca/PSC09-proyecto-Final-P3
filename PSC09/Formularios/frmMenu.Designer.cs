@@ -309,7 +309,8 @@
             //
             this.permisoAUsuarioToolStripMenuItem.Name = "permisoAUsuarioToolStripMenuItem";
             this.permisoAUsuarioToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.permisoAUsuarioToolStripMenuItem.Text = "Permiso a Usuario";
+            this.permisoAUsuarioToolStripMenuItem.Text = "Permisos por Rol";
+            this.permisoAUsuarioToolStripMenuItem.Click += new System.EventHandler(this.permisoAUsuarioToolStripMenuItem_Click);
             //
             // comprobantesFiscalesToolStripMenuItem
             //

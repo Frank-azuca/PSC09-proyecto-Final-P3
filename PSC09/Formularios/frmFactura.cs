@@ -896,6 +896,12 @@ namespace PSC09
 
         private void btnBorrar_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.AnularFactura))
+            {
+                MessageBox.Show("Tu usuario no tiene permiso para anular facturas. Consulta al administrador.", "Sin permiso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (!ExisteLaData)
             {
                 MessageBox.Show("No hay una factura cargada para anular.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);

@@ -897,6 +897,65 @@ IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('EMPRESA') 
     ALTER TABLE EMPRESA ADD permiteVentaSinExistencia BIT NOT NULL DEFAULT 0;
 GO
 
+-- Roles y permisos (Configuracion -> Permisos por Rol, Clases/RolService.cs/Sesion.cs):
+-- antes de esto, cualquier usuario que entraba veia y podia hacer todo. La lista de
+-- permisos posibles la define el codigo (Clases/Permisos.cs); cuales tiene cada rol es
+-- lo que se administra aqui/desde esa pantalla.
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ROL')
+CREATE TABLE ROL (
+    id      INT IDENTITY(1,1) PRIMARY KEY,
+    nombre  NVARCHAR(30) NOT NULL UNIQUE,
+    activo  BIT NOT NULL DEFAULT 1
+);
+GO
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ROLPERMISO')
+CREATE TABLE ROLPERMISO (
+    idRol   INT NOT NULL FOREIGN KEY REFERENCES ROL(id),
+    permiso VARCHAR(50) NOT NULL,
+    PRIMARY KEY (idRol, permiso)
+);
+GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('USUARIO') AND name = 'idRol')
+    ALTER TABLE USUARIO ADD idRol INT NULL FOREIGN KEY REFERENCES ROL(id);
+GO
+
+IF NOT EXISTS (SELECT * FROM ROL WHERE nombre = 'Administrador')
+    INSERT INTO ROL (nombre, activo) VALUES ('Administrador', 1);
+IF NOT EXISTS (SELECT * FROM ROL WHERE nombre = 'Cajero')
+    INSERT INTO ROL (nombre, activo) VALUES ('Cajero', 1);
+GO
+
+-- Administrador: todos los permisos que existen hoy.
+INSERT INTO ROLPERMISO (idRol, permiso)
+SELECT R.id, P.permiso
+FROM ROL R
+CROSS JOIN (VALUES
+    ('USUARIOS'),('PRODUCTOS'),('CLIENTES'),('FACTURAR'),('ANULAR_FACTURA'),('GASTOS'),
+    ('ORDENES_COMPRA'),('MOVIMIENTOS_INVENTARIO'),('PUNTO_VENTA'),('NOTA_CREDITO'),
+    ('NOTA_DEBITO'),('ESTADO_CUENTA'),('ALFABETICO_CLIENTES'),('PROVEEDORES'),
+    ('CUENTA_POR_PAGAR'),('REPORTE_FACTURA'),('REPORTE_INVENTARIO'),
+    ('REPORTE_CONSOLIDADO'),('REPORTE_ORDENES_COMPRA'),('PERMISOS_ROL'),
+    ('COMPROBANTES_FISCALES'),('DATOS_EMPRESA'),('TIPOS_PAGO'),('MONEDAS'),
+    ('TASAS_CAMBIO')
+) AS P(permiso)
+WHERE R.nombre = 'Administrador'
+  AND NOT EXISTS (SELECT * FROM ROLPERMISO RP WHERE RP.idRol = R.id AND RP.permiso = P.permiso);
+GO
+
+-- Cajero: "solo vender" -- facturar y consultar, sin anular ni tocar nada de
+-- Configuracion/Compras/Gastos/Usuarios/Productos.
+INSERT INTO ROLPERMISO (idRol, permiso)
+SELECT R.id, P.permiso
+FROM ROL R
+CROSS JOIN (VALUES
+    ('CLIENTES'),('FACTURAR'),('PUNTO_VENTA'),('NOTA_CREDITO'),('NOTA_DEBITO'),
+    ('ESTADO_CUENTA'),('ALFABETICO_CLIENTES'),('REPORTE_FACTURA'),
+    ('REPORTE_INVENTARIO'),('REPORTE_CONSOLIDADO'),('REPORTE_ORDENES_COMPRA')
+) AS P(permiso)
+WHERE R.nombre = 'Cajero'
+  AND NOT EXISTS (SELECT * FROM ROLPERMISO RP WHERE RP.idRol = R.id AND RP.permiso = P.permiso);
+GO
+
 -- Usuario inicial para poder entrar por primera vez.
 -- Usuario: admin   Contraseña: admin123
 -- Se guarda en texto plano a propósito: frmLogin.cs detecta que no tiene el
@@ -906,4 +965,11 @@ GO
 IF NOT EXISTS (SELECT * FROM USUARIO WHERE nombrecorto = 'admin')
     INSERT INTO USUARIO (posicion, nombrecorto, correo, clave, activo, nombrecompleto)
     VALUES ('Administrador', 'admin', '', 'admin123', '1', 'Administrador');
+GO
+
+-- Nadie pierde acceso por sorpresa con esta migracion: todo usuario que todavia no
+-- tiene rol asignado (incluidos los que ya existian antes de este cambio) queda como
+-- Administrador. El dueño reasigna manualmente a Cajero despues, desde Registro ->
+-- Usuario, a quien corresponda.
+UPDATE USUARIO SET idRol = (SELECT id FROM ROL WHERE nombre = 'Administrador') WHERE idRol IS NULL;
 GO

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -21,6 +21,72 @@ namespace PSC09
         {
             this.Text = "Andrómeda - Menú Principal";
             this.KeyPreview = true;
+
+            AplicarPermisos();
+        }
+
+        // Oculta cada ítem hoja cuyo permiso no tiene la sesión actual, y el menú padre
+        // completo si ninguno de sus hijos gestionados por permisos queda visible. Esto
+        // es sólo la capa de interfaz (esconder un botón no es seguridad): cada Click
+        // handler vuelve a exigir el mismo permiso antes de abrir la pantalla, y varias
+        // pantallas además exigen permisos propios para acciones puntuales (ej. Anular
+        // Factura). "Salir" queda siempre visible para cualquier rol.
+        // Nota: se usa .Available (no .Visible) porque para un ToolStripMenuItem hijo de
+        // un dropdown que todavía no se ha abierto, el getter de .Visible siempre da false
+        // (sólo refleja si está pintado en pantalla en este instante), aunque el setter
+        // internamente sí actualiza Available. Al leerlo de vuelta acá abajo para decidir
+        // la visibilidad del ítem padre, .Visible daba false para todo y ocultaba el menú
+        // completo entero. .Available no tiene ese problema: se puede leer y escribir de
+        // forma confiable sin importar si el dropdown está abierto o no.
+        private void AplicarPermisos()
+        {
+            usuarioToolStripMenuItem.Available = Sesion.Puede(Permisos.Usuarios);
+            productosToolStripMenuItem.Available = Sesion.Puede(Permisos.Productos);
+            clienteToolStripMenuItem.Available = Sesion.Puede(Permisos.Clientes);
+            facturaToolStripMenuItem.Available = Sesion.Puede(Permisos.Facturar);
+            gastosToolStripMenuItem.Available = Sesion.Puede(Permisos.Gastos);
+            ordenesCompraToolStripMenuItem.Available = Sesion.Puede(Permisos.OrdenesCompra);
+            movimientosInventarioToolStripMenuItem.Available = Sesion.Puede(Permisos.MovimientosInventario);
+            registroToolStripMenuItem.Available = usuarioToolStripMenuItem.Available || productosToolStripMenuItem.Available ||
+                clienteToolStripMenuItem.Available || facturaToolStripMenuItem.Available || gastosToolStripMenuItem.Available ||
+                ordenesCompraToolStripMenuItem.Available || movimientosInventarioToolStripMenuItem.Available;
+
+            puntoVentaToolStripMenuItem.Available = Sesion.Puede(Permisos.PuntoVenta);
+            notaCreditoToolStripMenuItem.Available = Sesion.Puede(Permisos.NotaCredito);
+            notaDebitoToolStripMenuItem.Available = Sesion.Puede(Permisos.NotaDebito);
+            ventasToolStripMenuItem.Available = puntoVentaToolStripMenuItem.Available ||
+                notaCreditoToolStripMenuItem.Available || notaDebitoToolStripMenuItem.Available;
+
+            estadoDeCuentaToolStripMenuItem.Available = Sesion.Puede(Permisos.EstadoCuenta);
+            alfabeticoDelClienteToolStripMenuItem.Available = Sesion.Puede(Permisos.AlfabeticoClientes);
+            cuentasPorCobrarToolStripMenuItem.Available = estadoDeCuentaToolStripMenuItem.Available || alfabeticoDelClienteToolStripMenuItem.Available;
+
+            proveedoresToolStripMenuItem.Available = Sesion.Puede(Permisos.Proveedores);
+            cuentaPorPagarToolStripMenuItem.Available = Sesion.Puede(Permisos.CuentaPorPagar);
+            cuentasPorPagarToolStripMenuItem.Available = proveedoresToolStripMenuItem.Available || cuentaPorPagarToolStripMenuItem.Available;
+
+            facturaToolStripMenuItem1.Available = Sesion.Puede(Permisos.ReporteFactura);
+            inventarioToolStripMenuItem.Available = Sesion.Puede(Permisos.ReporteInventario);
+            consolidadoToolStripMenuItem.Available = Sesion.Puede(Permisos.ReporteConsolidado);
+            ordenesCompraReporteToolStripMenuItem.Available = Sesion.Puede(Permisos.ReporteOrdenesCompra);
+            reporteToolStripMenuItem.Available = facturaToolStripMenuItem1.Available || inventarioToolStripMenuItem.Available ||
+                consolidadoToolStripMenuItem.Available || ordenesCompraReporteToolStripMenuItem.Available;
+
+            permisoAUsuarioToolStripMenuItem.Available = Sesion.Puede(Permisos.PermisosRol);
+            comprobantesFiscalesToolStripMenuItem.Available = Sesion.Puede(Permisos.ComprobantesFiscales);
+            datosEmpresaToolStripMenuItem.Available = Sesion.Puede(Permisos.DatosEmpresa);
+            tiposPagoToolStripMenuItem.Available = Sesion.Puede(Permisos.TiposPago);
+            monedasToolStripMenuItem.Available = Sesion.Puede(Permisos.Monedas);
+            tasasCambioToolStripMenuItem.Available = Sesion.Puede(Permisos.TasasCambio);
+            configuraciónToolStripMenuItem.Available = permisoAUsuarioToolStripMenuItem.Available || comprobantesFiscalesToolStripMenuItem.Available ||
+                datosEmpresaToolStripMenuItem.Available || tiposPagoToolStripMenuItem.Available ||
+                monedasToolStripMenuItem.Available || tasasCambioToolStripMenuItem.Available;
+        }
+
+        private void SinPermiso()
+        {
+            MessageBox.Show("Tu usuario no tiene permiso para esta pantalla. Consulta al administrador.",
+                "Sin permiso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         private void frmMenu_KeyDown(object sender, KeyEventArgs e)
@@ -33,6 +99,7 @@ namespace PSC09
 
         private void productosToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.Productos)) { SinPermiso(); return; }
             this.Close();
 
             frmProductos pro = new frmProductos();
@@ -41,6 +108,7 @@ namespace PSC09
 
         private void clienteToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.Clientes)) { SinPermiso(); return; }
             this.Close();
 
             frmCliente cli = new frmCliente();
@@ -49,6 +117,7 @@ namespace PSC09
 
         private void usuarioToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.Usuarios)) { SinPermiso(); return; }
             this.Close();
 
             frmUsuario usr = new frmUsuario();
@@ -57,6 +126,7 @@ namespace PSC09
 
         private void comprobantesFiscalesToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.ComprobantesFiscales)) { SinPermiso(); return; }
             this.Close();
 
             frmComprobantesFiscales frm = new frmComprobantesFiscales();
@@ -65,6 +135,7 @@ namespace PSC09
 
         private void datosEmpresaToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.DatosEmpresa)) { SinPermiso(); return; }
             this.Close();
 
             frmDatosEmpresa frm = new frmDatosEmpresa();
@@ -73,6 +144,7 @@ namespace PSC09
 
         private void tiposPagoToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.TiposPago)) { SinPermiso(); return; }
             this.Close();
 
             frmTiposPago frm = new frmTiposPago();
@@ -81,6 +153,7 @@ namespace PSC09
 
         private void monedasToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.Monedas)) { SinPermiso(); return; }
             this.Close();
 
             frmMoneda frm = new frmMoneda();
@@ -89,14 +162,25 @@ namespace PSC09
 
         private void tasasCambioToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.TasasCambio)) { SinPermiso(); return; }
             this.Close();
 
             frmTasasCambio frm = new frmTasasCambio();
             frm.Show();
         }
 
+        private void permisoAUsuarioToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!Sesion.Puede(Permisos.PermisosRol)) { SinPermiso(); return; }
+            this.Close();
+
+            frmPermisosPorRol frm = new frmPermisosPorRol();
+            frm.Show();
+        }
+
         private void reporteFacturaToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.ReporteFactura)) { SinPermiso(); return; }
             this.Close();
 
             frmReporteFactura frm = new frmReporteFactura();
@@ -105,6 +189,7 @@ namespace PSC09
 
         private void reporteInventarioToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.ReporteInventario)) { SinPermiso(); return; }
             this.Close();
 
             frmReporteInventario frm = new frmReporteInventario();
@@ -113,6 +198,7 @@ namespace PSC09
 
         private void facturaToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.Facturar)) { SinPermiso(); return; }
             frmFactura factura = new frmFactura();
             this.Close();
             factura.Show();
@@ -120,6 +206,7 @@ namespace PSC09
 
         private void gastosToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.Gastos)) { SinPermiso(); return; }
             this.Close();
 
             frmGastos frm = new frmGastos();
@@ -128,6 +215,7 @@ namespace PSC09
 
         private void ordenesCompraToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.OrdenesCompra)) { SinPermiso(); return; }
             this.Close();
 
             frmOrdenCompra frm = new frmOrdenCompra();
@@ -136,6 +224,7 @@ namespace PSC09
 
         private void movimientosInventarioToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.MovimientosInventario)) { SinPermiso(); return; }
             this.Close();
 
             frmMovimientosInventario frm = new frmMovimientosInventario();
@@ -144,6 +233,7 @@ namespace PSC09
 
         private void proveedoresToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.Proveedores)) { SinPermiso(); return; }
             this.Close();
 
             frmProveedor frm = new frmProveedor();
@@ -152,6 +242,7 @@ namespace PSC09
 
         private void cuentaPorPagarToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.CuentaPorPagar)) { SinPermiso(); return; }
             this.Close();
 
             frmEstadoCuentaProveedor frm = new frmEstadoCuentaProveedor();
@@ -160,6 +251,7 @@ namespace PSC09
 
         private void consolidadoToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.ReporteConsolidado)) { SinPermiso(); return; }
             this.Close();
 
             frmReporteConsolidado frm = new frmReporteConsolidado();
@@ -168,6 +260,7 @@ namespace PSC09
 
         private void ordenesCompraReporteToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.ReporteOrdenesCompra)) { SinPermiso(); return; }
             this.Close();
 
             frmReporteOrdenesCompra frm = new frmReporteOrdenesCompra();
@@ -176,6 +269,7 @@ namespace PSC09
 
         private void notaCreditoToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.NotaCredito)) { SinPermiso(); return; }
             this.Close();
 
             frmNotaCredito frm = new frmNotaCredito();
@@ -184,6 +278,7 @@ namespace PSC09
 
         private void notaDebitoToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.NotaDebito)) { SinPermiso(); return; }
             this.Close();
 
             frmNotaDebito frm = new frmNotaDebito();
@@ -192,6 +287,7 @@ namespace PSC09
 
         private void puntoVentaToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.PuntoVenta)) { SinPermiso(); return; }
             this.Close();
 
             frmPuntoVenta frm = new frmPuntoVenta();
@@ -200,6 +296,7 @@ namespace PSC09
 
         private void estadoDeCuentaToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.EstadoCuenta)) { SinPermiso(); return; }
             this.Close();
 
             frmEstadoCuenta frm = new frmEstadoCuenta();
@@ -208,6 +305,7 @@ namespace PSC09
 
         private void alfabeticoDelClienteToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Sesion.Puede(Permisos.AlfabeticoClientes)) { SinPermiso(); return; }
             this.Close();
 
             frmAlfabeticoClientes frm = new frmAlfabeticoClientes();
@@ -226,6 +324,7 @@ namespace PSC09
 
                 if (resultado == DialogResult.Yes)
                 {
+                    Sesion.CerrarSesion();
                     this.Hide();
 
                     frmLogin login = new frmLogin();
