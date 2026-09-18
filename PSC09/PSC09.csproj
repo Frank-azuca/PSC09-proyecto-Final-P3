@@ -60,6 +60,7 @@
     <Compile Include="Clases\ValidadorFiscal.cs" />
     <Compile Include="Clases\RespaldoService.cs" />
     <Compile Include="Clases\ConversionMoneda.cs" />
+    <Compile Include="Clases\Auditoria.cs" />
     <Compile Include="Clases\CuentaCliente.cs" />
     <Compile Include="Clases\CuentaProveedor.cs" />
     <Compile Include="Clases\Empresa.cs" />

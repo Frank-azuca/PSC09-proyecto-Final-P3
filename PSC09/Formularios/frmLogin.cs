@@ -120,7 +120,11 @@ namespace PSC09
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        if (!reader.Read()) return false;
+                        if (!reader.Read())
+                        {
+                            Auditoria.Registrar("LOGIN_FALLIDO", "USUARIO", usuario, "Usuario no existe o está inactivo");
+                            return false;
+                        }
 
                         idEmpleado = Convert.ToInt32(reader["idEmpleado"]);
                         claveGuardada = reader["clave"].ToString();
@@ -156,6 +160,11 @@ namespace PSC09
                     {
                         Rol rol = idRol.HasValue ? RolService.ObtenerRolPorId(idRol.Value) : null;
                         Sesion.IniciarSesion(idEmpleado, usuario, nombreCompleto, idRol, rol != null ? rol.Nombre : null);
+                        Auditoria.Registrar("LOGIN", "USUARIO", usuario);
+                    }
+                    else
+                    {
+                        Auditoria.Registrar("LOGIN_FALLIDO", "USUARIO", usuario, "Contraseña incorrecta");
                     }
 
                     return esValida;

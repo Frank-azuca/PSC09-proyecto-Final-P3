@@ -145,6 +145,8 @@ namespace PSC09
                 }
             }
 
+            Auditoria.Registrar("CREAR", "NOTA_DEBITO", numero, "Factura " + numeroFactura + ", " + concepto);
+
             return numero;
         }
 
@@ -176,6 +178,8 @@ namespace PSC09
                     }
                 }
             }
+
+            Auditoria.Registrar("ANULAR", "NOTA_DEBITO", numero);
         }
 
         public static NotaDebitoInfo ObtenerNota(string numero)

@@ -92,6 +92,8 @@ namespace PSC09
                 cmd.Parameters.AddWithValue("@carpetaDocumentos", (object)datos.CarpetaDocumentos ?? "");
                 cmd.ExecuteNonQuery();
             }
+
+            Auditoria.Registrar("EDITAR", "DATOS_EMPRESA", null);
         }
 
         // Conveniencia para InventarioService (evita traer todo DatosEmpresa sólo para

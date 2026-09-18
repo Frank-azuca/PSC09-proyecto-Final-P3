@@ -79,7 +79,9 @@ namespace PSC09
                 SqlCommand cmd = new SqlCommand(
                     "INSERT INTO ROL (nombre, activo) OUTPUT INSERTED.id VALUES (@nombre, 1)", cnx);
                 cmd.Parameters.AddWithValue("@nombre", nombre);
-                return Convert.ToInt32(cmd.ExecuteScalar());
+                int idNuevo = Convert.ToInt32(cmd.ExecuteScalar());
+                Auditoria.Registrar("CREAR", "ROL", idNuevo.ToString(), nombre);
+                return idNuevo;
             }
         }
 
@@ -141,6 +143,8 @@ namespace PSC09
                     }
                 }
             }
+
+            Auditoria.Registrar("EDITAR", "PERMISOS_ROL", idRol.ToString(), otorgados.Count + " permiso(s)");
         }
 
         // El rol de un usuario (null si todavía no se le asignó ninguno, ej. cuentas muy

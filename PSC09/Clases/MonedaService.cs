@@ -122,7 +122,9 @@ namespace PSC09
                 cmd.Parameters.AddWithValue("@codigo", codigo.ToUpperInvariant());
                 cmd.Parameters.AddWithValue("@nombre", nombre);
                 cmd.Parameters.AddWithValue("@simbolo", simbolo);
-                return Convert.ToInt32(cmd.ExecuteScalar());
+                int idNuevo = Convert.ToInt32(cmd.ExecuteScalar());
+                Auditoria.Registrar("CREAR", "MONEDA", idNuevo.ToString(), codigo.ToUpperInvariant());
+                return idNuevo;
             }
         }
 
@@ -140,6 +142,8 @@ namespace PSC09
                 cmd.Parameters.AddWithValue("@id", id);
                 cmd.ExecuteNonQuery();
             }
+
+            Auditoria.Registrar("EDITAR", "MONEDA", id.ToString(), codigo.ToUpperInvariant());
         }
 
         // Marca una moneda como la base del negocio y le quita esa marca a
@@ -170,6 +174,8 @@ namespace PSC09
                     }
                 }
             }
+
+            Auditoria.Registrar("MARCAR_BASE", "MONEDA", id.ToString());
         }
     }
 }

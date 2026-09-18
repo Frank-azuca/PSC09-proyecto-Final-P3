@@ -143,6 +143,8 @@ namespace PSC09
                 cmd.Parameters.AddWithValue("@tasa", tasa);
                 cmd.ExecuteNonQuery();
             }
+
+            Auditoria.Registrar("CREAR", "TASA_CAMBIO", idMoneda.ToString(), "Tasa " + tasa.ToString("0.####") + " el " + fecha.ToString("dd/MM/yyyy"));
         }
 
         public static void EliminarTasa(int id)
@@ -154,6 +156,8 @@ namespace PSC09
                 cmd.Parameters.AddWithValue("@id", id);
                 cmd.ExecuteNonQuery();
             }
+
+            Auditoria.Registrar("ELIMINAR", "TASA_CAMBIO", id.ToString());
         }
     }
 }

@@ -980,3 +980,29 @@ GO
 -- Usuario, a quien corresponda.
 UPDATE USUARIO SET idRol = (SELECT id FROM ROL WHERE nombre = 'Administrador') WHERE idRol IS NULL;
 GO
+
+-- Bitacora de auditoria (Clases/Auditoria.cs): quien hizo que y cuando, en toda
+-- accion de negocio que crea/edita/anula algo (facturas, notas, usuarios,
+-- productos, clientes, gastos, compras, pagos, permisos, configuracion, login).
+-- idEmpleado puede quedar NULL a proposito (ej. un intento de login fallido no
+-- tiene una sesion iniciada todavia); "usuario" guarda el nombrecorto tal cual en
+-- el momento, para que la bitacora siga siendo legible aunque ese usuario se
+-- borre o cambie de nombre despues.
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AUDITORIA')
+CREATE TABLE AUDITORIA (
+    id          INT IDENTITY(1,1) PRIMARY KEY,
+    fechaHora   DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    idEmpleado  INT NULL,
+    usuario     NVARCHAR(50) NULL,
+    accion      NVARCHAR(30) NOT NULL,
+    entidad     NVARCHAR(50) NOT NULL,
+    entidadId   NVARCHAR(50) NULL,
+    detalle     NVARCHAR(500) NULL
+);
+GO
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_AUDITORIA_ENTIDAD' AND object_id = OBJECT_ID('AUDITORIA'))
+    CREATE INDEX IX_AUDITORIA_ENTIDAD ON AUDITORIA (entidad, entidadId);
+GO
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_AUDITORIA_FECHAHORA' AND object_id = OBJECT_ID('AUDITORIA'))
+    CREATE INDEX IX_AUDITORIA_FECHAHORA ON AUDITORIA (fechaHora);
+GO

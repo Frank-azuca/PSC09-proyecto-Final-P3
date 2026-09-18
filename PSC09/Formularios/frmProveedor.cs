@@ -90,6 +90,8 @@ namespace PSC09
                 txtCodigo.Text = nuevoId.ToString();
                 existeElProveedor = true;
             }
+
+            Auditoria.Registrar("CREAR", "PROVEEDOR", txtCodigo.Text, txtNombre.Text.Trim());
         }
 
         private void ActualizaData(int idProveedor)
@@ -106,6 +108,8 @@ namespace PSC09
 
                 cmd.ExecuteNonQuery();
             }
+
+            Auditoria.Registrar("EDITAR", "PROVEEDOR", idProveedor.ToString(), txtNombre.Text.Trim());
         }
 
         private void AgregarParametros(SqlCommand cmd)
@@ -127,6 +131,8 @@ namespace PSC09
                 cmd.Parameters.AddWithValue("@id", idProveedor);
                 cmd.ExecuteNonQuery();
             }
+
+            Auditoria.Registrar("DESACTIVAR", "PROVEEDOR", idProveedor.ToString());
         }
 
         private void txtCodigo_Leave(object sender, EventArgs e)

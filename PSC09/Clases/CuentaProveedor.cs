@@ -156,6 +156,8 @@ namespace PSC09
                 }
             }
 
+            Auditoria.Registrar("CREAR", "PAGO_PROVEEDOR", numeroPago, "Monto " + total.ToString("0.00"));
+
             return numeroPago;
         }
 

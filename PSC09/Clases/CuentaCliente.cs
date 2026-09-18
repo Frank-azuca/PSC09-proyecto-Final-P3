@@ -261,6 +261,8 @@ namespace PSC09
                 }
             }
 
+            Auditoria.Registrar("CREAR", "RECIBO", numeroRecibo, "Monto " + total.ToString("0.00"));
+
             return numeroRecibo;
         }
 

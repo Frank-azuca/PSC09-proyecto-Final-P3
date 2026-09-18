@@ -356,6 +356,8 @@ namespace PSC09
                 return;
             }
 
+            Auditoria.Registrar("EDITAR", "COMPROBANTES_FISCALES", null, pendientes.Count + " tipo(s)");
+
             MessageBox.Show("Configuración guardada correctamente.", "Comprobantes Fiscales", MessageBoxButtons.OK, MessageBoxIcon.Information);
             CargarGrid();
         }
@@ -379,6 +381,7 @@ namespace PSC09
                 try
                 {
                     ComprobanteFiscal.CrearTipo(frm.Prefijo, frm.Nombre, frm.EsElectronico);
+                    Auditoria.Registrar("CREAR", "TIPO_COMPROBANTE", frm.Prefijo, frm.Nombre);
                     MessageBox.Show("Tipo de comprobante creado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     CargarGrid();
                 }

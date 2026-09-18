@@ -138,6 +138,8 @@ namespace PSC09
                     }
                 }
 
+                Auditoria.Registrar("GUARDAR", "TIPOS_PAGO", null, dgv.Rows.Count + " fila(s)");
+
                 MessageBox.Show("Tipos de pago guardados.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 CargarGrid();
             }

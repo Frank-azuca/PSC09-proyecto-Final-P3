@@ -223,6 +223,8 @@ namespace PSC09
                 txtCodigo.Text = nuevoId.ToString();
                 existeElCliente = true;
             }
+
+            Auditoria.Registrar("CREAR", "CLIENTE", txtCodigo.Text, txtNombre.Text.Trim());
         }
 
         private void ActualizaData(int idCliente)
@@ -240,6 +242,8 @@ namespace PSC09
 
                 cmd.ExecuteNonQuery();
             }
+
+            Auditoria.Registrar("EDITAR", "CLIENTE", idCliente.ToString(), txtNombre.Text.Trim());
         }
 
         private void AgregarParametros(SqlCommand cmd)
@@ -267,6 +271,8 @@ namespace PSC09
                 cmd.Parameters.AddWithValue("@id", idCliente);
                 cmd.ExecuteNonQuery();
             }
+
+            Auditoria.Registrar("DESACTIVAR", "CLIENTE", idCliente.ToString());
         }
 
         // Eventos

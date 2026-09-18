@@ -153,6 +153,47 @@ la base real a mitad de esta ronda (la columna `carpetaDocumentos` y el permiso
 `RESPALDO_BD` no existían todavía) — recordatorio de que este script no se ejecuta
 solo, hay que correrlo a mano después de actualizar el ejecutable.
 
+**Sexta ronda (18 de septiembre de 2026): bitácora de auditoría genérica.** El
+pendiente original ("bitácora de quién crea/anula una factura", mencionado junto a
+P1.6) se resolvió con más alcance del que pedía: una tabla `AUDITORIA` genérica
+para todo el sistema, no sólo para Factura.
+
+**Hecho:**
+- Tabla `AUDITORIA` (`id`, `fechaHora`, `idEmpleado`, `usuario`, `accion`,
+  `entidad`, `entidadId`, `detalle`) + índices en `entidad+entidadId` y en
+  `fechaHora`, en `crear_base_datos.sql`.
+- `Clases/Auditoria.cs`: `Auditoria.Registrar(accion, entidad, entidadId, detalle)`
+  toma quién está logueado de `Sesion` (`idEmpleado`/`NombreCorto`); si falla el
+  propio registro (ej. tabla sin migrar todavía), lo manda a `Log.cs` y no revienta
+  la operación real que se estaba auditando.
+- Conectada en: Factura (crear/anular), Producto (crear/editar/desactivar), Cliente
+  (crear/editar/desactivar), Usuario (crear/editar/desactivar), Gastos
+  (guardar/anular), Proveedor (crear/editar/desactivar), Orden de Compra
+  (crear/recibir/anular), movimientos de inventario manuales (entrada/salida),
+  Nota de Crédito (crear/anular), Nota de Débito (crear/anular), Pago a Proveedor,
+  Recibo de cliente, Permisos por Rol (crear rol/guardar permisos), Datos de la
+  Empresa, Tipos de Pago, Monedas (crear/editar/marcar base), Tasas de Cambio
+  (crear/eliminar), Comprobantes Fiscales (crear tipo/guardar configuración),
+  Respaldo de Base de Datos, y Login/Logout (incluidos los intentos fallidos, con
+  el usuario que se tecleó aunque no exista sesión iniciada).
+- Migración corrida contra la base real y probado en vivo: el login de prueba
+  quedó registrado correctamente en `AUDITORIA` (`LOGIN`, usuario `admin`) sin
+  tocar los datos reales que ya había en la tabla de actividad genuina del negocio
+  (facturas F-2/F-3, edición de GR15R, edición de Datos de la Empresa — esas filas
+  se dejaron intactas a propósito, no eran datos de prueba).
+
+**Falta (a propósito, fuera de esta ronda):**
+- No hay todavía una pantalla para **consultar** la bitácora (`SELECT * FROM
+  AUDITORIA` es la única forma de verla por ahora). Sería una pantalla de sólo
+  lectura, parecida a un reporte, con filtro por usuario/entidad/fecha.
+- No quedó conectada en: Monedas/Tasas de Cambio ya sí quedaron, pero
+  `ComprobanteFiscal.FijarProximoNumero` (corrección manual de secuencia) y algunas
+  pantallas menores no se revisaron una por una — el criterio fue cubrir las
+  acciones con un botón Guardar/Borrar/Anular en las pantallas principales, no
+  auditar cada `INSERT`/`UPDATE` del proyecto.
+- No hay una forma de purgar o archivar filas viejas de `AUDITORIA` (crecerá sin
+  límite); no se pidió y no urge con el volumen actual del negocio.
+
 ---
 
 ## Cómo leer este documento
@@ -336,6 +377,41 @@ el detalle en "Qué cambió desde la última revisión" al principio del documen
 factura — el audit lo mencionaba junto a este punto, pero es una mejora aparte que
 ahora es barata de agregar reutilizando `Sesion.IdEmpleado`.
 
+**Hallazgo de revisión externa (17 de septiembre de 2026): una segunda puerta sin
+guardia.** `frmFactura.btnBorrar_Click` sí exige `ANULAR_FACTURA` (confirmado arriba),
+pero `Formularios/frmReporteFactura.cs:150` (`btnAnular_Click`) llama a
+`FacturaService.AnularFactura(factura)` directo, sin ningún `Sesion.Puede`/`Exigir`
+antes. Es la misma acción con dos botones — uno guardado, el otro no — y el menú no lo
+protege porque para llegar a ese botón sólo hace falta el permiso `REPORTE_FACTURA`,
+que Cajero sí tiene (para ver sus propias ventas). Con los permisos actuales, un Cajero
+no puede anular desde `frmFactura`, pero sí puede hacerlo desde Reporte de Facturas.
+
+No es un fallo del diseño de `Sesion`/`Permisos` — es que se aplicó en un solo punto de
+entrada cuando hay dos. Se arregla igual que en `frmFactura`:
+
+```csharp
+private void btnAnular_Click(object sender, EventArgs e)
+{
+    if (!Sesion.Puede(Permisos.AnularFactura))
+    {
+        MessageBox.Show("Tu usuario no tiene permiso para anular facturas. Consulta al administrador.",
+            "Permiso requerido", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        return;
+    }
+    // ... resto del método sin cambios
+}
+```
+
+Se revisó si `frmNotaCredito`/`frmNotaDebito` tienen el mismo patrón, y es peor: ninguno
+de los dos tiene ningún chequeo. `frmNotaCredito.btnAnularNota_Click` (línea 312) y
+`frmNotaDebito.btnAnularNota_Click` (línea 232) llaman a `NotaCreditoService.AnularNotaCredito`/
+`NotaDebitoService.AnularNotaDebito` directo — y no es que falte llamar a `Sesion.Puede`
+en el sitio correcto, es que **no existe un permiso `ANULAR_NOTA_CREDITO`/
+`ANULAR_NOTA_DEBITO` en `Clases/Permisos.cs`**. Cualquiera con permiso para abrir la
+pantalla (`NotaCredito`/`NotaDebito`, que Cajero sí tiene) puede anular. Para cerrar
+esto hace falta, además del chequeo, agregar los dos permisos nuevos al catálogo y a
+`RolService` (sembrado de Administrador/Cajero).
+
 ## ~~P1.7 · Redondeo bancario en cálculos de dinero~~ — RESUELTO (2026-09-16)
 
 Se creó `Clases/Dinero.cs` con `Dinero.Redondear(decimal)` (`Math.Round(valor, 2,
@@ -410,13 +486,16 @@ completo más abajo.
 
 ## ~~P2.4 · Validación de RNC/cédula~~ — RESUELTO PARCIAL (2026-09-17)
 
-`Clases/ValidadorFiscal.cs` valida el dígito verificador de la Cédula dominicana (11
-dígitos) desde `frmCliente.btnGuardar_Click`, sin bloquear el guardado (solo avisa).
-El RNC (9 dígitos) sólo se valida por longitud, a propósito: no hay un algoritmo de
-dígito verificador de RNC públicamente bien documentado, y validar mal el
-identificador fiscal real de un negocio es peor que no validarlo. Ver "Quinta ronda"
-al principio del documento. Pendiente real: la columna `tipoIdentificacion` (RNC vs.
-Cédula explícito) que pide P2.2 completo — hoy sigue siendo un solo campo de texto.
+**Hecho:** `Clases/ValidadorFiscal.cs` valida el dígito verificador de la Cédula
+dominicana (11 dígitos) desde `frmCliente.btnGuardar_Click`, sin bloquear el
+guardado (solo avisa). El RNC (9 dígitos) sólo se valida por longitud, a propósito:
+no hay un algoritmo de dígito verificador de RNC públicamente bien documentado, y
+validar mal el identificador fiscal real de un negocio es peor que no validarlo.
+Ver "Quinta ronda" al principio del documento.
+
+**Falta:** la columna `tipoIdentificacion` (RNC vs. Cédula explícito) que pide
+P2.2 completo — hoy sigue siendo un solo campo de texto sin tipo, la detección es
+solo por longitud (9 vs. 11 dígitos).
 
 ---
 
@@ -440,14 +519,17 @@ un formulario de 1.100+ líneas.
 
 ## ~~P3.2 · Probar la aritmética, no la interfaz~~ — RESUELTO PARCIAL (2026-09-17)
 
-Se extrajo `Clases/ConversionMoneda.cs` (la división base/tasa de P1.8) de
-`PrecioProductoService`, y `PSC09.Tests/DineroYMonedaTests.cs` la prueba junto con
-`Dinero` y `ValidadorFiscal` (17 pruebas, todas pasan). Ver "Quinta ronda" al
+**Hecho:** se extrajo `Clases/ConversionMoneda.cs` (la división base/tasa de P1.8)
+de `PrecioProductoService`, y `PSC09.Tests/DineroYMonedaTests.cs` la prueba junto
+con `Dinero` y `ValidadorFiscal` (17 pruebas, todas pasan). Ver "Quinta ronda" al
 principio del documento para el detalle, incluido el hallazgo de que las pruebas de
-interfaz con Appium ya existentes no compilan. Pendiente real: el resto de la
-aritmética delicada (ITBIS por línea, descuento por línea vs. por factura, prorrateo
-de Nota de Crédito) sigue sin pruebas porque todavía vive dentro de `frmFactura.cs`
-sin extraer (ver P3.1) — no hay una `FacturaEnEdicion` que probar todavía.
+interfaz con Appium ya existentes no compilan.
+
+**Falta:** el resto de la aritmética delicada (ITBIS por línea, descuento por línea
+vs. por factura, prorrateo de Nota de Crédito) sigue sin pruebas porque todavía
+vive dentro de `frmFactura.cs` sin extraer (ver P3.1) — no hay una
+`FacturaEnEdicion` que probar todavía. Este pedazo no se puede resolver sin resolver
+P3.1 primero.
 
 ## P3.3 · Objetos de parámetros en vez de listas largas
 
@@ -458,13 +540,16 @@ ejemplo) va a pasar lo mismo si la firma sigue siendo posicional.
 
 ## ~~P3.4 · Registro de errores~~ — RESUELTO PARCIAL (2026-09-17)
 
-`Clases/Log.cs`, nueva, escribe a un archivo de texto (carpeta `Logs/` junto al
-ejecutable). Conectada a los 8 sitios que tragaban en silencio un error de
-impresión después de guardar (ver "Quinta ronda"), y al `throw new Exception(...)`
-de `frmProductos.cs` que perdía el stack trace (ahora lo preserva como
-`InnerException`). Pendiente real: el resto de los 70+ bloques `catch` del proyecto
-sigue sin tocar — sólo se conectaron los más claramente silenciosos, no se auditó
-cada uno.
+**Hecho:** `Clases/Log.cs`, nueva, escribe a un archivo de texto (carpeta `Logs/`
+junto al ejecutable) y ya existe como herramienta lista para usar en cualquier
+`catch` nuevo o viejo. Conectada en 9 sitios: los 8 que tragaban en silencio un
+error de impresión después de guardar (ver "Quinta ronda"), y el
+`throw new Exception(...)` de `frmProductos.cs` que perdía el stack trace (ahora lo
+preserva como `InnerException`).
+
+**Falta:** el resto de los 70+ bloques `catch` del proyecto sigue sin tocar y sin
+auditar uno por uno — sólo se conectaron los más claramente silenciosos de esta
+ronda.
 
 ## P3.5 a P3.9
 
@@ -488,12 +573,15 @@ Escritorio.
 
 Sin formatos 606/607/608, sin impresión térmica, sin retenciones de ITBIS/ISR.
 
-**Respaldo de base de datos: RESUELTO PARCIAL (2026-09-17).** `Clases/
-RespaldoService.cs` + Configuración → Respaldar Base de Datos (permiso
-`RESPALDO_BD`, solo Administrador) generan un `.bak` bajo demanda con un clic,
-probado contra la base real. Pendiente real: sigue sin existir un respaldo
-AUTOMÁTICO programado (un job de SQL Server Agent o una tarea del Programador de
-Windows) que corra solo, sin que alguien tenga que acordarse de darle clic.
+**Respaldo de base de datos: RESUELTO PARCIAL (2026-09-17).**
+
+**Hecho:** `Clases/RespaldoService.cs` + Configuración → Respaldar Base de Datos
+(permiso `RESPALDO_BD`, solo Administrador) generan un `.bak` bajo demanda con un
+clic, probado contra la base real (generó uno de 7.2 MB correctamente).
+
+**Falta:** sigue sin existir un respaldo AUTOMÁTICO programado (un job de SQL
+Server Agent o una tarea del Programador de Windows) que corra solo, todos los
+días, sin que alguien tenga que acordarse de darle clic.
 
 ---
 
@@ -627,7 +715,12 @@ iTextSharp 5 es AGPL. Si Andrómeda se vende o se instala a terceros sin liberar
 código bajo AGPL, es una exposición legal real. QuestPDF (MIT hasta cierto umbral) resuelve
 esto y facilita el QR de la representación impresa del e-CF.
 
-## P3.10 · Centralizar la ruta de documentos
+## ~~P3.10 · Centralizar la ruta de documentos~~ — RESUELTO (2026-09-17, ver arriba)
+
+Implementado casi igual a este boceto (la diferencia: `Empresa.CarpetaDocumentos()`
+devuelve la carpeta BASE sin la subcarpeta "Facturas" incluida, porque cada llamador
+sigue armando su propia subcarpeta como antes — Facturas, Recibos, Pagos, etc. — para
+no cambiar la estructura de carpetas que ya existía):
 
 ```csharp
 public static string CarpetaDocumentos()
@@ -666,28 +759,42 @@ public static string CarpetaDocumentos()
 
 - Verificar categoría del contribuyente en la Oficina Virtual (P2.0)
 - Iniciar trámite del certificado digital (P2.0)
+- Investigar por qué las pruebas de interfaz con Appium no compilan (hallazgo de
+  la Quinta ronda, sin corregir)
 
 **Semanas 1-2:**
 
-- P3.4 · Logging de errores
+- P2.1 · Migración de fechas a `DATE` — el cambio de mayor retorno que queda, sin
+  empezar
+- P3.1 · Extraer `FacturaEnEdicion` de `frmFactura` — desbloquea el resto de P3.2
+  (probar ITBIS, descuento, prorrateo de Nota de Crédito)
+- ~~P3.4 · Logging de errores~~ — RESUELTO PARCIAL 2026-09-17, ver arriba. Si se
+  retoma: conectar `Log.Registrar` en el resto de los 70+ `catch` que quedaron sin
+  tocar.
 
 **Semanas 3-4:**
 
-- P2.1 · Migración de fechas a `DATE`
-- P3.1 · Extraer `FacturaEnEdicion`
-- P3.2 · Pruebas unitarias, incluida la conversión de moneda
-- P2.2 · Campos de e-CF en el esquema
-- Bitácora de quién crea/anula una factura (mencionada junto a P1.6 en el audit
-  original; P1.6 mismo ya se resolvió el 16 de septiembre, ver arriba)
+- P2.2 · Campos de e-CF en el esquema, incluida la columna `tipoIdentificacion`
+  que le falta a P2.4
+- ~~Bitácora de quién crea/anula una factura~~ — RESUELTO Y AMPLIADO (2026-09-18):
+  ver "Sexta ronda" al principio del documento. En vez de sólo Factura, quedó una
+  tabla `AUDITORIA` genérica conectada a la mayoría de las acciones de negocio del
+  sistema.
+- Respaldo automático programado (job de SQL Server Agent o tarea de Windows) —
+  el manual bajo demanda ya está resuelto (ver P4 arriba)
 
 **Semanas 5-8:**
 
-- P2.4 · Validación de RNC/cédula
 - P2.3 · Capa de emisión
 - P3.9 · Migrar a QuestPDF
 - P2.5 · Certificación con la DGII
 
-**Después:** P3.3, P3.5-P3.8, P3.10, y todo P4.
+**Después:** P3.3, P3.5-P3.8, y el resto de P4 (606/607/608, impresión térmica,
+retenciones de ITBIS/ISR).
+
+**Ya resueltos, no forman parte de este plan:** P3.10 (carpeta de documentos),
+P2.4 y P3.2 en su alcance parcial (ver el detalle de cada uno arriba, con lo que
+sí quedó pendiente de cada uno señalado por separado), y el respaldo manual de P4.
 
 ---
 
@@ -761,3 +868,10 @@ de datos bajo demanda (P4 parcial). Además se verificó P1.6 con un usuario de 
 Cajero real contra la app compilada (quedaba pendiente desde la cuarta ronda), y se
 encontró que las pruebas de interfaz con Appium ya existentes no compilan
 (hallazgo sin corregir). Todo lo demás de P2-P4 sigue pendiente, sin cambios.*
+
+*Sexta actualización (18 de septiembre de 2026): se agregó la bitácora de auditoría
+genérica (tabla `AUDITORIA` + `Clases/Auditoria.cs`) que el pendiente original sólo
+pedía para Factura, conectada en la mayoría de las acciones de crear/editar/anular
+del sistema, incluido login/logout (ver "Sexta ronda" al principio del documento).
+Falta una pantalla para consultarla. Todo lo demás de P2-P4 sigue pendiente, sin
+cambios.*

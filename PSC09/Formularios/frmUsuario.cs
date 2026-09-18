@@ -118,6 +118,8 @@ namespace PSC09
             }
 
             existeElUsuario = true;
+
+            Auditoria.Registrar("CREAR", "USUARIO", txtNombreCorto.Text.Trim());
         }
 
         private void ActualizaData()
@@ -141,6 +143,8 @@ namespace PSC09
                 cmd.Parameters.AddWithValue("@id", idEmpleadoActual);
                 cmd.ExecuteNonQuery();
             }
+
+            Auditoria.Registrar("EDITAR", "USUARIO", txtNombreCorto.Text.Trim());
         }
 
         private void AgregarParametros(SqlCommand cmd)
@@ -163,6 +167,8 @@ namespace PSC09
                 cmd.Parameters.AddWithValue("@id", idEmpleadoActual);
                 cmd.ExecuteNonQuery();
             }
+
+            Auditoria.Registrar("DESACTIVAR", "USUARIO", txtNombreCorto.Text.Trim());
         }
 
         private void btnGuardar_Click(object sender, EventArgs e)

@@ -523,6 +523,8 @@ namespace PSC09
 
                 cdm.ExecuteNonQuery();
             }
+
+            Auditoria.Registrar("EDITAR", "PRODUCTO", txtCodigo.Text, txtDescripcion.Text);
         }
 
         private void InsertarData(decimal cantidad, decimal costo, decimal precioVenta, decimal impuesto)
@@ -547,6 +549,8 @@ namespace PSC09
 
                 cdm.ExecuteNonQuery();
             }
+
+            Auditoria.Registrar("CREAR", "PRODUCTO", txtCodigo.Text, txtDescripcion.Text);
         }
 
         private void ActualizaSecuencia(string numProducto)
@@ -569,6 +573,8 @@ namespace PSC09
                 cmd.Parameters.AddWithValue("@item", numProducto);
                 cmd.ExecuteNonQuery();
             }
+
+            Auditoria.Registrar("DESACTIVAR", "PRODUCTO", numProducto);
         }
 
         // Valida que Existencia/Costo/Precio de Venta/Impuesto sean numeros validos

@@ -195,6 +195,7 @@ namespace PSC09
                 try
                 {
                     RespaldoService.RespaldarBaseDeDatos(dlg.FileName);
+                    Auditoria.Registrar("RESPALDAR", "BASE_DE_DATOS", null, dlg.FileName);
                     MessageBox.Show("Respaldo creado correctamente en:\n" + dlg.FileName, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception error)
@@ -364,6 +365,7 @@ namespace PSC09
 
                 if (resultado == DialogResult.Yes)
                 {
+                    Auditoria.Registrar("LOGOUT", "USUARIO", Sesion.NombreCorto);
                     Sesion.CerrarSesion();
                     this.Hide();
 

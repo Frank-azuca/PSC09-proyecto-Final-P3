@@ -229,6 +229,8 @@ namespace PSC09
                     }
                 }
 
+                Auditoria.Registrar("GUARDAR", "GASTOS", null, filasValidas.Count + " fila(s)");
+
                 MessageBox.Show("Gastos guardados.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 CargarDatos();
             }
@@ -273,6 +275,8 @@ namespace PSC09
                     cmd.Parameters.AddWithValue("@id", (int)dgv.CurrentRow.Tag);
                     cmd.ExecuteNonQuery();
                 }
+
+                Auditoria.Registrar("ANULAR", "GASTO", dgv.CurrentRow.Tag.ToString());
 
                 MessageBox.Show("Gasto anulado.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 CargarDatos();

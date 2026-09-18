@@ -274,6 +274,8 @@ namespace PSC09
                 }
             }
 
+            Auditoria.Registrar("CREAR", "NOTA_CREDITO", numero, "Factura " + numeroFactura);
+
             return numero;
         }
 
@@ -322,6 +324,8 @@ namespace PSC09
                     }
                 }
             }
+
+            Auditoria.Registrar("ANULAR", "NOTA_CREDITO", numero);
         }
 
         // Encabezado de una nota ya guardada, para reabrirla en frmNotaCredito.

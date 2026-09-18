@@ -90,6 +90,8 @@ namespace PSC09
                     }
                 }
             }
+
+            Auditoria.Registrar(tipo == Entrada ? "ENTRADA_MANUAL" : "SALIDA_MANUAL", "PRODUCTO", articulo, "Cantidad " + cantidad + (string.IsNullOrWhiteSpace(nota) ? "" : ": " + nota));
         }
 
         // Historial de movimientos, opcionalmente filtrado por artículo (null = todos),

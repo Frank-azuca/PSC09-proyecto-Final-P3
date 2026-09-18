@@ -154,6 +154,8 @@ namespace PSC09
                 }
             }
 
+            Auditoria.Registrar("CREAR", "FACTURA", numeroFactura, "Total " + total.ToString("0.00") + ", comprobante " + comprobante);
+
             return numeroFactura;
         }
 
@@ -352,6 +354,8 @@ namespace PSC09
                     }
                 }
             }
+
+            Auditoria.Registrar("ANULAR", "FACTURA", numFactura);
         }
 
         public static bool EstaActiva(string numFactura)

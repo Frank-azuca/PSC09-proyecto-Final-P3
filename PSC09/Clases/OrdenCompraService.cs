@@ -102,6 +102,8 @@ namespace PSC09
                 }
             }
 
+            Auditoria.Registrar("CREAR", "ORDEN_COMPRA", numero);
+
             return numero;
         }
 
@@ -230,6 +232,8 @@ namespace PSC09
                     }
                 }
             }
+
+            Auditoria.Registrar("RECIBIR", "ORDEN_COMPRA", numeroOrden, "Costeo: " + metodoCosteo);
         }
 
         // Anula una orden (baja lógica, no física). Si ya estaba Recibida, revierte la
@@ -292,6 +296,8 @@ namespace PSC09
                     }
                 }
             }
+
+            Auditoria.Registrar("ANULAR", "ORDEN_COMPRA", numeroOrden);
         }
 
         // Líneas de una orden (con descripción del artículo, vía JOIN), para mostrarla
